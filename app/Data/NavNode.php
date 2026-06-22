@@ -24,10 +24,13 @@ final class NavNode extends Data
         #[DataCollectionOf(NavNode::class)]
         public DataCollection $children,
         // Raw SportsEngine node_type as returned by /page/nav/<id>:
-        // 'Page' | 'Calendar' | 'NewsNode' | null (root) | other.
+        // 'Page' | 'Calendar' | 'NewsNode' | 'LinkNode' | null (root / tools) | other.
         public ?string $node_type = null,
-        // Numeric id parsed out of the `page_node_<int>` string. Lets the planner
-        // re-fetch a node or correlate with rootNav data.
+        // Numeric id parsed out of the `page_node_<int>` string. Null when the id
+        // isn't in that shape (e.g. SE's hardcoded `id: "toolsLink"` sibling).
         public ?int $page_node_id = null,
+        // Differentiates external sub-shapes when kind === 'external':
+        // 'external_link' (node_type=LinkNode) | 'se_tool' (id=toolsLink) | null.
+        public ?string $external_subtype = null,
     ) {}
 }

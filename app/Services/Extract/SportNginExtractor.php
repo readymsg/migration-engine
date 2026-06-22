@@ -160,9 +160,11 @@ final class SportNginExtractor implements Extractor
      */
     private function expandNode(string $orgUrl, array $raw, int $depth): NavNode
     {
-        $nodeId = $this->extractNodeId($raw['id'] ?? null);
+        $rawId = $raw['id'] ?? null;
+        $nodeId = $this->extractNodeId($rawId);
         $nodeType = is_string($raw['node_type'] ?? null) ? $raw['node_type'] : null;
         $hasChild = (int) ($raw['has_child'] ?? 0);
+        [$kind, $externalSubtype] = $this->classify($nodeType, $rawId);
 
         $children = [];
         if ($hasChild > 0 && $nodeId !== null && $depth < self::MAX_DEPTH) {
@@ -185,10 +187,11 @@ final class SportNginExtractor implements Extractor
         return new NavNode(
             label: $this->stringOr($raw['name'] ?? null, ''),
             url: $this->stringOrNull($raw['url'] ?? null),
-            kind: $this->classifyKind($nodeType),
+            kind: $kind,
             children: new DataCollection(NavNode::class, $children),
             node_type: $nodeType,
             page_node_id: $nodeId,
+            external_subtype: $externalSubtype,
         );
     }
 
@@ -210,15 +213,39 @@ final class SportNginExtractor implements Extractor
         return null;
     }
 
-    private function classifyKind(?string $nodeType): string
+    /**
+     * Map a rootNav node to (kind, external_subtype). External shapes recon'd
+     * after dumping real manifests: SE injects `LinkNode` siblings (external
+     * shop / external resource link) and a hardcoded `id: "toolsLink"` sibling
+     * pointing at SE's own Dibs volunteer-scheduling tool. Both stay in the
+     * tree so the page-list reads true to the source, but classified
+     * 'external' so PLAN doesn't treat them as content pages.
+     *
+     * @return array{0: string, 1: ?string}
+     */
+    private function classify(?string $nodeType, mixed $rawId): array
     {
-        return match (true) {
+        if ($nodeType === 'LinkNode') {
+            return ['external', 'external_link'];
+        }
+        if ($rawId === 'toolsLink') {
+            return ['external', 'se_tool'];
+        }
+        // Catch-all for SE's other "not really a page" siblings: null node_type
+        // paired with a non-page_node id. Kept external, subtype unknown.
+        if ($nodeType === null && is_string($rawId) && preg_match('#^page_node_\d+$#', $rawId) !== 1) {
+            return ['external', null];
+        }
+
+        $kind = match (true) {
             $nodeType === 'Page' => 'page',
             $nodeType === 'Calendar' => 'dynamic_calendar',
             $nodeType === 'NewsNode' => 'dynamic_news',
             is_string($nodeType) && $nodeType !== '' => 'dynamic_other',
             default => 'unknown',
         };
+
+        return [$kind, null];
     }
 
     /**

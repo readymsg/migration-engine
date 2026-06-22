@@ -93,6 +93,22 @@ final class SportNginExtractorRealTest extends TestCase
         $this->assertSame('Programs', $programs->label);
         $this->assertSame(0, $programs->children->count(), 'unloaded node should not expand');
 
+        // SE external-link shapes — Swag/Spirit Wear is a LinkNode child of
+        // About Us pointing at the org's shop; Dibs is the hardcoded toolsLink
+        // sibling at the top level. Both stay in the tree as external.
+        $swag = $this->findByLabel($aboutUs->children->items(), 'Swag/ Spirit Wear');
+        $this->assertNotNull($swag);
+        $this->assertSame('LinkNode', $swag->node_type);
+        $this->assertSame('external', $swag->kind);
+        $this->assertSame('external_link', $swag->external_subtype);
+
+        $dibs = $this->findByLabel($manifest->structure->nav->items(), 'Dibs');
+        $this->assertNotNull($dibs);
+        $this->assertNull($dibs->node_type);
+        $this->assertNull($dibs->page_node_id, 'toolsLink id is not page_node_<int>');
+        $this->assertSame('external', $dibs->kind);
+        $this->assertSame('se_tool', $dibs->external_subtype);
+
         // pages_total counts the whole walked tree, not just top-level.
         $this->assertSame(7 + 11, $manifest->structure->pages_total);
 
@@ -187,6 +203,21 @@ final class SportNginExtractorRealTest extends TestCase
         $this->assertNotNull($aboutUs);
         $this->assertSame(6, $aboutUs->children->count());
 
+        // Same Dibs toolsLink sibling appears here — SE injects it on every
+        // site, regardless of theme.
+        $dibs = $this->findByLabel($manifest->structure->nav->items(), 'Dibs');
+        $this->assertNotNull($dibs);
+        $this->assertSame('external', $dibs->kind);
+        $this->assertSame('se_tool', $dibs->external_subtype);
+
+        // Calendar at top-level is a real Calendar node — sanity that the
+        // existing dynamic_* classification still works alongside external.
+        $calendar = $this->findByLabel($manifest->structure->nav->items(), 'Calendar');
+        $this->assertNotNull($calendar);
+        $this->assertSame('Calendar', $calendar->node_type);
+        $this->assertSame('dynamic_calendar', $calendar->kind);
+        $this->assertNull($calendar->external_subtype);
+
         // v1 scope cut: provisioning is not extracted, even though this site
         // has a "Langdon Leagues" top-level we could have walked.
         $this->assertNull($manifest->provisioning);
@@ -206,5 +237,19 @@ final class SportNginExtractorRealTest extends TestCase
         $kinds = array_count_values(array_column($uploader->uploads, 'kind'));
         $this->assertSame(1, $kinds['logos'] ?? 0);
         $this->assertSame(1, $kinds['scrapes'] ?? 0);
+    }
+
+    /**
+     * @param  array<int, NavNode>  $nodes
+     */
+    private function findByLabel(array $nodes, string $label): ?NavNode
+    {
+        foreach ($nodes as $node) {
+            if ($node->label === $label) {
+                return $node;
+            }
+        }
+
+        return null;
     }
 }
