@@ -14,6 +14,9 @@ use App\Services\Extract\HttpRootNavFetcher;
 use App\Services\Extract\RootNavFetcher;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SportNginExtractor;
+use App\Services\Generate\AnthropicIrPassAgent;
+use App\Services\Generate\IrPass;
+use App\Services\Generate\IrPassAgent;
 use App\Services\Plan\AnthropicClassifierAgent;
 use App\Services\Plan\ClassifierAgent;
 use App\Services\Plan\Planner;
@@ -45,6 +48,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(ClassifierAgent::class, AnthropicClassifierAgent::class);
         $this->app->singleton(Planner::class, RootNavPlanner::class);
+
+        $this->app->singleton(IrPassAgent::class, AnthropicIrPassAgent::class);
+        $this->app->singleton(IrPass::class);
     }
 
     public function boot(): void

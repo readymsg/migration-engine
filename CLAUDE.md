@@ -123,6 +123,48 @@ Two SportsEngine-flavored signals, handled completely differently:
 - **SE CDN asset URLs** (`cdn*.sportngin.com`, `assets.ngin.com`, `app-assets*.sportngin.com`) — used by SE for brand logos, banner graphics, content images, theme JS/CSS — are **NEVER** matched by the link-removal rule. The detection logic looks at the URL *path*, not the host, so CDN URLs that happen to fall under sportngin.com don't false-positive.
 - **`TODO (GENERATE):` re-host every `sportngin.com` / `assets.ngin.com` / `app-assets*.sportngin.com` asset URL found in scraped content to S3 (via `S3AssetUploader::putFromUrl`).** The rebuilt site must have **zero** live SportsEngine dependency at serve-time — no images, no JS, no CSS pulled from sportngin/ngin hosts. BrandExtractor already handles the brand logo at INGEST; the rest is a GENERATE concern.
 
+## GENERATE — IR pass (v1, irPass only)
+
+`App\Services\Generate\IrPass::run(SitePlan, Manifest): IrPassResult` runs ONE structured Opus 4.8 call (via the injectable `IrPassAgent`) to produce:
+
+- a compact **`GlobalStyleBrief`** (brand voice, palette, layout conventions, nav — nav is echoed from `SitePlan.nav`, not re-derived by the LLM); and
+- per-page **`Ir`** (page_slug, page_title, nav_order, ordered abstract block intents).
+
+**Scope is tight** — the IR pass is *just* the architecture call. Block-fill (Sonnet 4.6 per BUILD.md), `GeneratePageJob`, `Bus::batch()`, the deterministic assembler, validation/repair, `createDraftSite`, placeholder blocks, asset re-hosting, and the demo are all **not built yet** — separate seams that come after this checkpoint.
+
+### IR pass scoping (CRITICAL)
+
+IR is generated **only** for pages whose disposition is `keep` AND whose `kind === 'page'`. Everything else is excluded *before* the LLM call:
+
+| Disposition / kind | IR? | Why |
+|---|---|---|
+| `keep` + `kind=page` | **yes** | content page rebuilt from scraped content |
+| `platform_dynamic` (Schedule/Scores/Standings/Roster/Teams/Divisions/Contacts/Calendar/News) | no | becomes a TeamLinkt platform block via a **separate later seam**; the LLM never designs IR for one |
+| `subsumed` | no | represented by an ancestor `platform_dynamic`'s block |
+| `park` / `drop` | no | absent from the rebuilt site (drop never emitted in v1) |
+| `dynamic` (vestigial) | no | not rebuilt as content |
+| `keep` + `kind=external` (LinkNode / Dibs / etc.) | no | preserved as a nav link only — no content to design |
+
+The filter lives in `IrPass::extractKeepContentPages()`. Tests assert that platform_dynamic, subsumed, parked, and external pages never reach the agent's `$seen->keep_pages`.
+
+### Faithful-rebuild guarantee: validate → targeted retry → flag
+
+Opus is allowed to silently drop pages from a large batch (observed on the first real run: 2 of 16 keep-pages missing from the response). The IR pass NEVER lets that turn into a silent loss:
+
+1. After the agent returns, `IrPass` diffs the returned `page_slug`s against the expected slugs (single-sourced via `App\Services\Generate\PageSlug::of()` — the helper the prompt and the orchestration both use; drift here would re-introduce silent loss).
+2. If anything is missing, the agent is called a **second** time with **only the missing pages** (full nav still passed for context; the retry's `style_brief` is discarded — the first call's is authoritative).
+3. If anything is **still** missing after the retry, it lands in `IrPassResult.failures` as an explicit `IrPassFailure` (slug, title, page_node_id, reason). `IrPassResult.status` flips to `Partial` so the ConversionLog can flag the conversion.
+
+**Crucially**: missing pages are NEVER replaced by a stub Ir entry with placeholder content. A blank stub masquerading as a rebuilt page is worse than a visible failure — `IrPass` would rather a reviewer see the gap and re-run than ship a fake page.
+
+### Schema-agnostic IR (still the rule)
+
+`IrBlock.component_type` is an **abstract intent name** (`'hero'`, `'paragraph'`, `'card'`, `'cta'`, `'gallery'`, `'team_grid'`, …), NEVER a Puck-specific PROP name (`'background_image'`, `'subheading'`, `'cta_label'`). The recommended vocabulary lives in the agent's system prompt; the assembler is the only place that maps these abstract intents to real Puck components, and it doesn't exist yet.
+
+### Anthropic config gotcha (still applies)
+
+`AnthropicIrPassAgent` pins `Lab::Anthropic` + `claude-opus-4-8` via `#[Provider]` / `#[Model]` attributes, since `config/ai.php` defaults to OpenAI. The same `HasStructuredOutput` + JSON schema pattern from `AnthropicClassifierAgent`.
+
 ## Guardrails (from BUILD.md — these come up repeatedly)
 
 - DTOs + Larastan are the strictness net (PHP isn't TS) — make them strict.
