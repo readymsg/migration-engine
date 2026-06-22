@@ -14,6 +14,10 @@ use App\Services\Extract\HttpRootNavFetcher;
 use App\Services\Extract\RootNavFetcher;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SportNginExtractor;
+use App\Services\Plan\AnthropicClassifierAgent;
+use App\Services\Plan\ClassifierAgent;
+use App\Services\Plan\Planner;
+use App\Services\Plan\RootNavPlanner;
 use App\Services\Product\ProductClient;
 use App\Services\Product\StubProductClient;
 use App\Services\Schema\ComponentSchema;
@@ -38,6 +42,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(AssetUploader::class, S3AssetUploader::class);
         $this->app->singleton(Extractor::class, SportNginExtractor::class);
+
+        $this->app->singleton(ClassifierAgent::class, AnthropicClassifierAgent::class);
+        $this->app->singleton(Planner::class, RootNavPlanner::class);
     }
 
     public function boot(): void

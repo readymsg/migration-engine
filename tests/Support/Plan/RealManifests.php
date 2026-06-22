@@ -1,0 +1,80 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Support\Plan;
+
+use App\Data\Manifest;
+use App\Services\Extract\BrandExtractor;
+use App\Services\Extract\ScrapedPage;
+use App\Services\Extract\SportNginExtractor;
+use Tests\Support\Extract\FakeAssetUploader;
+use Tests\Support\Extract\FakeFirecrawlClient;
+use Tests\Support\Extract\FixtureHtmlFetcher;
+use Tests\Support\Extract\FixtureRootNavFetcher;
+
+// Builds the two real-fixture Manifests used by PlannerTest. Lives in test
+// support so the planner test doesn't have to know about the extractor's
+// internal fakes — and so we don't recreate the setup in two test files.
+final class RealManifests
+{
+    private const FIXTURES = __DIR__.'/../../Fixtures/rootnav/real';
+
+    public static function stthomas(): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.stthomassoccer.com/',
+            finalUrl: 'https://www.stthomassoccer.com/',
+            path: self::FIXTURES.'/stthomassoccer.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        $nav->preloadFromFile(2901070, self::FIXTURES.'/stthomassoccer.rootnav.json');
+        $nav->preloadFromFile(2901073, self::FIXTURES.'/stthomassoccer.node.2901073.json');
+
+        $firecrawl = new FakeFirecrawlClient;
+        $firecrawl->preload(
+            'https://www.stthomassoccer.com/page/show/2901070-home',
+            new ScrapedPage(
+                url: 'https://www.stthomassoccer.com/page/show/2901070-home',
+                title: 'Home',
+                markdown: '# Home',
+                html: '<h1>Home</h1>',
+            ),
+        );
+
+        $extractor = new SportNginExtractor($html, $nav, $firecrawl, new FakeAssetUploader, new BrandExtractor);
+
+        return $extractor->extract('https://www.stthomassoccer.com/');
+    }
+
+    public static function langdondiamonds(): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.strikersbaseball.ca/',
+            finalUrl: 'https://www.langdondiamonds.ca/',
+            path: self::FIXTURES.'/strikersbaseball.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        $nav->preloadFromFile(7507227, self::FIXTURES.'/strikersbaseball.rootnav.json');
+        $nav->preloadFromFile(7507229, self::FIXTURES.'/strikersbaseball.node.7507229.json');
+
+        $firecrawl = new FakeFirecrawlClient;
+        $firecrawl->preload(
+            'https://www.langdondiamonds.ca/home',
+            new ScrapedPage(
+                url: 'https://www.langdondiamonds.ca/home',
+                title: 'Home',
+                markdown: '# Home',
+                html: '<h1>Home</h1>',
+            ),
+        );
+
+        $extractor = new SportNginExtractor($html, $nav, $firecrawl, new FakeAssetUploader, new BrandExtractor);
+
+        return $extractor->extract('https://www.strikersbaseball.ca/');
+    }
+}
