@@ -46,7 +46,7 @@ Plus `DecisionLedger`, `ConversionLog`, and `GlobalStyleBrief` as first-class DT
 ## Architecture: the four stages
 
 1. **INGEST** — `extract(url): Manifest` behind `Extractor`. Structure from rootNav (no blind crawl). Firecrawl for content pages (async submit + poll), S3 for assets. Brand fallback ladder: header → og:image → favicon → flag (signals come from the **homepage HTML**, not rootNav — see "Real SportsEngine rootNav" below). **Provisioning is out of scope for v1** — site rebuild only; the `provisioning` field stays null. Brand extraction, content scraping, asset upload are independent — run concurrently (`Http::pool()` / parallel jobs) once the queue lands.
-2. **PLAN** — `inventory → classify → decideIa`. **Batched classification** (~20 pages per Haiku call, not one). Drops are **reversible** (mark `parked`, never delete) and **conservative** (low confidence → keep). Every decision gets a `DecisionLedger` entry. Keep the "what's the IA" and "is this page worth keeping" prompts separate.
+2. **PLAN** — `inventory → classify → decideIa`. **Batched classification** (~20 pages per Haiku call). Three buckets per page: content → `keep`, live data → `platform_dynamic` + block, SE plumbing → `park`. Faithful-rebuild bias: a model `park`/`drop`/`platform_dynamic` is honored only when confidence is **strictly > 0.80**; below that the page is `keep`-ed with the model's verdict preserved in the ledger reason. Drops are **reversible** (high-confidence drop → `park`, never delete); merges are **suggestions** (engine never auto-folds; model merge → `keep` with target in ledger reason). Descendants of `platform_dynamic` are `subsumed` (represented by the parent's block, never independently classified). Every decision gets a `DecisionLedger` entry. See "PLAN — v1 dispositions" for the full action set, the `PlatformBlockType` enum (now including `Calendar` and `News`), registration retargeting, and the SE-platform-link vs SE-CDN-asset distinction.
 3. **GENERATE** — `irPass` (one Opus call) emits `Ir[]` + a compact `GlobalStyleBrief`. **Inject `GlobalStyleBrief` into every block-fill call** — that's the main coherence lever in a critic-free v1. **Mark the schema + GlobalStyleBrief + rubric prefix as `cache_control` cacheable** on Anthropic — biggest single speed/cost win. `GeneratePageJob` per page in a `Bus::batch()` with `then()`/`catch()`. `assemble(ir): PuckOutput` is **deterministic, no LLM** — one repair attempt on validation failure, then flag. Land via `ProductClient.createDraftSite()` as **unpublished draft, never auto-publish**.
 4. **SCORE & LOG** — `structuralConfidence(manifest, puck)` is the trusted monitored score (extraction-grounded), not LLM self-assessment. Write `ConversionLog` structured for Metabase. Slack notify on completion; **flag low-confidence conversions specifically** — not every conversion.
 
@@ -79,6 +79,49 @@ The Demo namespace (`/demo`, `/preview/{id}`, Vite + React + `@measured/puck`) i
   - **favicon** → `attachments/favicon_graphic/...` else `<link rel="shortcut icon">` (which on every site we saw points to `https://assets.ngin.com/site_files/<site_id>/favicon.ico`).
   - **flag** → none found.
 - **Redirects are real.** One of the six recon sites (`strikersbaseball.ca`) 301s to a rebrand domain (`langdondiamonds.ca`). The Manifest stores the **post-redirect** URL in `source_url`; the input URL is preserved only via a `redirected: <from> -> <to>` flag. `HttpHtmlFetcher` captures the final URL via Guzzle's `on_stats`. `SportNginExtractor` builds all subsequent absolute URLs (rootNav endpoint, scrape submissions) against the post-redirect origin.
+
+## PLAN — v1 dispositions
+
+The engine's guiding principle: **any dynamic SportsEngine content TeamLinkt reproduces as its own block — zero live SE dependency.** Three buckets every page falls into:
+
+1. **Content → `keep`.** Static informational pages (About Us, Coaches, FAQs, Programs). Scraped and rebuilt 1:1.
+2. **Live data → `platform_dynamic` + a `PlatformBlockType`.** Anything SE renders from data — Calendar, News, Schedule, Scores, Standings, Roster, Teams, Divisions, Contacts. The block replaces the source page; the source is NOT scraped. The rebuilt site reads from TeamLinkt's own data.
+3. **SE plumbing → `park`.** SportsEngine platform / tool / help links (Dibs toolsLink, /sportsengine, SE login). Removed in the rebuild.
+
+Every page lands in the ledger with exactly one `DecisionAction`. v1 is a **faithful-rebuild migration** — the engine rebuilds the whole site by default and only sets aside pages it's very confident are junk.
+
+- **`keep`** — preserve as content. Default for ambiguous pages.
+- **`platform_dynamic`** — page whose content TeamLinkt **regenerates** via a `PlatformBlockType` Puck block: `Schedule | Scores | Standings | Roster | Teams | Divisions | Contacts | Calendar | News`. The block replaces the source page; the source is NOT scraped. Conservative-by-design — a false `platform_dynamic` destroys real content (replaced by an empty block), so the bar is high.
+- **`subsumed`** — descendant of a `platform_dynamic` node. The ancestor's block represents the whole subtree, so descendants are NOT scraped, classified, or independently rebuilt. Absent from `nav` + `kept_pages`, present in the ledger with reason `"subsumed by parent <BlockType> block at '<parent label>'"`. Reversible — a reviewer can promote one back if the block doesn't cover their case. Crucially, subsumed descendants are NEVER sent to the LLM (deterministic platform_dynamic catches them in phase 1; LLM-returned platform_dynamic catches them retroactively in phase 3).
+- **`park`** — set aside, absent from `nav`/`kept_pages`, present in the ledger. Used for high-confidence (> 0.80) LLM parks/drops, unknown-shape nodes, and SE platform/tool/help links.
+- **`drop`** — NEVER emitted in v1. High-confidence drops are rewritten as `park` (reversibility).
+- **`merge`** — NEVER emitted in v1. The engine doesn't auto-fold pages; a model `merge` is rewritten as `keep` with the merge target preserved in the ledger reason for human review.
+- **`dynamic`** — vestigial fallback for unrecognized SE dynamic node types (`dynamic_other`). Calendar and NewsNode no longer use this — they map to `platform_dynamic` with `PlatformBlockType::Calendar` / `News`. v1 should never emit `dynamic` in practice; if you see it in a ledger, that's a signal a new SE dynamic type needs a PlatformBlockType.
+
+### Recall thresholds (enforced in `RootNavPlanner::applyRecallBias`)
+
+A model `park`/`drop`/`platform_dynamic` is honored only when confidence is **strictly greater than 0.80**. At or below 0.80 the page is `keep`-ed and the model's verdict is preserved in the reason (`recall-biased keep (model wanted … @ 0.80: …)`) so a reviewer can still act.
+
+### platform_dynamic detection (hybrid, conservative)
+
+Three deterministic paths run BEFORE the LLM, plus an LLM fallback:
+
+1. **node_type-driven** — `Calendar` → `PlatformBlockType::Calendar`; `NewsNode` → `PlatformBlockType::News`. SE's structural classification is enough; the LLM is never asked.
+2. **Name-map** — matches only unambiguous data-listing labels on `kind=page` nodes: `standings` → Standings; `score(s)/result(s)` → Scores; `schedule(s)` → Schedule; `roster(s)` → Roster; `division(s)` → Divisions; `teams` → Teams **only when the node has children** (a leaf "Teams" page is content, a Teams parent of team pages is a directory). Ambiguous words (`tryouts`, `recruiting`, `programs`, `events`, `camps`, `contacts`) are intentionally NOT in the map — they go to the LLM.
+3. **Subsumption** — once a node is `platform_dynamic`, every descendant in its subtree is `subsumed`. `RootNavPlanner::classify()` runs in three phases for this: phase 1 = deterministic + early subsume (deterministic platform_dynamic descendants are never even sent to the LLM); phase 2 = LLM batches for the remaining ambiguous pages; phase 3 = retroactive subsume of LLM-returned platform_dynamic descendants (their LLM verdicts are discarded — the parent's block represents them).
+4. **LLM fallback** for semantic variants like "Game Schedule" or "League Standings". Strict > 0.80 threshold; below it the page is recall-biased to keep.
+
+### Registration intent
+
+A nav node whose label or URL matches `\b(register|registration)\b` is classified `keep` with the ledger note `"registration link — GENERATE should retarget to TeamLinkt secure registration URL"`. The nav entry survives; only the destination is rewritten by GENERATE. This is intentionally narrow word-matching (`Sign Up` does NOT match — that goes to the LLM).
+
+### SE platform LINKS vs SE CDN ASSETS — different concerns
+
+Two SportsEngine-flavored signals, handled completely differently:
+
+- **SE platform / tool / help LINKS in nav** → `park`. Detected by: `external_subtype === 'se_tool'` (the hardcoded `Dibs` toolsLink sibling SE injects on every site); OR label matching `/sports\s*engine/i`; OR URL path matching `/sportsengine`, `/sportsengine/*`, `/dib_sessions*`, `/sn_signin`, `/sn_login`, `/se_login`, `/se_signin`. These nav entries do not carry over to the rebuilt site.
+- **SE CDN asset URLs** (`cdn*.sportngin.com`, `assets.ngin.com`, `app-assets*.sportngin.com`) — used by SE for brand logos, banner graphics, content images, theme JS/CSS — are **NEVER** matched by the link-removal rule. The detection logic looks at the URL *path*, not the host, so CDN URLs that happen to fall under sportngin.com don't false-positive.
+- **`TODO (GENERATE):` re-host every `sportngin.com` / `assets.ngin.com` / `app-assets*.sportngin.com` asset URL found in scraped content to S3 (via `S3AssetUploader::putFromUrl`).** The rebuilt site must have **zero** live SportsEngine dependency at serve-time — no images, no JS, no CSS pulled from sportngin/ngin hosts. BrandExtractor already handles the brand logo at INGEST; the rest is a GENERATE concern.
 
 ## Guardrails (from BUILD.md — these come up repeatedly)
 

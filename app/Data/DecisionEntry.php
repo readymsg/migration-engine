@@ -14,5 +14,8 @@ final class DecisionEntry extends Data
         public string $reason,
         public float $confidence,
         public ?string $merged_into = null,
+        // Set only when action === PlatformDynamic. Tells GENERATE which
+        // TeamLinkt Puck block to instantiate in place of the source page.
+        public ?PlatformBlockType $platform_block_type = null,
     ) {}
 }

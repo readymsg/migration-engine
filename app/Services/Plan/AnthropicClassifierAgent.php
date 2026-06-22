@@ -7,6 +7,7 @@ namespace App\Services\Plan;
 use App\Data\ClassificationResponse;
 use App\Data\DecisionAction;
 use App\Data\InventoryPage;
+use App\Data\PlatformBlockType;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use JsonException;
 use Laravel\Ai\Attributes\Model as ModelAttribute;
@@ -42,17 +43,29 @@ final class AnthropicClassifierAgent implements Agent, ClassifierAgent, HasStruc
 
             For each page in `pages`, output one decision. Possible actions:
 
-              - keep   : preserve as its own page in the new site
-              - merge  : merge into another page (set `merged_into` to that page's url)
-              - drop   : the page has no value to carry over (e.g. stale event notice)
-              - park   : you are uncertain — needs a human to review
+              - keep              : preserve as its own page in the new site
+              - merge             : merge into another page (set `merged_into` to that
+                                    page's url)
+              - drop              : the page has no value to carry over (e.g. stale event notice)
+              - park              : you are uncertain — needs a human to review
+              - platform_dynamic  : page IS a live-data listing TeamLinkt regenerates
+                                    from its own data — also set `platform_block_type` to
+                                    one of: schedule, scores, standings, roster, teams,
+                                    divisions, contacts
 
             HARD RULES
             - Be biased toward recall. If you are not strongly confident a page
               should be dropped, prefer 'keep' or 'park' instead.
-            - `confidence` is 0..1 — your confidence in the action, not in the page.
+            - 'platform_dynamic' is ONLY for pages that ARE live-data listings — a
+              standings table, a schedule grid, a scores page, a team/division
+              directory, a contacts directory. NEVER use it for informational pages
+              ABOUT those topics (a "tryouts info" page or an "about our schedule"
+              page is 'keep', not 'platform_dynamic'). A false 'platform_dynamic'
+              replaces real content with an empty block — when in doubt, choose
+              'keep'.
+            - `confidence` is 0..1 — your confidence in the action, not the page.
             - `reason` is one short sentence (< 120 chars).
-            - Do NOT return 'dynamic' — dynamic features are handled elsewhere.
+            - Do NOT return 'dynamic' — dynamic SE features are handled elsewhere.
             - Return one decision per input page, in the same order as `pages`.
             PROMPT;
     }
@@ -60,10 +73,13 @@ final class AnthropicClassifierAgent implements Agent, ClassifierAgent, HasStruc
     public function schema(JsonSchema $schema): array
     {
         $decision = $schema->object([
-            'action' => $schema->string()->enum(['keep', 'merge', 'drop', 'park'])->required(),
+            'action' => $schema->string()->enum(['keep', 'merge', 'drop', 'park', 'platform_dynamic'])->required(),
             'confidence' => $schema->number()->min(0)->max(1)->required(),
             'reason' => $schema->string()->required(),
             'merged_into' => $schema->string(),
+            'platform_block_type' => $schema->string()->enum([
+                'schedule', 'scores', 'standings', 'roster', 'teams', 'divisions', 'contacts',
+            ]),
         ])->withoutAdditionalProperties();
 
         return [
@@ -106,12 +122,16 @@ final class AnthropicClassifierAgent implements Agent, ClassifierAgent, HasStruc
             $mergedInto = is_string($row['merged_into'] ?? null) && $row['merged_into'] !== ''
                 ? $row['merged_into']
                 : null;
+            $platformBlockType = is_string($row['platform_block_type'] ?? null) && $row['platform_block_type'] !== ''
+                ? PlatformBlockType::tryFrom($row['platform_block_type'])
+                : null;
 
             $out[$i] = new ClassificationResponse(
                 action: DecisionAction::from($action),
                 confidence: $confidence,
                 reason: $reason,
                 merged_into: $mergedInto,
+                platform_block_type: $platformBlockType,
             );
         }
 

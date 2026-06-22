@@ -13,9 +13,15 @@ use Spatie\LaravelData\Data;
 final class ClassificationResponse extends Data
 {
     public function __construct(
-        public DecisionAction $action,   // keep | merge | drop | park  (LLM never returns 'dynamic')
+        // keep | merge | drop | park | platform_dynamic.
+        // (LLM never returns 'dynamic' — that's a deterministic disposition
+        // from node_type and never reaches the model.)
+        public DecisionAction $action,
         public float $confidence,        // 0..1
         public string $reason,           // one line
         public ?string $merged_into = null,
+        // Set only when action === PlatformDynamic. Echoed onto the
+        // DecisionEntry by the planner after recall-bias checks.
+        public ?PlatformBlockType $platform_block_type = null,
     ) {}
 }

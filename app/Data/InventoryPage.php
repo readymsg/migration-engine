@@ -23,5 +23,10 @@ final class InventoryPage extends Data
         public ?string $external_subtype,    // external_link | se_tool | null (only when kind=external)
         public int $depth,
         public array $nav_path,
+        // True when the original NavNode had child entries. Lets the
+        // platform_dynamic name-map gate ambiguous matches (e.g. a leaf
+        // "Teams" page is content; a "Teams" parent of team pages is a
+        // PlatformBlockType::Teams directory).
+        public bool $has_children = false,
     ) {}
 }

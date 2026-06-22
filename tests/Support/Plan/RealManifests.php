@@ -49,6 +49,61 @@ final class RealManifests
         return $extractor->extract('https://www.stthomassoccer.com/');
     }
 
+    public static function tenacityvolleyball(): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.tenacityvolleyball.com/',
+            finalUrl: 'https://www.tenacityvolleyball.com/',
+            path: self::FIXTURES.'/tenacityvolleyball.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        // Homepage node + every BFS-expansion fixture we have on disk so
+        // the realised tree matches what production would see.
+        $nav->preloadFromFile(8115909, self::FIXTURES.'/tenacityvolleyball.rootnav.json');
+        $nav->preloadFromFile(8115910, self::FIXTURES.'/tenacityvolleyball.node.8115910.json'); // About Us
+        $nav->preloadFromFile(8115917, self::FIXTURES.'/tenacityvolleyball.node.8115917.json'); // News
+        $nav->preloadFromFile(8116200, self::FIXTURES.'/tenacityvolleyball.node.8116200.json'); // Teams (has_child=3)
+        $nav->preloadFromFile(8304450, self::FIXTURES.'/tenacityvolleyball.node.8304450.json'); // Recruiting
+        $nav->preloadFromFile(8611434, self::FIXTURES.'/tenacityvolleyball.node.8611434.json'); // Recognition
+
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            new FakeFirecrawlClient,    // PLAN-only — no scraping in this fixture
+            new FakeAssetUploader,
+            new BrandExtractor,
+        );
+
+        return $extractor->extract('https://www.tenacityvolleyball.com/');
+    }
+
+    public static function surprisevolleyballacademy(): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.surprisevolleyballacademy.org/',
+            finalUrl: 'https://www.surprisevolleyballacademy.org/',
+            path: self::FIXTURES.'/surprisevolleyballacademy.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        $nav->preloadFromFile(1738735, self::FIXTURES.'/surprisevolleyballacademy.rootnav.json');
+        $nav->preloadFromFile(2090298, self::FIXTURES.'/surprisevolleyballacademy.node.2090298.json'); // About Us
+        $nav->preloadFromFile(2177484, self::FIXTURES.'/surprisevolleyballacademy.node.2177484.json'); // Tryouts/Open House — contains the "Sports Engine" link
+
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            new FakeFirecrawlClient,
+            new FakeAssetUploader,
+            new BrandExtractor,
+        );
+
+        return $extractor->extract('https://www.surprisevolleyballacademy.org/');
+    }
+
     public static function langdondiamonds(): Manifest
     {
         $html = new FixtureHtmlFetcher;
