@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+Date: Thu, 18 Jun 2026 06:44:58 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: max-age=0, private, must-revalidate
+cf-cache-status: DYNAMIC
+ETag: W/"f75c36d3c07f591ad222876569c92b76"
+Link: <https://app-assets3.sportngin.com/site_stylesheets_secure/63620/itasca/page_elements.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/63620/itasca/sports.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/63620/itasca/default.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/63620/itasca/theme.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/jquery_treeTable.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/stylesheets/sn/shared_components.css?17804268681>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin/latest/ngin-bar.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin-bar/latest/main-v2.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/inline-manual/1/main.css?20190108>; rel=preload; as=style, <https://app-assets2.sportngin.com/javascripts/base_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/angular_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/se-analytics-js.umd.min.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/dropdown_nav.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/grecaptcha.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/jquery/jquery.toolbar.min.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/jquery/jquery-3.7.1.min.js?17809506621>; rel=preload; as=script
+Referrer-Policy: strict-origin-when-cross-origin
+Server: cloudflare
+Status: 200 OK
+Vary: Accept-Encoding
+vary: Origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Permitted-Cross-Domain-Policies: none
+X-Powered-By: Phusion Passenger(R)
+X-Request-Id: b216de66-c3ff-428b-bb40-870d5ce4bc4f
+X-Runtime: 0.032692
+X-XSS-Protection: 1; mode=block
+Set-Cookie: _ngin_session=aq5fxABAUDmsU8NHBefXGBw51ew4SFRvoCnmb80rFoZhwcD%2FPoBNl8IhPY8x8dX6Z%2FN6bCcqpf4BxA6fUn8KiVj7Gbmh%2BueJbE1S6Eh6p8MscENlQ1Z3m2U8kGfYnFqvtLGtZSBYCxGgdu5L5t7KfEA9dfbvHLj14FCCXwH5EvHEPHGWn%2FdLDce8Hf%2BiUGQwiOQbEw%3D%3D--hNSTvG7kx5hLBEYZ--DcaST87SimXB8LGay1Vpvg%3D%3D; path=/; HttpOnly
+set-cookie: _cfuvid=LZFL7DSmp9OK.dBWnKhs3FGe_lGpsaOiOljpSIMl0B4-1781765098.479135-1.0.1.1-Z4aHNMaxl0BbdOW.tbkTeqPcYkoIc4tdnF.EmzMzMmc; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.tbirdhoops.org
+CF-RAY: a0d854197df757e1-YVR
+

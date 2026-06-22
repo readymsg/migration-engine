@@ -8,6 +8,8 @@ Standalone Laravel 13 service that converts a youth-sports org's existing **Spor
 
 **`BUILD.md` is the authoritative spec.** Read it before starting any non-trivial change. v1 scope is SportsEngine only, critic-free, structural validation only — do NOT build Sports Connect, a render critic, or live-signup wiring.
 
+**v1 SCOPE CUT — site rebuild only.** Beyond BUILD.md's v1 boundary, the engine in this repo is further narrowed: we only convert the **site** (structure, content, brand). We do **NOT** extract or provision TeamLinkt data — no teams, divisions, admins, or team logos. The `Provisioning`/`Team`/`Division`/`Admin` DTOs are kept in the contracts as scaffolding for a later phase, but `Manifest.provisioning` is nullable and always set to `null` by the v1 extractor. Do not walk the "Teams" / "Divisions" subtrees, do not invent admin sources, do not flag "missing" provisioning — it's intentionally absent.
+
 The codebase today is a fresh Laravel 13 skeleton (just the User model, default routes, stock providers) plus the engine packages from `composer.json`. None of the four pipeline stages exist yet — the build is staged and Claude Code is meant to implement one stage at a time per the build order in BUILD.md.
 
 ## Commands
@@ -29,7 +31,7 @@ Stock `.env` ships with `DB_CONNECTION=sqlite` and `QUEUE_CONNECTION=database`; 
 
 These DTOs (built with `spatie/laravel-data`) are the spec. Define them strictly first; everything else conforms to them.
 
-- **`Manifest`** — output of stage 1 (INGEST). Structure, provisioning (teams/divisions/admins), brand, content refs, asset refs, confidence, flags. Asset payloads are always S3 references, never binary.
+- **`Manifest`** — output of stage 1 (INGEST). Structure, brand, content refs, asset refs, confidence, flags. `provisioning` is nullable and always null in v1 (see scope cut above). Asset payloads are always S3 references, never binary.
 - **`Ir`** — per page: ordered `{ component_type, content_brief, asset_refs }` + nav order. **Schema-agnostic** — abstract intent only, **never Puck prop names.** This is enforced — keeping IR abstract is what lets the `ComponentSchema` change without rewriting the LLM stages.
 - **`PuckOutput`** — validated Puck data per page, conforming to the `ComponentSchema` provider.
 
@@ -43,7 +45,7 @@ Plus `DecisionLedger`, `ConversionLog`, and `GlobalStyleBrief` as first-class DT
 
 ## Architecture: the four stages
 
-1. **INGEST** — `extract(url): Manifest` behind `Extractor`. Structure + provisioning from rootNav (no blind crawl). Firecrawl for content pages (async submit + poll), S3 for assets. Brand fallback ladder: header → og:image → favicon → flag. Brand extraction, content scraping, asset upload are independent — run concurrently (`Http::pool()` / parallel jobs).
+1. **INGEST** — `extract(url): Manifest` behind `Extractor`. Structure from rootNav (no blind crawl). Firecrawl for content pages (async submit + poll), S3 for assets. Brand fallback ladder: header → og:image → favicon → flag (signals come from the **homepage HTML**, not rootNav — see "Real SportsEngine rootNav" below). **Provisioning is out of scope for v1** — site rebuild only; the `provisioning` field stays null. Brand extraction, content scraping, asset upload are independent — run concurrently (`Http::pool()` / parallel jobs) once the queue lands.
 2. **PLAN** — `inventory → classify → decideIa`. **Batched classification** (~20 pages per Haiku call, not one). Drops are **reversible** (mark `parked`, never delete) and **conservative** (low confidence → keep). Every decision gets a `DecisionLedger` entry. Keep the "what's the IA" and "is this page worth keeping" prompts separate.
 3. **GENERATE** — `irPass` (one Opus call) emits `Ir[]` + a compact `GlobalStyleBrief`. **Inject `GlobalStyleBrief` into every block-fill call** — that's the main coherence lever in a critic-free v1. **Mark the schema + GlobalStyleBrief + rubric prefix as `cache_control` cacheable** on Anthropic — biggest single speed/cost win. `GeneratePageJob` per page in a `Bus::batch()` with `then()`/`catch()`. `assemble(ir): PuckOutput` is **deterministic, no LLM** — one repair attempt on validation failure, then flag. Land via `ProductClient.createDraftSite()` as **unpublished draft, never auto-publish**.
 4. **SCORE & LOG** — `structuralConfidence(manifest, puck)` is the trusted monitored score (extraction-grounded), not LLM self-assessment. Write `ConversionLog` structured for Metabase. Slack notify on completion; **flag low-confidence conversions specifically** — not every conversion.
@@ -59,6 +61,23 @@ Plus `DecisionLedger`, `ConversionLog`, and `GlobalStyleBrief` as first-class DT
 7. Demo harness + preview renderer (throwaway, deleted at integration)
 
 The Demo namespace (`/demo`, `/preview/{id}`, Vite + React + `@measured/puck`) is marked throwaway — it renders the default Puck blocks so generation and preview share one config. Don't entangle it with the engine.
+
+## Real SportsEngine rootNav (recon'd against 6 live sites)
+
+**Don't believe a fixture you invented.** Stage 2's synthetic fixture was wrong about almost everything; replaced with real per-site fixtures in `tests/Fixtures/rootnav/real/` (homepage HTML + one or more `/page/nav/<id>` JSON responses per site).
+
+- **No single `/rootnav` endpoint.** rootNav is per-node: `GET https://<site>/page/nav/<page_node_id>` returns one node with its `parent`, `siblings`, and `children`. Full-tree extraction is a **BFS** that expands any sibling/child whose `has_child > 0` by calling the same endpoint with that node's id. Cap depth (`SportNginExtractor::MAX_DEPTH = 5`).
+- **Node JSON shape** (keys we rely on): `name`, `id` (string `"page_node_<int>"`), `url`, `node_type`, `has_child`, `nav_url`, `siblings: array<self>`, `children: array<self>`, `parent: self|null`.
+- **`node_type` taxonomy is what's real**, NOT an invented `kind` flag. Values seen across the 6 sites: `"Page"`, `"Calendar"`, `"NewsNode"`, `null` (root). Other types likely exist on bigger sites. `NavNode.kind` is a derived classification: `'page' | 'dynamic_calendar' | 'dynamic_news' | 'dynamic_other' | 'unknown'`.
+- **Themes vary, the API doesn't.** `itasca` (5/6 sites) inlines `var rootNav = {...}` and `var currentId = 'page_node_<id>'` into every `/page/show/...` HTML; `waterworld` (1/6) does not. **The extractor never reads the inline blob** — always uses the `/page/nav/<id>` API so it's theme-agnostic. The HTML is used only to discover (a) the SE numeric site_id from the `site_files/<id>/favicon.ico` link, (b) at least one valid `page_node_<id>` to start BFS from, and (c) brand assets.
+- **Bootstrap heuristic** for the starting page_node_id: prefer `var currentId = 'page_node_<int>'` (itasca shortcut), else try every distinct `page_node_<int>` reference in the HTML in order — the site's root parent id often returns 401, so the extractor falls forward until one node fetches cleanly. See `SportNginExtractor::resolveStartNode()`.
+- **Provisioning is out of scope in v1.** Even though rootNav lacks provisioning anyway (no `team`/`division`/`admins` keys), the v1 site-rebuild scope means we don't try to recover it. `Manifest.provisioning` is null. The Provisioning/Team/Division/Admin DTOs remain as scaffolding — do not delete them — but the extractor doesn't populate them and doesn't walk any "Teams"-named subtree. When v2 lifts this cut, the structural-walk heuristic (top-level siblings labelled `Teams` / `Divisions`, their direct children become rows) lives in git history and can be revived; admins will additionally require an authenticated SE endpoint we don't have.
+- **Brand signals live in the homepage HTML**, not anywhere in rootNav. Patterns by rung:
+  - **header** → first `https://cdn[1-4].sportngin.com/attachments/banner_graphic/.../<file>`; fall back to `logo_graphic` within the same rung if no banner.
+  - **og:image** → `<meta property="og:image" content="...">`.
+  - **favicon** → `attachments/favicon_graphic/...` else `<link rel="shortcut icon">` (which on every site we saw points to `https://assets.ngin.com/site_files/<site_id>/favicon.ico`).
+  - **flag** → none found.
+- **Redirects are real.** One of the six recon sites (`strikersbaseball.ca`) 301s to a rebrand domain (`langdondiamonds.ca`). The Manifest stores the **post-redirect** URL in `source_url`; the input URL is preserved only via a `redirected: <from> -> <to>` flag. `HttpHtmlFetcher` captures the final URL via Guzzle's `on_stats`. `SportNginExtractor` builds all subsequent absolute URLs (rootNav endpoint, scrape submissions) against the post-redirect origin.
 
 ## Guardrails (from BUILD.md — these come up repeatedly)
 

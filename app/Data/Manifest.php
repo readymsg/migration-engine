@@ -11,8 +11,12 @@ use Spatie\LaravelData\DataCollection;
 final class Manifest extends Data
 {
     /**
-     * Output of the INGEST stage. Structure + provisioning + brand + content/asset refs.
+     * Output of the INGEST stage. Structure + brand + content/asset refs.
      * Asset payloads are always S3 references — never binary.
+     *
+     * v1 scope cut: provisioning (teams/divisions/admins) is NOT extracted —
+     * v1 focuses on the site rebuild only. The Provisioning DTO is kept as
+     * scaffolding for a later phase; today this field is always null.
      *
      * @param  DataCollection<int, ContentRef>  $content_refs
      * @param  DataCollection<int, AssetRef>  $asset_refs
@@ -22,7 +26,7 @@ final class Manifest extends Data
         public string $source_url,
         public string $org_id,
         public SiteStructure $structure,
-        public Provisioning $provisioning,
+        public ?Provisioning $provisioning,
         public Brand $brand,
         #[DataCollectionOf(ContentRef::class)]
         public DataCollection $content_refs,

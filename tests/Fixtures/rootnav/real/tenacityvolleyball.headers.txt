@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+Date: Thu, 18 Jun 2026 06:44:58 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: max-age=0, private, must-revalidate
+cf-cache-status: DYNAMIC
+ETag: W/"7cce4d881f23c46096e7a89d24228511"
+Link: <https://app-assets2.sportngin.com/site_stylesheets_secure/55180/itasca/page_elements.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/55180/itasca/sports.css?17804268681>; rel=preload; as=style, <https://app-assets2.sportngin.com/site_stylesheets_secure/55180/itasca/default.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/55180/itasca/theme.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/jquery_treeTable.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/stylesheets/sn/shared_components.css?17804268681>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin/latest/ngin-bar.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin-bar/latest/main-v2.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/inline-manual/1/main.css?20190108>; rel=preload; as=style, <https://app-assets2.sportngin.com/javascripts/base_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/angular_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/se-analytics-js.umd.min.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/dropdown_nav.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/grecaptcha.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/jquery/jquery.toolbar.min.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/jquery/jquery-3.7.1.min.js?17809506621>; rel=preload; as=script
+Referrer-Policy: strict-origin-when-cross-origin
+Server: cloudflare
+Status: 200 OK
+Vary: Accept-Encoding
+vary: Origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Permitted-Cross-Domain-Policies: none
+X-Powered-By: Phusion Passenger(R)
+X-Request-Id: e831642e-a020-4eb2-be01-3c6250a399c7
+X-Runtime: 0.031740
+X-XSS-Protection: 1; mode=block
+Set-Cookie: _ngin_session=rmfP5wkkeQt29NPNTQcvTPHPhYiIR5oHx%2BzwuE%2BkkOq1Nwv2KhtkqppKYyyYo0sAFiczpTnvEIOpy0PLxu4PwRf5UVtOgFourHVLxBJzycgywltLkwrFG7Yni2QO0jEz52Z8qcSJ%2B1RbPjAKf%2Fid5RtXpXZ1nsWgtPGdATOzF%2FZM0OssQw9GOa1CSYXtNuCeDJusNQ%3D%3D--7vA63piv8EXzv2om--L8gAXDwct2WcIwyYGyyykQ%3D%3D; path=/; HttpOnly
+set-cookie: _cfuvid=nxpeqW10cxpc5kyiHi2OEv0xf9FjPOvMxnTLQB5K4e0-1781765098.160609-1.0.1.1-9IZ7vTWOMz2BPGEPSPtPEP9uKUiCj_AN494LHHHx614; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.tenacityvolleyball.com
+CF-RAY: a0d854177927a14f-YVR
+

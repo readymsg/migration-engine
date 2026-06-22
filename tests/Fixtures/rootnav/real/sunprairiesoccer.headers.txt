@@ -1,0 +1,23 @@
+HTTP/2 200 
+date: Thu, 18 Jun 2026 06:44:59 GMT
+content-type: text/html; charset=utf-8
+cache-control: max-age=0, private, must-revalidate
+cf-cache-status: DYNAMIC
+etag: W/"c4dc3dfdef4e9ede00541e4858b905af"
+link: <https://app-assets1.sportngin.com/site_stylesheets_secure/37956/itasca/page_elements.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/37956/itasca/sports.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/37956/itasca/default.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/37956/itasca/theme.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/jquery_treeTable.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/stylesheets/sn/shared_components.css?17804268681>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin/latest/ngin-bar.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin-bar/latest/main-v2.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/inline-manual/1/main.css?20190108>; rel=preload; as=style, <https://app-assets2.sportngin.com/javascripts/base_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/angular_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/se-analytics-js.umd.min.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/dropdown_nav.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/grecaptcha.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/jquery/jquery.toolbar.min.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/jquery/jquery-3.7.1.min.js?17809506621>; rel=preload; as=script
+referrer-policy: strict-origin-when-cross-origin
+server: cloudflare
+status: 200 OK
+vary: Accept-Encoding
+vary: Origin
+x-content-type-options: nosniff
+x-download-options: noopen
+x-permitted-cross-domain-policies: none
+x-powered-by: Phusion Passenger(R)
+x-request-id: 1f10fccd-2d53-46ac-81ad-3569f3ad03b3
+x-runtime: 0.032555
+x-xss-protection: 1; mode=block
+set-cookie: _ngin_session=xfqgzAcZfKvoetEH30W5%2By4Z3meW%2FPaEGQp9sSETy5he3yJhPOK0znpxYWWJqE0nVDwcZs7eOBPnPsx9brBd2b8ShW3GexZCBr5SX2x7PXV2LZpd4c7n97kDGi%2BZjRLOEHcvWZ9SA5g%2BAeWDGPfIk434xMzgSY%2B60Iku0xPvejiCmv4ep7Wr2QXdcFlTBNzN7H%2FqUA%3D%3D--XejgrnMDc%2FuGCYot--xtHOniWoNn5G5jwd8rraGA%3D%3D; path=/; HttpOnly
+set-cookie: _cfuvid=S7gFzMGm.lrFfTDgzeOZNf4MRBBnw6zauERM907vnd4-1781765099.242388-1.0.1.1-BUcpi9bihaQirGS8Xb8bL851LNj3_pwAfyeq3uXcdds; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.sunprairiesoccer.com
+cf-ray: a0d8541e49f44675-YVR
+

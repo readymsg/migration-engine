@@ -1,0 +1,23 @@
+HTTP/2 200 
+date: Thu, 18 Jun 2026 06:44:59 GMT
+content-type: text/html; charset=utf-8
+cache-control: max-age=0, private, must-revalidate
+cf-cache-status: DYNAMIC
+etag: W/"49c8978ac80867012e69d8f0ee140b27"
+link: <https://app-assets3.sportngin.com/site_stylesheets_secure/13992/itasca/page_elements.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/13992/itasca/sports.css?17804268681>; rel=preload; as=style, <https://app-assets2.sportngin.com/site_stylesheets_secure/13992/itasca/default.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/site_stylesheets_secure/13992/itasca/theme.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/jquery_treeTable.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/stylesheets/sn/shared_components.css?17804268681>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin/latest/ngin-bar.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin-bar/latest/main-v2.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/inline-manual/1/main.css?20190108>; rel=preload; as=style, <https://app-assets2.sportngin.com/javascripts/base_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/angular_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/se-analytics-js.umd.min.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/dropdown_nav.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/grecaptcha.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/jquery/jquery.toolbar.min.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/jquery/jquery-3.7.1.min.js?17809506621>; rel=preload; as=script
+referrer-policy: strict-origin-when-cross-origin
+server: cloudflare
+status: 200 OK
+vary: Accept-Encoding
+vary: Origin
+x-content-type-options: nosniff
+x-download-options: noopen
+x-permitted-cross-domain-policies: none
+x-powered-by: Phusion Passenger(R)
+x-request-id: 1631d89a-280f-4323-8db4-5fcd5535847c
+x-runtime: 0.030952
+x-xss-protection: 1; mode=block
+set-cookie: _ngin_session=eyHn1MZmFveWBTRK9xnbl4TEjF8JQ2VQETi6VlC7LU0OfV2%2B%2BB42U2Vv0czXeAwyv7ZXauqzr2hXCzeuHNkg8BQQUeO4k5Z2FZ2fpCd2Rn6Hu30miVdsKcziqQf6TitIvdWOMYCm52zTFOo55g%2BoWcVLwFFY%2BOcHpO7HZcIyy4zdKtar1tVP62m6ksoASOw1gkz1yQ%3D%3D--i4Eji%2Bb%2Fa%2BoQcR30--bu7CWyY61jnUTkexvgG3EA%3D%3D; path=/; HttpOnly
+set-cookie: _cfuvid=DFNLao91aV.0qBlguJPbCytn5XRt2bhss_wRy4_4UAU-1781765099.5785856-1.0.1.1-4LE5oE0UqFOxB_Ts_7mQCBBwrpGyC1ik9dFzYMfhIM4; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.stthomassoccer.com
+cf-ray: a0d854205e8bc6a8-YVR
+

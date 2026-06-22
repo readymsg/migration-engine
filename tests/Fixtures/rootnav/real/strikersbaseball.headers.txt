@@ -1,0 +1,47 @@
+HTTP/1.1 301 Moved Permanently
+Date: Thu, 18 Jun 2026 06:45:01 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: no-cache
+Location: https://www.langdondiamonds.ca/
+Referrer-Policy: strict-origin-when-cross-origin
+Server: cloudflare
+Status: 301 Moved Permanently
+vary: Origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Permitted-Cross-Domain-Policies: none
+X-Powered-By: Phusion Passenger(R)
+X-Request-Id: 3ca3e215-cbfc-4ae6-9582-66c6607a1553
+X-Runtime: 0.010069
+X-XSS-Protection: 1; mode=block
+set-cookie: _cfuvid=ifq4T2lvSMm2nyPGk.ufFnQXTMVrzlaYma975pr7zaM-1781765101.4535239-1.0.1.1-j.WNhoCLhPO_T5EJCbrrhaDMhyf7UxYE6nDiwRdXkCU; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.strikersbaseball.ca
+cf-cache-status: DYNAMIC
+CF-RAY: a0d8542c1847db4e-YVR
+
+HTTP/1.1 200 OK
+Date: Thu, 18 Jun 2026 06:45:02 GMT
+Content-Type: text/html; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: max-age=0, private, must-revalidate
+Set-Cookie: _ngin_session=lo5Jvbyq%2Fqd4HeILzWsAbiiuKxB7cNxTqYQWqqKeUX6iJXuWYLudAvpQjnV7IulpmLGtLsT88ee7Mxj7EYkwzvySKx%2FHDgByYZiXGQHpaR3rZ%2FgIGcflLWPnpaAQqmaO29NiqN1g59RM3xg7lBLKDwpgtB2arHXtB9Sd03BX85HnoFbHprpXchi%2BF%2Bjc7qbX07c6muw%3D--HIlOJlxRPyEgsT29--ft7ps16TkF7%2B%2FWeI1LqHYA%3D%3D; path=/; HttpOnly
+set-cookie: _cfuvid=8pkZHk_U2zu2ZuhEQzlGFkX6FaKp3WXJhCOQlZIohOw-1781765101.7227619-1.0.1.1-qJEDSsZR_68db0w70dnSO2Ro1PH6UZpMOus5ZR4hv3Y; HttpOnly; SameSite=None; Secure; Path=/; Domain=www.langdondiamonds.ca
+ETag: W/"f49f2e7e957233071c47ab0b4ca499a5"
+Link: <https://app-assets2.sportngin.com/site_stylesheets_secure/65581/waterworld/page_elements.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/65581/waterworld/sports.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/65581/waterworld/default.css?17804268681>; rel=preload; as=style, <https://app-assets2.sportngin.com/site_stylesheets_secure/65581/waterworld/theme.css?17804268681>; rel=preload; as=style, <https://app-assets3.sportngin.com/site_stylesheets_secure/jquery_treeTable.css?17804268681>; rel=preload; as=style, <https://app-assets1.sportngin.com/stylesheets/sn/shared_components.css?17804268681>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin/latest/ngin-bar.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/ngin-bar/latest/main-v2.css?20190108>; rel=preload; as=style, <//se-aws-snap.sportngin.com/sportngin-snap-production/ui_themes/inline-manual/1/main.css?20190108>; rel=preload; as=style, <https://app-assets2.sportngin.com/javascripts/base_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/angular_packaged.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/se-analytics-js.umd.min.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/dropdown_nav.js?17809506621>; rel=preload; as=script, <https://app-assets1.sportngin.com/javascripts/grecaptcha.js?17809506621>; rel=preload; as=script, <https://app-assets2.sportngin.com/javascripts/jquery/jquery.toolbar.min.js?17809506621>; rel=preload; as=script, <https://app-assets3.sportngin.com/javascripts/jquery/jquery-3.7.1.min.js?17809506621>; rel=preload; as=script
+Referrer-Policy: strict-origin-when-cross-origin
+Server: cloudflare
+Status: 200 OK
+Vary: Accept-Encoding
+vary: Origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Permitted-Cross-Domain-Policies: none
+X-Powered-By: Phusion Passenger(R)
+X-Request-Id: ea274d99-1586-4a16-a527-029489a51ec7
+X-Runtime: 0.079743
+X-XSS-Protection: 1; mode=block
+cf-cache-status: DYNAMIC
+CF-RAY: a0d8542dcc538f72-YVR
+
