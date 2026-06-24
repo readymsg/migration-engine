@@ -7,6 +7,7 @@ namespace Tests\Support\Plan;
 use App\Data\Manifest;
 use App\Services\Extract\BrandExtractor;
 use App\Services\Extract\ScrapedPage;
+use App\Services\Extract\SeCdnRehoster;
 use App\Services\Extract\SportNginExtractor;
 use Tests\Support\Extract\FakeAssetUploader;
 use Tests\Support\Extract\FakeFirecrawlClient;
@@ -44,7 +45,15 @@ final class RealManifests
             ),
         );
 
-        $extractor = new SportNginExtractor($html, $nav, $firecrawl, new FakeAssetUploader, new BrandExtractor);
+        $uploader = new FakeAssetUploader;
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            $firecrawl,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
 
         return $extractor->extract('https://www.stthomassoccer.com/');
     }
@@ -68,12 +77,14 @@ final class RealManifests
         $nav->preloadFromFile(8304450, self::FIXTURES.'/tenacityvolleyball.node.8304450.json'); // Recruiting
         $nav->preloadFromFile(8611434, self::FIXTURES.'/tenacityvolleyball.node.8611434.json'); // Recognition
 
+        $uploader = new FakeAssetUploader;
         $extractor = new SportNginExtractor(
             $html,
             $nav,
             new FakeFirecrawlClient,    // PLAN-only — no scraping in this fixture
-            new FakeAssetUploader,
+            $uploader,
             new BrandExtractor,
+            new SeCdnRehoster($uploader),
         );
 
         return $extractor->extract('https://www.tenacityvolleyball.com/');
@@ -93,12 +104,14 @@ final class RealManifests
         $nav->preloadFromFile(2090298, self::FIXTURES.'/surprisevolleyballacademy.node.2090298.json'); // About Us
         $nav->preloadFromFile(2177484, self::FIXTURES.'/surprisevolleyballacademy.node.2177484.json'); // Tryouts/Open House — contains the "Sports Engine" link
 
+        $uploader = new FakeAssetUploader;
         $extractor = new SportNginExtractor(
             $html,
             $nav,
             new FakeFirecrawlClient,
-            new FakeAssetUploader,
+            $uploader,
             new BrandExtractor,
+            new SeCdnRehoster($uploader),
         );
 
         return $extractor->extract('https://www.surprisevolleyballacademy.org/');
@@ -128,7 +141,15 @@ final class RealManifests
             ),
         );
 
-        $extractor = new SportNginExtractor($html, $nav, $firecrawl, new FakeAssetUploader, new BrandExtractor);
+        $uploader = new FakeAssetUploader;
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            $firecrawl,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
 
         return $extractor->extract('https://www.strikersbaseball.ca/');
     }

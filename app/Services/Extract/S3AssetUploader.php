@@ -8,9 +8,20 @@ use App\Data\AssetRef;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
-// S3-backed uploader. Uses the disk configured in config/filesystems.php
-// (default 's3'). Returns `s3://<key>` references — never URLs, never bytes.
+// Filesystem-backed uploader. The target disk is configurable via
+// `services.scrapes.disk` (SCRAPES_DISK env) — defaults to 's3' for prod,
+// can be flipped to 'local' (or any other Laravel disk) for dev.
+//
+// CRITICAL: every successful return must mean the bytes actually landed.
+// Laravel's `Storage::disk(...)->put(...)` returns `bool`, and the s3 disk
+// is configured with `'throw' => false`, so a failed write (missing bucket,
+// revoked perms, etc.) silently returns `false`. If we don't check the
+// return value, an upstream caller will build a ContentRef pointing at a
+// key that has nothing behind it — exactly the phantom-success we'd never
+// notice until trying to read the content back. So putContent() throws
+// on a false return; putFromUrl() propagates that via the putContent call.
 final class S3AssetUploader implements AssetUploader
 {
     public function __construct(
@@ -37,7 +48,14 @@ final class S3AssetUploader implements AssetUploader
     public function putContent(string $content, string $mimeType, string $orgId, string $kind, string $name): AssetRef
     {
         $key = "orgs/{$orgId}/{$kind}/{$name}";
-        Storage::disk($this->disk)->put($key, $content);
+        $ok = Storage::disk($this->disk)->put($key, $content);
+        if ($ok === false) {
+            throw new RuntimeException(
+                "Storage::disk('{$this->disk}')->put('{$key}', ...) returned false. ".
+                'A write that did not land must never report success — check disk config '.
+                '(services.scrapes.disk / SCRAPES_DISK), credentials, and write permissions.'
+            );
+        }
 
         return new AssetRef(
             s3_key: "s3://{$key}",

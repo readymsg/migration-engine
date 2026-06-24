@@ -40,10 +40,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(FirecrawlClient::class, function (Application $app): FirecrawlClient {
             return new HttpFirecrawlClient(
                 apiKey: (string) config('services.firecrawl.api_key', ''),
-                baseUrl: (string) config('services.firecrawl.url', 'https://api.firecrawl.dev/v1'),
+                baseUrl: (string) config('services.firecrawl.url', 'https://api.firecrawl.dev/v2'),
             );
         });
-        $this->app->singleton(AssetUploader::class, S3AssetUploader::class);
+        $this->app->singleton(AssetUploader::class, function (Application $app): AssetUploader {
+            return new S3AssetUploader(
+                disk: (string) config('services.scrapes.disk', 's3'),
+            );
+        });
         $this->app->singleton(Extractor::class, SportNginExtractor::class);
 
         $this->app->singleton(ClassifierAgent::class, AnthropicClassifierAgent::class);

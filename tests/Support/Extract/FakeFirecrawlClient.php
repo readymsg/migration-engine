@@ -7,30 +7,40 @@ namespace Tests\Support\Extract;
 use App\Services\Extract\FirecrawlClient;
 use App\Services\Extract\ScrapedPage;
 
-// Synchronous in-memory fake. preload() pre-stages the ScrapedPage that
-// poll() will return immediately after submit(). The test owns the data.
+// Offline fake. preload() stages a ScrapedPage for a specific URL; scrape()
+// returns it (or null when the URL hasn't been preloaded — which is the
+// signal the SportNginExtractor uses to record an explicit content-
+// extraction failure rather than silently dropping the page).
 final class FakeFirecrawlClient implements FirecrawlClient
 {
     /** @var array<string, ScrapedPage> */
     private array $pages = [];
 
+    /** @var array<string, true>  URLs the test wants to simulate a hard failure for (scrape() throws). */
+    private array $shouldThrow = [];
+
+    /** @var array<int, string>  URLs scrape() saw, in call order. */
+    public array $seen = [];
+
     public function preload(string $url, ScrapedPage $page): void
     {
-        $this->pages[$this->jobIdFor($url)] = $page;
+        $this->pages[$url] = $page;
     }
 
-    public function submit(string $url): string
+    /** Mark a URL so that scrape() throws when called for it (simulates 5xx / timeout). */
+    public function failHard(string $url): void
     {
-        return $this->jobIdFor($url);
+        $this->shouldThrow[$url] = true;
     }
 
-    public function poll(string $jobId): ?ScrapedPage
+    public function scrape(string $url): ?ScrapedPage
     {
-        return $this->pages[$jobId] ?? null;
-    }
+        $this->seen[] = $url;
 
-    private function jobIdFor(string $url): string
-    {
-        return 'fake_job_'.sha1($url);
+        if (isset($this->shouldThrow[$url])) {
+            throw new \RuntimeException("FakeFirecrawlClient: simulated failure for {$url}");
+        }
+
+        return $this->pages[$url] ?? null;
     }
 }

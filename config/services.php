@@ -34,5 +34,18 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'firecrawl' => [
+        'api_key' => env('FIRECRAWL_API_KEY'),
+        'url' => env('FIRECRAWL_URL', 'https://api.firecrawl.dev/v2'),
+    ],
+
+    // Filesystem disk (from config/filesystems.php) the S3AssetUploader
+    // writes scrapes, brand assets, and re-hosted SE-CDN assets to. Defaults
+    // to 's3' for prod; set SCRAPES_DISK=local in .env to route to local
+    // storage during dev so captured content can be read back without a
+    // bucket. The class name is historical — any configured disk works.
+    'scrapes' => [
+        'disk' => env('SCRAPES_DISK', 's3'),
+    ],
 
 ];

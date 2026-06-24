@@ -6,6 +6,7 @@ namespace App\Services\Extract;
 
 use App\Data\AssetRef;
 use App\Data\Brand;
+use App\Data\ContentExtractionFailure;
 use App\Data\ContentRef;
 use App\Data\Manifest;
 use App\Data\NavNode;
@@ -38,6 +39,7 @@ final class SportNginExtractor implements Extractor
         private readonly FirecrawlClient $firecrawl,
         private readonly AssetUploader $uploader,
         private readonly BrandExtractor $brandExtractor,
+        private readonly SeCdnRehoster $cdnRehoster,
     ) {}
 
     public function extract(string $url): Manifest
@@ -57,9 +59,27 @@ final class SportNginExtractor implements Extractor
         }
 
         $structure = $this->buildStructure($orgUrl, $startNodeId);
-        $brand = $this->brandExtractor->extract($homepage->html, $orgId, $this->uploader);
 
-        [$contentRefs, $assetRefs] = $this->scrapeContent($structure, $orgUrl, $orgId);
+        // Brand upload failure is a soft signal, not a fatal abort — mirrors
+        // how the scrape path and the CDN rehoster handle disk/source faults.
+        // A broken brand asset shouldn't kill the whole extraction before any
+        // page bodies are captured; fall back to the existing 'flag' (no-logo)
+        // brand and surface 'brand_upload_failed: <reason>' on the Manifest so
+        // a reviewer can see the gap.
+        $brandUploadError = null;
+        try {
+            $brand = $this->brandExtractor->extract($homepage->html, $orgId, $this->uploader);
+        } catch (Throwable $e) {
+            $brandUploadError = $e->getMessage();
+            $brand = new Brand(
+                logo_source: 'flag',
+                logo_asset_ref: null,
+                palette: [],
+                voice_hint: null,
+            );
+        }
+
+        [$contentRefs, $assetRefs, $contentFailures, $cdnFound, $cdnRehosted] = $this->scrapeContent($structure, $orgUrl, $orgId);
 
         if ($brand->logo_asset_ref !== null) {
             $assetRefs[] = new AssetRef(
@@ -78,7 +98,10 @@ final class SportNginExtractor implements Extractor
             content_refs: new DataCollection(ContentRef::class, $contentRefs),
             asset_refs: new DataCollection(AssetRef::class, $assetRefs),
             confidence: $this->confidence($structure, $brand),
-            flags: $this->flags($homepage, $structure, $brand),
+            flags: $this->flags($homepage, $structure, $brand, $contentFailures, $cdnFound, $cdnRehosted, $brandUploadError),
+            content_failures: new DataCollection(ContentExtractionFailure::class, $contentFailures),
+            cdn_assets_found: $cdnFound,
+            cdn_assets_rehosted: $cdnRehosted,
         );
     }
 
@@ -263,7 +286,16 @@ final class SportNginExtractor implements Extractor
     }
 
     /**
-     * @return array{0: array<int, ContentRef>, 1: array<int, AssetRef>}
+     * Captures body content for every kind=page nav node with a URL.
+     * Reconciliation invariant: total kind=page-with-url nodes == count
+     * of returned contentRefs + count of contentFailures. NEVER silently
+     * drop a page — the same faithful-rebuild rule we apply to the IR
+     * pass and the planner.
+     *
+     * Also sums SE-CDN re-host counts across pages so the Manifest can
+     * surface a soft signal when assets were lost.
+     *
+     * @return array{0: array<int, ContentRef>, 1: array<int, AssetRef>, 2: array<int, ContentExtractionFailure>, 3: int, 4: int}
      */
     private function scrapeContent(SiteStructure $structure, string $orgUrl, string $orgId): array
     {
@@ -271,30 +303,63 @@ final class SportNginExtractor implements Extractor
         $contentRefs = [];
         /** @var array<int, AssetRef> $assetRefs */
         $assetRefs = [];
+        /** @var array<int, ContentExtractionFailure> $contentFailures */
+        $contentFailures = [];
+        $cdnFound = 0;
+        $cdnRehosted = 0;
 
         /** @var array<int, NavNode> $rootNodes */
         $rootNodes = $structure->nav->items();
-        $this->walkNav($rootNodes, function (NavNode $node) use ($orgUrl, $orgId, &$contentRefs, &$assetRefs): void {
+        $this->walkNav($rootNodes, function (NavNode $node) use ($orgUrl, $orgId, &$contentRefs, &$assetRefs, &$contentFailures, &$cdnFound, &$cdnRehosted): void {
             if ($node->kind !== 'page' || $node->url === null) {
                 return;
             }
             $absoluteUrl = $this->absoluteUrl($orgUrl, $node->url);
 
-            // BUILD.md: submit + poll. v1 calls them back-to-back; the queue
-            // moves the "submit a batch, poll all" loop into stage 3.
-            $jobId = $this->firecrawl->submit($absoluteUrl);
-            $scrape = $this->firecrawl->poll($jobId);
-            if ($scrape === null) {
+            try {
+                $scrape = $this->firecrawl->scrape($absoluteUrl);
+            } catch (Throwable $e) {
+                $contentFailures[] = new ContentExtractionFailure(
+                    url: $absoluteUrl,
+                    page_title: $node->label,
+                    page_node_id: $node->page_node_id,
+                    reason: 'firecrawl_threw: '.$e->getMessage(),
+                );
+
                 return;
             }
 
-            $assetRef = $this->uploader->putContent(
-                (string) json_encode($scrape->toArray(), JSON_THROW_ON_ERROR),
-                'application/json',
-                $orgId,
-                'scrapes',
-                sprintf('%s.json', sha1($absoluteUrl)),
-            );
+            if ($scrape === null) {
+                $contentFailures[] = new ContentExtractionFailure(
+                    url: $absoluteUrl,
+                    page_title: $node->label,
+                    page_node_id: $node->page_node_id,
+                    reason: 'firecrawl_returned_null',
+                );
+
+                return;
+            }
+
+            // Persist the raw scrape JSON to S3 — debugging + downstream
+            // block-fill consume from here.
+            try {
+                $assetRef = $this->uploader->putContent(
+                    (string) json_encode($scrape->toArray(), JSON_THROW_ON_ERROR),
+                    'application/json',
+                    $orgId,
+                    'scrapes',
+                    sprintf('%s.json', sha1($absoluteUrl)),
+                );
+            } catch (Throwable $e) {
+                $contentFailures[] = new ContentExtractionFailure(
+                    url: $absoluteUrl,
+                    page_title: $node->label,
+                    page_node_id: $node->page_node_id,
+                    reason: 'scrape_upload_failed: '.$e->getMessage(),
+                );
+
+                return;
+            }
             $assetRefs[] = $assetRef;
 
             $contentRefs[] = new ContentRef(
@@ -303,9 +368,21 @@ final class SportNginExtractor implements Extractor
                 title: $scrape->title !== '' ? $scrape->title : null,
                 nav_path: [$node->label],
             );
+
+            // Re-host every SE-CDN asset URL referenced from the body so
+            // the rebuilt site has zero live SportsEngine dependency.
+            // Per-asset failures are swallowed inside the rehoster (body
+            // is still captured); the found-vs-rehosted counts surface on
+            // the Manifest so a partial loss isn't invisible.
+            $rehost = $this->cdnRehoster->rehost($scrape, $orgId);
+            foreach ($rehost['refs'] as $cdnRef) {
+                $assetRefs[] = $cdnRef;
+            }
+            $cdnFound += $rehost['found'];
+            $cdnRehosted += $rehost['rehosted'];
         });
 
-        return [$contentRefs, $assetRefs];
+        return [$contentRefs, $assetRefs, $contentFailures, $cdnFound, $cdnRehosted];
     }
 
     private function absoluteUrl(string $orgUrl, string $url): string
@@ -334,9 +411,10 @@ final class SportNginExtractor implements Extractor
     }
 
     /**
+     * @param  array<int, ContentExtractionFailure>  $contentFailures
      * @return array<int, string>
      */
-    private function flags(HtmlFetchResult $homepage, SiteStructure $structure, Brand $brand): array
+    private function flags(HtmlFetchResult $homepage, SiteStructure $structure, Brand $brand, array $contentFailures, int $cdnFound, int $cdnRehosted, ?string $brandUploadError): array
     {
         $flags = [];
         if ($homepage->requested_url !== $homepage->final_url) {
@@ -347,6 +425,15 @@ final class SportNginExtractor implements Extractor
         }
         if ($brand->logo_source === 'flag') {
             $flags[] = 'logo_fallback_flagged';
+        }
+        if ($brandUploadError !== null) {
+            $flags[] = 'brand_upload_failed: '.$brandUploadError;
+        }
+        if ($contentFailures !== []) {
+            $flags[] = 'content_extraction_partial: '.count($contentFailures).' page(s) failed';
+        }
+        if ($cdnRehosted < $cdnFound) {
+            $flags[] = "cdn_rehost_partial: {$cdnRehosted}/{$cdnFound} assets re-hosted";
         }
 
         return $flags;

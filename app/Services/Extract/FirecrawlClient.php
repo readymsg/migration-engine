@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\Extract;
 
-// Async scrape client. BUILD.md: submit + poll, never block on one call.
-// Injectable so the test can swap in a deterministic fake — there is NO
-// live Firecrawl call from the test suite.
+// Single-page scrape client. Real Firecrawl v2 is SYNCHRONOUS — one POST
+// returns the body. Returns null when Firecrawl reports success=false but
+// did NOT throw; throws on transport / auth / HTTP errors. Injectable so
+// tests run offline against a deterministic fake.
 interface FirecrawlClient
 {
     /**
-     * Submit a URL for scraping. Returns the provider's job id.
+     * Scrape one URL. Returns ScrapedPage with markdown + html on success.
+     * Returns null when the page can't be retrieved (404, blocked, etc.)
+     * but the API call itself succeeded — the SportNginExtractor records
+     * those as content-extraction failures, never as silent absences.
      */
-    public function submit(string $url): string;
-
-    /**
-     * Poll a job. Returns null while pending; ScrapedPage when ready.
-     */
-    public function poll(string $jobId): ?ScrapedPage;
+    public function scrape(string $url): ?ScrapedPage;
 }

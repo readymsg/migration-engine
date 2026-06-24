@@ -9,6 +9,7 @@ use App\Data\ContentRef;
 use App\Data\NavNode;
 use App\Services\Extract\BrandExtractor;
 use App\Services\Extract\ScrapedPage;
+use App\Services\Extract\SeCdnRehoster;
 use App\Services\Extract\SportNginExtractor;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\Extract\FakeAssetUploader;
@@ -55,7 +56,14 @@ final class SportNginExtractorRealTest extends TestCase
         );
 
         $uploader = new FakeAssetUploader;
-        $extractor = new SportNginExtractor($html, $nav, $firecrawl, $uploader, new BrandExtractor);
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            $firecrawl,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
 
         $manifest = $extractor->extract('https://www.stthomassoccer.com/');
 
@@ -176,7 +184,14 @@ final class SportNginExtractorRealTest extends TestCase
         );
 
         $uploader = new FakeAssetUploader;
-        $extractor = new SportNginExtractor($html, $nav, $firecrawl, $uploader, new BrandExtractor);
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            $firecrawl,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
 
         $manifest = $extractor->extract('https://www.strikersbaseball.ca/');
 
