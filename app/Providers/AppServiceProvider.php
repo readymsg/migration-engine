@@ -15,6 +15,7 @@ use App\Services\Extract\RootNavFetcher;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SportNginExtractor;
 use App\Services\Generate\AnthropicIrPassAgent;
+use App\Services\Generate\ContentLoader;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\IrPassAgent;
 use App\Services\Plan\AnthropicClassifierAgent;
@@ -54,6 +55,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(Planner::class, RootNavPlanner::class);
 
         $this->app->singleton(IrPassAgent::class, AnthropicIrPassAgent::class);
+        $this->app->singleton(ContentLoader::class, function (Application $app): ContentLoader {
+            return new ContentLoader(
+                disk: (string) config('services.scrapes.disk', 's3'),
+            );
+        });
         $this->app->singleton(IrPass::class);
     }
 

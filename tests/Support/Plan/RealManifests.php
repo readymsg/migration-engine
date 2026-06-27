@@ -6,6 +6,7 @@ namespace Tests\Support\Plan;
 
 use App\Data\Manifest;
 use App\Services\Extract\BrandExtractor;
+use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\ScrapedPage;
 use App\Services\Extract\SeCdnRehoster;
 use App\Services\Extract\SportNginExtractor;
@@ -115,6 +116,78 @@ final class RealManifests
         );
 
         return $extractor->extract('https://www.surprisevolleyballacademy.org/');
+    }
+
+    // ─── content-captured variants ─────────────────────────────────────
+    //
+    // Same rootnav fixtures as above, but the FakeFirecrawlClient is put
+    // into default-echo mode and the asset uploader is the REAL
+    // S3AssetUploader pointing at $disk — so every kind=page-with-url node
+    // gets a ContentRef AND the bytes are persisted on $disk where
+    // ContentLoader can read them back. Tests using these MUST call
+    // `Storage::fake($disk)` (or the like) in setUp so the writes land in
+    // an isolated test disk.
+    //
+    // The IR pass / GENERATE tests want this shape: PLAN sees a content-
+    // captured Manifest, IrPass resolves bodies, and the round-trip from
+    // extractor write -> ContentLoader read is exercised end to end.
+
+    public static function stthomasWithContentCaptured(string $disk): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.stthomassoccer.com/',
+            finalUrl: 'https://www.stthomassoccer.com/',
+            path: self::FIXTURES.'/stthomassoccer.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        $nav->preloadFromFile(2901070, self::FIXTURES.'/stthomassoccer.rootnav.json');
+        $nav->preloadFromFile(2901073, self::FIXTURES.'/stthomassoccer.node.2901073.json');
+
+        $firecrawl = (new FakeFirecrawlClient)->withDefaultEcho();
+        $uploader = new S3AssetUploader(disk: $disk);
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            $firecrawl,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
+
+        return $extractor->extract('https://www.stthomassoccer.com/');
+    }
+
+    public static function tenacityvolleyballWithContentCaptured(string $disk): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.tenacityvolleyball.com/',
+            finalUrl: 'https://www.tenacityvolleyball.com/',
+            path: self::FIXTURES.'/tenacityvolleyball.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        $nav->preloadFromFile(8115909, self::FIXTURES.'/tenacityvolleyball.rootnav.json');
+        $nav->preloadFromFile(8115910, self::FIXTURES.'/tenacityvolleyball.node.8115910.json');
+        $nav->preloadFromFile(8115917, self::FIXTURES.'/tenacityvolleyball.node.8115917.json');
+        $nav->preloadFromFile(8116200, self::FIXTURES.'/tenacityvolleyball.node.8116200.json');
+        $nav->preloadFromFile(8304450, self::FIXTURES.'/tenacityvolleyball.node.8304450.json');
+        $nav->preloadFromFile(8611434, self::FIXTURES.'/tenacityvolleyball.node.8611434.json');
+
+        $firecrawl = (new FakeFirecrawlClient)->withDefaultEcho();
+        $uploader = new S3AssetUploader(disk: $disk);
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            $firecrawl,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
+
+        return $extractor->extract('https://www.tenacityvolleyball.com/');
     }
 
     public static function langdondiamonds(): Manifest

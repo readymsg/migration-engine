@@ -10,11 +10,13 @@ use App\Data\Ir;
 use App\Data\IrBlock;
 use App\Data\IrPassAgentResponse;
 use App\Data\IrPassInput;
+use App\Data\KeepPageContent;
 use App\Data\NavItem;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use JsonException;
 use Laravel\Ai\Attributes\Model as ModelAttribute;
 use Laravel\Ai\Attributes\Provider as ProviderAttribute;
+use Laravel\Ai\Attributes\Timeout as TimeoutAttribute;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\HasStructuredOutput;
 use Laravel\Ai\Enums\Lab;
@@ -35,6 +37,10 @@ use Spatie\LaravelData\DataCollection;
 // laravel/ai releases. Today we decode $response->text as JSON.
 #[ProviderAttribute(Lab::Anthropic)]
 #[ModelAttribute('claude-opus-4-8')]
+// Opus 4.8 + structured-output for many pages can run several minutes.
+// The HTTP client's default 60s would trip on real multi-page calls
+// before the model has streamed the full structured response back.
+#[TimeoutAttribute(600)]
 final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAgent
 {
     use Promptable;
@@ -49,12 +55,20 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
             you receive) and which become TeamLinkt platform blocks (which
             you do NOT receive — they are handled elsewhere).
 
+            For EACH keep page you receive its REAL captured body in the
+            `body_markdown` field — that is the actual content the live
+            SportsEngine site renders for that page. You design the IR
+            FROM that body. You are NOT writing the page; you are deciding
+            how the body's content should be structured as blocks.
+
             You produce ONE structured response in a single call:
 
               - brand_voice          : 2-3 sentences describing the site's
                                        tone (warm, professional, community-
                                        focused, etc.). Derive from the org
-                                       name + page titles + any voice_hint.
+                                       name, page bodies, and any voice_hint
+                                       — let the actual writing style on the
+                                       pages anchor this.
               - palette              : hex color tokens — primary, secondary,
                                        accent, background, text. If the input
                                        palette has values, preserve or refine
@@ -63,12 +77,38 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
               - layout_conventions   : 4-8 short rules (e.g. "Use full-bleed
                                        heroes on landing pages", "Lead About
                                        Us with a group photo"). These
-                                       reflect the site's character — they
-                                       must be consistent across pages.
+                                       reflect the site's character —
+                                       observed from the bodies, consistent
+                                       across pages.
               - pages                : one entry per page in keep_pages, in
                                        the same order. Each has page_slug,
                                        page_title, nav_order, and an ordered
                                        list of abstract block intents.
+
+            FAITHFULNESS RULES (CRITICAL — design from body, do NOT invent):
+
+            - DESIGN from the provided body, do NOT rewrite or invent copy.
+              `content_brief` is a STRUCTURAL POINTER to material that
+              exists in body_markdown ("render the four-pillar coaching
+              philosophy from the body as a 4-column card grid"; "show
+              the registration steps as an ordered list"), NEVER invented
+              prose ("welcome to our premier youth basketball organization
+              where dreams come true").
+
+            - If the body is short or thin, the IR should be short and thin
+              to match. Do NOT pad a 100-word About page with fabricated
+              sections. Faithful-rebuild means the rebuilt page reflects
+              what's actually on the source page.
+
+            - Use the body's structure as the strongest hint to block
+              boundaries: headings often signal a new block; lists become
+              list or card blocks; image references become image / gallery
+              blocks.
+
+            - Block-fill (a later, separate pass) is what actually writes
+              the rendered copy from the body. Your job is the
+              architecture: which blocks, in what order, pointing at which
+              piece of the body.
 
             BLOCK INTENT RULES (CRITICAL):
 
@@ -86,10 +126,6 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
               types. The assembler maps abstract block intents to real
               schema components in a later phase.
 
-            - content_brief is a 1-2 sentence description of WHAT the
-              block should contain. Brief, descriptive, not prose. Tie it
-              to the page's nav context and the brand voice.
-
             - asset_refs is an array of S3 keys for images already
               extracted. Leave empty when unknown.
 
@@ -99,7 +135,9 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
             - Pages with different nav roles should have different layouts:
               a landing hub (Home, About Us) leans hero + intro + featured
               cards; a deep policy page leans heading + paragraphs;
-              a directory page leans grid/cards.
+              a directory page leans grid/cards. The body anchors this —
+              don't impose a hero on a page whose body has no hero
+              material.
 
             Return strictly the structured JSON. No prose outside the schema.
             PROMPT;
@@ -155,6 +193,20 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
 
     private function buildUserPrompt(IrPassInput $input): string
     {
+        // Index bodies by slug so the per-page payload can include the
+        // matching body verbatim. IrPass guarantees keep_pages and
+        // keep_page_bodies are aligned by PageSlug::of(); the lookup is
+        // defensive — a missing body would surface as empty body_markdown
+        // (which the prompt's faithfulness rules tell the model to design
+        // thinly from).
+        /** @var array<string, KeepPageContent> $bodyBySlug */
+        $bodyBySlug = [];
+        /** @var array<int, KeepPageContent> $bodies */
+        $bodies = $input->keep_page_bodies->items();
+        foreach ($bodies as $body) {
+            $bodyBySlug[$body->page_slug] = $body;
+        }
+
         $payload = [
             'org_id' => $input->org_id,
             'source_url' => $input->source_url,
@@ -171,18 +223,36 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
                 $input->nav->items(),
             ),
             'keep_pages' => array_map(
-                fn (InventoryPage $p): array => [
-                    'page_slug' => $this->slugOf($p),
-                    'page_title' => $p->label,
-                    'url' => $p->url,
-                    'nav_path' => $p->nav_path,
-                    'depth' => $p->depth,
-                ],
+                function (InventoryPage $p) use ($bodyBySlug): array {
+                    $slug = $this->slugOf($p);
+                    $markdown = '';
+                    /** @var array<int, string> $images */
+                    $images = [];
+                    if (isset($bodyBySlug[$slug])) {
+                        $markdown = $bodyBySlug[$slug]->markdown;
+                        $images = $bodyBySlug[$slug]->image_urls;
+                    }
+
+                    return [
+                        'page_slug' => $slug,
+                        'page_title' => $p->label,
+                        'url' => $p->url,
+                        'nav_path' => $p->nav_path,
+                        'depth' => $p->depth,
+                        // THE PROVIDED PAGE BODY — design from this, do
+                        // NOT rewrite or invent copy. See the faithfulness
+                        // rules in the system prompt.
+                        'body_markdown' => $markdown,
+                        'body_image_urls' => $images,
+                    ];
+                },
                 $input->keep_pages->items(),
             ),
         ];
 
-        return 'Design the IR + GlobalStyleBrief for this site:'.PHP_EOL.
+        return 'Design the IR + GlobalStyleBrief for this site. '
+            .'The `body_markdown` per keep_page is the REAL captured body — '
+            .'design FROM it, do not invent copy.'.PHP_EOL.
             json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 

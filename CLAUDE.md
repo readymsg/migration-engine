@@ -165,6 +165,10 @@ Opus is allowed to silently drop pages from a large batch (observed on the first
 
 `AnthropicIrPassAgent` pins `Lab::Anthropic` + `claude-opus-4-8` via `#[Provider]` / `#[Model]` attributes, since `config/ai.php` defaults to OpenAI. The same `HasStructuredOutput` + JSON schema pattern from `AnthropicClassifierAgent`.
 
+## Known gaps / next slices
+
+- **PLAN gap surfaced by the tbirdhoops IR dump** — pages whose ENTIRE body is SportsEngine platform/tutorial content (e.g. a "SportsEngine Parents" how-to page, or a Home block of SE app-download links) are currently classified Keep and faithfully rebuilt by the IR pass. PLAN catches SE-platform LINKS but not pages/blocks whose CONTENT is SE-platform material. These should be parked (page-level) or scrubbed (block-level) so the rebuilt TeamLinkt site carries zero SportsEngine onboarding content. Next PLAN slice.
+
 ## Guardrails (from BUILD.md — these come up repeatedly)
 
 - DTOs + Larastan are the strictness net (PHP isn't TS) — make them strict.
