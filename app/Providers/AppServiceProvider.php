@@ -22,6 +22,7 @@ use App\Services\Plan\AnthropicClassifierAgent;
 use App\Services\Plan\ClassifierAgent;
 use App\Services\Plan\Planner;
 use App\Services\Plan\RootNavPlanner;
+use App\Services\Plan\SePlatformContentDetector;
 use App\Services\Product\ProductClient;
 use App\Services\Product\StubProductClient;
 use App\Services\Schema\ComponentSchema;
@@ -52,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(Extractor::class, SportNginExtractor::class);
 
         $this->app->singleton(ClassifierAgent::class, AnthropicClassifierAgent::class);
+        $this->app->singleton(SePlatformContentDetector::class);
         $this->app->singleton(Planner::class, RootNavPlanner::class);
 
         $this->app->singleton(IrPassAgent::class, AnthropicIrPassAgent::class);

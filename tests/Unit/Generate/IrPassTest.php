@@ -28,6 +28,7 @@ use App\Services\Generate\ContentLoader;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\PageSlug;
 use App\Services\Plan\RootNavPlanner;
+use App\Services\Plan\SePlatformContentDetector;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
@@ -74,7 +75,7 @@ final class IrPassTest extends TestCase
         // are kind=page+Keep, 1 is external+Keep (Swag/Spirit Wear), 1 is
         // external+Park (Dibs via SE-platform rule). Only the 16 reach IR.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $agent = new FakeIrPassAgent;
         $result = $this->makeIrPass($agent)->run($plan, $manifest);
@@ -105,7 +106,7 @@ final class IrPassTest extends TestCase
         // KeepPageContent with a non-empty markdown that's slug-aligned —
         // a missing body would silently degrade IR quality.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $agent = new FakeIrPassAgent;
         $this->makeIrPass($agent)->run($plan, $manifest);
@@ -141,7 +142,7 @@ final class IrPassTest extends TestCase
     public function platform_dynamic_subsumed_park_and_external_pages_get_no_ir(): void
     {
         $manifest = RealManifests::tenacityvolleyballWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $agent = new FakeIrPassAgent;
         $this->makeIrPass($agent)->run($plan, $manifest);
@@ -167,7 +168,7 @@ final class IrPassTest extends TestCase
     public function ir_blocks_are_schema_agnostic_no_puck_prop_names_in_component_type(): void
     {
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $agent = new FakeIrPassAgent;
         $result = $this->makeIrPass($agent)->run($plan, $manifest);
@@ -202,7 +203,7 @@ final class IrPassTest extends TestCase
         // Synthetic SitePlan with no kept pages — orchestration short-
         // circuits and the agent is never called (no Opus tokens burned).
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $emptyPlan = new SitePlan(
             nav: $plan->nav,
@@ -233,7 +234,7 @@ final class IrPassTest extends TestCase
         //   - still design IR for the 1 page with content
         //   - return Partial (because failures != [])
         $manifest = $this->stthomasOnlyHomeCaptured();
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $agent = new FakeIrPassAgent;
         $result = $this->makeIrPass($agent)->run($plan, $manifest);
@@ -276,7 +277,7 @@ final class IrPassTest extends TestCase
         // a URL, IrPass surfaces the original reason so a reviewer can
         // tell "Firecrawl 5xx'd" from "page just wasn't captured".
         $manifest = $this->stthomasOnlyHomeCaptured();
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $agent = new FakeIrPassAgent;
         $result = $this->makeIrPass($agent)->run($plan, $manifest);
@@ -302,7 +303,7 @@ final class IrPassTest extends TestCase
         // node with kind=page and Keep, confirm we account for ALL of them
         // across pages + failures with no gaps.
         $manifest = $this->stthomasOnlyHomeCaptured();
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $expectedSlugs = [];
         /** @var array<int, InventoryPage> $pages */
@@ -385,7 +386,7 @@ final class IrPassTest extends TestCase
         // Complete; both calls were made; the retry input contained ONLY
         // the two missing pages.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $coachesId = 2901075;
         $boardId = 2901074;
@@ -462,7 +463,7 @@ final class IrPassTest extends TestCase
     public function still_missing_after_retry_becomes_explicit_failure_status_partial(): void
     {
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $coachesId = 2901075;
         $boardId = 2901074;
@@ -549,7 +550,7 @@ final class IrPassTest extends TestCase
     public function retry_recovering_some_but_not_all_yields_partial_with_only_unrecovered_failures(): void
     {
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
-        $plan = (new RootNavPlanner(new FakeClassifierAgent))->plan($manifest);
+        $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
         $coachesId = 2901075;
         $boardId = 2901074;

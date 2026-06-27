@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Plan;
 
 use App\Data\ClassificationResponse;
+use App\Data\ContentRef;
 use App\Data\DecisionAction;
 use App\Data\DecisionEntry;
 use App\Data\DecisionLedger;
@@ -15,6 +16,7 @@ use App\Data\NavNode;
 use App\Data\PageInventory;
 use App\Data\PlatformBlockType;
 use App\Data\SitePlan;
+use App\Services\Generate\ContentLoader;
 use Illuminate\Support\Str;
 use Spatie\LaravelData\DataCollection;
 
@@ -48,12 +50,14 @@ final class RootNavPlanner implements Planner
 
     public function __construct(
         private readonly ClassifierAgent $classifier,
+        private readonly ContentLoader $contentLoader,
+        private readonly SePlatformContentDetector $sePlatformDetector,
     ) {}
 
     public function plan(Manifest $manifest): SitePlan
     {
         $inventory = $this->inventory($manifest);
-        $entries = $this->classify($inventory, $manifest->brand->voice_hint ?? '');
+        $entries = $this->classify($inventory, $manifest);
 
         return $this->decideIa($inventory, $entries);
     }
@@ -98,12 +102,19 @@ final class RootNavPlanner implements Planner
     }
 
     /**
-     * Classify the inventory in three phases:
+     * Classify the inventory in four phases:
      *   1. Deterministic pass — also tracks platform_dynamic ancestors so any
      *      descendant of a deterministic platform_dynamic is marked Subsumed
      *      BEFORE phase 2, never sent to the LLM.
-     *   2. LLM batches for the remaining ambiguous (kind=page, non-subsumed)
-     *      pages.
+     *   1.5. Body-content SE-platform park — for tentatively-Keep kind=page
+     *      that has a captured ContentRef, load the body and run the
+     *      three-signal detector. Pages that match are parked as
+     *      se_platform_content BEFORE the LLM phase so we never burn a
+     *      classify call on SE-templated tutorial content. Pages without a
+     *      ContentRef bypass the detector and continue to phase 2 — can't
+     *      body-detect what we don't have.
+     *   2. LLM batches for the remaining ambiguous (kind=page, non-subsumed,
+     *      non-SE-platform) pages.
      *   3. Retroactive subsumption — if phase 2 produced a platform_dynamic
      *      from the LLM, override its descendants (already LLM-classified
      *      independently) to Subsumed so the final ledger respects the rule
@@ -111,8 +122,10 @@ final class RootNavPlanner implements Planner
      *
      * @return array<int, DecisionEntry>
      */
-    private function classify(PageInventory $inventory, string $brandVoiceHint): array
+    private function classify(PageInventory $inventory, Manifest $manifest): array
     {
+        $brandVoiceHint = $manifest->brand->voice_hint ?? '';
+        $contentByAbsoluteUrl = $this->indexContentRefs($manifest);
         /** @var array<int, DecisionEntry|null> $entries  indexed parallel to $pages */
         $entries = [];
         /** @var array<int, array{index: int, page: InventoryPage}> $needsLlm */
@@ -152,6 +165,66 @@ final class RootNavPlanner implements Planner
             $entries[$i] = null;
             $needsLlm[] = ['index' => $i, 'page' => $page];
         }
+
+        // Phase 1.5: body-content SE-platform-content park. Runs ONLY on
+        // pages currently null (tentatively-Keep), kind=page, that have a
+        // captured ContentRef. The detector is conservative-by-design (see
+        // SePlatformContentDetector docs): three reinforcing signals all
+        // required, vocabulary signal is the load-bearing false-positive
+        // guard. Pages without a ContentRef silently fall through to the
+        // LLM phase below — can't body-detect what we don't have.
+        //
+        // Direction of risk reverses PLAN's usual recall bias: this is a
+        // PARK (removal) action, so false-park is destructive. The
+        // detector's bar is "overwhelmingly SE-templated content";
+        // borderline stays Keep and goes to the LLM.
+        /** @var array<int, array{index: int, page: InventoryPage}> $stillNeedsLlm */
+        $stillNeedsLlm = [];
+        foreach ($needsLlm as $item) {
+            $page = $item['page'];
+            if ($page->kind !== 'page' || $page->url === null || $page->url === '') {
+                $stillNeedsLlm[] = $item;
+
+                continue;
+            }
+            $absoluteUrl = $this->absoluteUrl($manifest->source_url, $page->url);
+            $contentRef = $contentByAbsoluteUrl[$absoluteUrl] ?? null;
+            if ($contentRef === null) {
+                $stillNeedsLlm[] = $item;
+
+                continue;
+            }
+            $loaded = $this->contentLoader->load($contentRef);
+            if ($loaded === null) {
+                $stillNeedsLlm[] = $item;
+
+                continue;
+            }
+            $verdict = $this->sePlatformDetector->detect($loaded->markdown);
+            if (! $verdict->is_se_platform) {
+                $stillNeedsLlm[] = $item;
+
+                continue;
+            }
+
+            // Loud, specific ledger reason — a reviewer must be able to
+            // read EXACTLY why this parked and promote it back if wrong.
+            $vocab = implode(', ', $verdict->vocab_phrases_matched);
+            $reason = sprintf(
+                'se_platform_content (%d SE-tutorial links of %d total, ratio %.2f, vocab phrases: [%s])',
+                $verdict->se_platform_links,
+                $verdict->total_outbound_links,
+                $verdict->ratio,
+                $vocab,
+            );
+            $entries[$item['index']] = new DecisionEntry(
+                target: $this->targetOf($page),
+                action: DecisionAction::Park,
+                reason: $reason,
+                confidence: 0.95,
+            );
+        }
+        $needsLlm = $stillNeedsLlm;
 
         // Phase 2: LLM batches for ambiguous content pages.
         foreach (array_chunk($needsLlm, self::BATCH_SIZE) as $batch) {
@@ -223,6 +296,35 @@ final class RootNavPlanner implements Planner
             }
             array_pop($stack);
         }
+    }
+
+    /**
+     * Build a url → ContentRef map keyed by the ABSOLUTE URL the extractor
+     * stored on each ContentRef. Phase 1.5 normalises InventoryPage.url
+     * (relative) to absolute before lookup so the join lines up.
+     *
+     * @return array<string, ContentRef>
+     */
+    private function indexContentRefs(Manifest $manifest): array
+    {
+        /** @var array<string, ContentRef> $out */
+        $out = [];
+        /** @var array<int, ContentRef> $items */
+        $items = $manifest->content_refs->items();
+        foreach ($items as $ref) {
+            $out[$ref->url] = $ref;
+        }
+
+        return $out;
+    }
+
+    private function absoluteUrl(string $orgUrl, string $url): string
+    {
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+
+        return rtrim($orgUrl, '/').'/'.ltrim($url, '/');
     }
 
     private function subsumedEntry(InventoryPage $page, PlatformBlockType $block, string $parentLabel): DecisionEntry

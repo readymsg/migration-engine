@@ -15,7 +15,9 @@ use App\Data\Manifest;
 use App\Data\NavNode;
 use App\Data\PlatformBlockType;
 use App\Data\SiteStructure;
+use App\Services\Generate\ContentLoader;
 use App\Services\Plan\RootNavPlanner;
+use App\Services\Plan\SePlatformContentDetector;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
@@ -25,12 +27,27 @@ use Tests\TestCase;
 
 final class PlannerTest extends TestCase
 {
+    // Helper: builds a planner with deps that no-op for tests that don't
+    // care about the body-content SE-platform park (phase 1.5). The
+    // ContentLoader points at the production disk; pages whose ContentRef
+    // doesn't resolve to a real on-disk body return null and skip the
+    // detector. Tests that DO exercise phase 1.5 build their own planner
+    // with a real captured disk.
+    private function planner(FakeClassifierAgent $agent): RootNavPlanner
+    {
+        return new RootNavPlanner(
+            $agent,
+            new ContentLoader(disk: 'local'),
+            new SePlatformContentDetector,
+        );
+    }
+
     #[Test]
     public function ledger_covers_every_page_for_stthomas_and_skips_external_and_dynamic(): void
     {
         $manifest = RealManifests::stthomas();
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
         $this->assertCount(18, $entries, 'stthomas has 7 top-level + 11 About Us children');
@@ -71,7 +88,7 @@ final class PlannerTest extends TestCase
     {
         $manifest = RealManifests::langdondiamonds();
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
         $this->assertCount(19, $entries);
@@ -123,7 +140,7 @@ final class PlannerTest extends TestCase
             reason: 'looks stale',
         ));
 
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $llmEntries = array_values(array_filter(
             $plan->ledger->entries->items(),
@@ -153,7 +170,7 @@ final class PlannerTest extends TestCase
             reason: 'definitely stale',
         ));
 
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $drops = array_values(array_filter(
             $plan->ledger->entries->items(),
@@ -190,7 +207,7 @@ final class PlannerTest extends TestCase
             reason: 'placeholder page (Coming Soon)',
         ));
 
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         // Filter to LLM-derived parks; the model's exact reason is preserved.
         $llmParks = array_values(array_filter(
@@ -216,7 +233,7 @@ final class PlannerTest extends TestCase
                 reason: 'borderline value',
             ));
 
-            $plan = (new RootNavPlanner($agent))->plan($manifest);
+            $plan = $this->planner($agent)->plan($manifest);
 
             // No LLM-derived parks/drops — they all became recall-biased keeps.
             $llmDerivedParks = array_values(array_filter(
@@ -261,7 +278,7 @@ final class PlannerTest extends TestCase
             merged_into: 'https://www.stthomassoccer.com/page/show/3060737-programs',
         ));
 
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $merges = array_values(array_filter(
             $plan->ledger->entries->items(),
@@ -292,7 +309,7 @@ final class PlannerTest extends TestCase
     {
         $manifest = RealManifests::tenacityvolleyball();
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
 
@@ -357,7 +374,7 @@ final class PlannerTest extends TestCase
         $manifest = $this->manifestFromNavNodes([$standings]);
 
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
         $this->assertCount(4, $entries);
@@ -389,7 +406,7 @@ final class PlannerTest extends TestCase
         // LLM, not as the old 'Dynamic' action.
         $manifest = RealManifests::surprisevolleyballacademy();
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
 
@@ -428,7 +445,7 @@ final class PlannerTest extends TestCase
             ['Division', null],
         ]);
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $expected = [
             'Standings' => PlatformBlockType::Standings,
@@ -462,7 +479,7 @@ final class PlannerTest extends TestCase
         // Gate: the 'teams' name-map requires has_children > 0.
         $manifest = $this->manifestWithLabels([['Teams', null]]);
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $teams = $plan->ledger->entries->items()[0];
         $this->assertNotSame(DecisionAction::PlatformDynamic, $teams->action);
@@ -483,7 +500,7 @@ final class PlannerTest extends TestCase
         $entries = array_map(static fn (string $label): array => [$label, null], $ambiguous);
         $manifest = $this->manifestWithLabels($entries);
         $agent = new FakeClassifierAgent;
-        (new RootNavPlanner($agent))->plan($manifest);
+        $this->planner($agent)->plan($manifest);
 
         $this->assertCount(count($ambiguous), $agent->seen);
         $seenLabels = array_map(static fn (InventoryPage $p): string => $p->label, $agent->seen);
@@ -506,7 +523,7 @@ final class PlannerTest extends TestCase
             platform_block_type: PlatformBlockType::Schedule,
         ));
 
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entry = $plan->ledger->entries->items()[0];
         $this->assertSame(DecisionAction::PlatformDynamic, $entry->action);
@@ -528,7 +545,7 @@ final class PlannerTest extends TestCase
             platform_block_type: PlatformBlockType::Schedule,
         ));
 
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entry = $plan->ledger->entries->items()[0];
         $this->assertSame(DecisionAction::Keep, $entry->action);
@@ -544,7 +561,7 @@ final class PlannerTest extends TestCase
     {
         $manifest = RealManifests::surprisevolleyballacademy();
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         // The "Sports Engine" sub-link under Tryouts/Open House.
         $entries = $plan->ledger->entries->items();
@@ -587,7 +604,7 @@ final class PlannerTest extends TestCase
             ['Theme', 'https://app-assets1.sportngin.com/javascripts/themes/itasca/theme.js'],
         ]);
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         foreach ($plan->ledger->entries as $entry) {
             $this->assertNotSame(
@@ -610,7 +627,7 @@ final class PlannerTest extends TestCase
             ['Sign Up', null],     // tight matching — 'sign up' is NOT a registration trigger word
         ]);
         $agent = new FakeClassifierAgent;
-        $plan = (new RootNavPlanner($agent))->plan($manifest);
+        $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
         $registrationEntries = array_values(array_filter(
