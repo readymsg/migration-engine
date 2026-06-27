@@ -85,6 +85,19 @@ final class AnthropicIrPassAgent implements Agent, HasStructuredOutput, IrPassAg
                                        page_title, nav_order, and an ordered
                                        list of abstract block intents.
 
+            SLUG-ECHO RULE (CRITICAL — pages will be silently lost otherwise):
+
+            - `page_slug` is an IDENTIFIER WE PROVIDED YOU in each input
+              keep_page. ECHO IT BACK CHARACTER-FOR-CHARACTER — same
+              format, same value. Do NOT invent a "nicer" human-readable
+              slug, do NOT slugify the page title, do NOT change `_` to
+              `-` or vice versa, do NOT strip the `page-` prefix.
+            - Example: input keep_page `{page_slug: 'page-2901075', page_title: 'Coaches', ...}`
+              → output IR `{page_slug: 'page-2901075', page_title: 'Coaches', ...}`.
+            - Slugs that don't match what we sent are treated as silent
+              drops by the orchestration's reconciliation diff. The page
+              will land in failures, not in the rebuild.
+
             FAITHFULNESS RULES (CRITICAL — design from body, do NOT invent):
 
             - DESIGN from the provided body, do NOT rewrite or invent copy.
