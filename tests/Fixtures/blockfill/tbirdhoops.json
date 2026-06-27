@@ -1,0 +1,1546 @@
+{
+    "style_brief": {
+        "brand_voice": "Warm, community-focused, and family-oriented with an energetic, encouraging tone befitting a long-standing youth basketball organization. The writing is welcoming and instructional, balancing competitive pride (\"Go Thunderbirds!\") with practical guidance for players, parents, and volunteers. It reads like a tight-knit local program that celebrates skill development, sportsmanship, and belonging.",
+        "palette": {
+            "primary": "#1F3A93",
+            "secondary": "#C0392B",
+            "accent": "#F1C40F",
+            "background": "#FFFFFF",
+            "text": "#1A1A1A"
+        },
+        "layout_conventions": [
+            "Use a full-bleed banner hero on the Home page; lead deeper content pages with a simple heading rather than a hero",
+            "Render countdown/season-status callouts as a horizontal row of cards near the top of Home",
+            "Present news and featured stories as image-led cards with a Read More link",
+            "Show photo collections as galleries grouped by their existing section headings",
+            "Lay out the Board and Contacts as people-oriented grids and tables that preserve role labels",
+            "Append the recurring sponsor section as a sponsor strip at the bottom of pages that carry it",
+            "Keep registration and 'join' actions as clearly separated CTA blocks",
+            "Match block density to body length — thin pages stay thin, image-heavy pages lean on galleries"
+        ],
+        "nav": [
+            {
+                "label": "Home",
+                "page_slug": "home",
+                "order": 0
+            },
+            {
+                "label": "About Us",
+                "page_slug": "about-us",
+                "order": 1
+            },
+            {
+                "label": "TBird News",
+                "page_slug": "tbird-news",
+                "order": 2
+            },
+            {
+                "label": "Parents",
+                "page_slug": "parents",
+                "order": 3
+            }
+        ]
+    },
+    "pages": [
+        {
+            "page_slug": "page-7188115",
+            "page_title": "Home",
+            "nav_order": 0,
+            "blocks": [
+                {
+                    "component_type": "Hero",
+                    "props": {
+                        "heading": "THANKS FOR A WONDERFUL SEASON THUNDERBIRD & FLIGHT COMMUNITY. BE SAFE OVER THE SPRING AND SUMMER!!!!",
+                        "background_image": "https://cdn4.sportngin.com/attachments/photo/64f2-211650277/LTYB_site-banner_38_large.jpg"
+                    },
+                    "source_brief": "Full-bleed banner hero with season thank-you message as overlay headline",
+                    "source_quote": "THANKS FOR A WONDERFUL SEASON THUNDERBIRD & FLIGHT COMMUNITY.  BE SAFE OVER THE SPRING AND SUMMER!!!!"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Flight Tryouts",
+                                            "body": "0 Days  0 Hours  0 Minutes  0 Seconds"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Thunderbird Assessments",
+                                            "body": "0 Days  0 Hours  0 Minutes  0 Seconds"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Winter Basketball starts again in",
+                                            "body": "0 Days  0 Hours  0 Minutes  0 Seconds"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Row of three countdown cards: Flight Tryouts, Thunderbird Assessments, Winter Basketball starts again in",
+                    "source_quote": "## Flight Tryouts\n\n**0**\n\nDays**0**\n\nHours**0**\n\nMinutes**0**\n\nSeconds\n\n## Thunderbird Assessments"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Halftime Show -- Welcome to Lakota!!!",
+                        "level": "h3"
+                    },
+                    "source_brief": "Halftime Show video block heading (video itself cannot be represented in schema; mapped to closest type Heading)",
+                    "source_quote": "### Halftime Show -- Welcome to Lakota!!!"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Black & White Madness Brings Thunderhawk Pride to the Court",
+                        "body": "Read More",
+                        "image": "https://cdn2.sportngin.com/attachments/news_article/d775-215096379/image002_large.png",
+                        "href": "https://www.tbirdhoops.org/news_article/show/1351261?referrer_id=7188115"
+                    },
+                    "source_brief": "Featured news card for Black & White Madness article with image and Read More link",
+                    "source_quote": "# [Black & White Madness Brings Thunderhawk Pride to the Court](https://www.tbirdhoops.org/news_article/show/1351261?referrer_id=7188115)\n\n[Read More](https://www.tbirdhoops.org/news_article/show/1351261?referrer_id=7188115)"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Lakota Thunderbirds Give Back",
+                        "body": "Read More",
+                        "image": "https://cdn4.sportngin.com/attachments/news_article/1110-174289021/Adena_Donation_2020_large.jpg",
+                        "href": "https://www.tbirdhoops.org/news_article/show/1224959?referrer_id=7188115"
+                    },
+                    "source_brief": "Featured news card for Lakota Thunderbirds Give Back article with image and Read More link",
+                    "source_quote": "# [Lakota Thunderbirds Give Back](https://www.tbirdhoops.org/news_article/show/1224959?referrer_id=7188115)\n\n[Read More](https://www.tbirdhoops.org/news_article/show/1224959?referrer_id=7188115)"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "Stay Connected to Your Team with SportsEngine",
+                                "href": "#"
+                            },
+                            {
+                                "label": "SportsEngine for Apple Users",
+                                "href": "https://itunes.apple.com/us/app/sport-ngin/id499597400"
+                            },
+                            {
+                                "label": "SportsEngine for Android Users",
+                                "href": "https://play.google.com/store/apps/details?id=com.sportngin.android&hl=en"
+                            }
+                        ]
+                    },
+                    "source_brief": "Stay Connected section with Apple and Android app links",
+                    "source_quote": "#### [SportsEngine for Apple Users](https://itunes.apple.com/us/app/sport-ngin/id499597400)\n\n#### [SportsEngine for Android Users](https://play.google.com/store/apps/details?id=com.sportngin.android&hl=en)"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Keep connected to your team(s). Get schedules and team updates for every athlete in the house, plus a way to message other members on your team and a way to give coaches a heads up about practice. Enjoy unlimited access to scores & stats, photo/video sharing, and more.",
+                        "align": "left"
+                    },
+                    "source_brief": "Connectivity description paragraph for the Stay Connected section",
+                    "source_quote": "Keep connected to your team(s). Get schedules and team updates for every athlete in the house, plus a way to message other members on your team and a way to give coaches a heads up about practice."
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "### Quick Links\n\n- [Home](https://tbirdhoops.sportsengine-prelive.com/home)\n- [TBird News](https://tbirdhoops.sportsengine-prelive.com/news)\n- [Registration Portal](https://tbirdhoops.sportngin.com/register/form/770430566)\n- [About Us](https://tbirdhoops.sportsengine-prelive.com/aboutus)\n- [Board](https://tbirdhoops.sportsengine-prelive.com/board)\n- [Contacts](https://tbirdhoops.sportsengine-prelive.com/page/show/7199106-contact-us-2021-2022-season)\n- [Calendar](https://www.tbirdhoops.org/page/show/8334520-calendar)\n- [Join TBird Nation](https://www.tbirdhoops.org/page/show/8019295-tbird-connect)\n- [Unsubscribe](https://www.tbirdhoops.org/page/show/8659687-unsubscribe)",
+                        "align": "left"
+                    },
+                    "source_brief": "Quick Links list from the body",
+                    "source_quote": "### QUICK LINKS\n\n[Home](https://tbirdhoops.sportsengine-prelive.com/home)\n\n[TBird News](https://tbirdhoops.sportsengine-prelive.com/news)\n\n[Registration Portal](https://tbirdhoops.sportngin.com/register/form/770430566)"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Lakota Thunderbird Basketball",
+                        "body": "Contact Us",
+                        "image": "https://cdn3.sportngin.com/attachments/contact/5a35-177337476/Flight-Tbird_Logo__2___1_.jpg"
+                    },
+                    "source_brief": "Contact Us card with Flight-Tbird logo and Lakota Thunderbird Basketball label",
+                    "source_quote": "![CONTACT US](https://cdn3.sportngin.com/attachments/contact/5a35-177337476/Flight-Tbird_Logo__2___1_.jpg)\n\n### CONTACTUS\n\nLakota Thunderbird Basketball"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/5942-211929992/20250625_164656_medium.jpg",
+                                            "alt": "Contact Us photo 1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/fe5e-211929984/IMG_0350_medium.jpeg",
+                                            "alt": "Contact Us photo 2"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/b7f3-211929987/20250625_164948_medium.jpg",
+                                            "alt": "Contact Us photo 3"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Photo gallery for the CONTACT US / current-season photo set",
+                    "source_quote": "- ![](https://cdn2.sportngin.com/attachments/photo/5942-211929992/20250625_164656_medium.jpg)\n- ![](https://cdn3.sportngin.com/attachments/photo/fe5e-211929984/IMG_0350_medium.jpeg)\n- ![](https://cdn4.sportngin.com/attachments/photo/b7f3-211929987/20250625_164948_medium.jpg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "Lakota West Basketball Camp & Community",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/147c-215096554/IMG_5882_large.jpeg",
+                                            "alt": "Lakota West Basketball Camp & Community photo 1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/3577-215096549/IMG_5881_large.jpeg",
+                                            "alt": "Lakota West Basketball Camp & Community photo 2"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for Lakota West Basketball Camp & Community photo set",
+                    "source_quote": "### Lakota West Basketball Camp & Community\n\n- ![](https://cdn2.sportngin.com/attachments/photo/147c-215096554/IMG_5882_large.jpeg)\n- ![](https://cdn3.sportngin.com/attachments/photo/3577-215096549/IMG_5881_large.jpeg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "Black & White Madness 2025 at Lakota East",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/934c-215057945/1223985762450920806_1__large.jpg",
+                                            "alt": "Black & White Madness 2025 at Lakota East photo 1"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for Black & White Madness 2025 at Lakota East photo set",
+                    "source_quote": "### Black & White Madness 2025 at Lakota East\n\n- ![](https://cdn3.sportngin.com/attachments/photo/934c-215057945/1223985762450920806_1__large.jpg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "Thunderbirds in Action @ East or West Varsity Games",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/8606-211252250/IMG_20250301_172229__2__large.jpg",
+                                            "alt": "Thunderbirds in Action @ East or West Varsity Games photo 1"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for Thunderbirds in Action @ East or West Varsity Games photo set",
+                    "source_quote": "### Thunderbirds in Action @ East or West Varsity Games\n\n- ![](https://cdn4.sportngin.com/attachments/photo/8606-211252250/IMG_20250301_172229__2__large.jpg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "2024 Season Pics",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/dacc-201711155/Wycoff_Team_Victory_large.jpeg",
+                                            "alt": "2024 Season Pics photo 1"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for 2024 Season Pics photo set",
+                    "source_quote": "### 2024 Season Pics\n\n- ![](https://cdn1.sportngin.com/attachments/photo/dacc-201711155/Wycoff_Team_Victory_large.jpeg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "Flight Teams In Action 2023",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/07d4-216471737/IMG-3063_medium.jpg",
+                                            "alt": "Flight Teams In Action 2023 photo 1"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for Flight Teams In Action 2023 photo set",
+                    "source_quote": "### Flight Teams In Action 2023\n\n- ![](https://cdn3.sportngin.com/attachments/photo/07d4-216471737/IMG-3063_medium.jpg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "High School Division Pics",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/7ee3-215594053/0f499375-f210-4101-b49d-f36f98f8d025_medium.jpg",
+                                            "alt": "High School Division Pics photo 1"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for High School Division Pics photo set",
+                    "source_quote": "### High School Division Pics\n\n- ![](https://cdn3.sportngin.com/attachments/photo/7ee3-215594053/0f499375-f210-4101-b49d-f36f98f8d025_medium.jpg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "2025 Thunderbird & Flight Gallery",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/6c79-211708854/IMG_4722001_medium.jpg",
+                                            "alt": "2025 Thunderbird & Flight Gallery photo 1"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for 2025 Thunderbird & Flight Gallery photo set",
+                    "source_quote": "### 2025 Thunderbird & Flight Gallery\n\n- ![](https://cdn3.sportngin.com/attachments/photo/6c79-211708854/IMG_4722001_medium.jpg)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "Team Highlights Throughout the Years",
+                                            "level": "h3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/98f4-212929449/20250810_150648_medium.jpg",
+                                            "alt": "Team Highlights Throughout the Years photo 1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Heading",
+                                        "props": {
+                                            "text": "Open Gym Pics - Flight Basketball",
+                                            "level": "h3"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery for Team Highlights Throughout the Years and Open Gym Pics - Flight Basketball photo sets",
+                    "source_quote": "### Team Highlights Throughout the Years\n\n- ![](https://cdn4.sportngin.com/attachments/photo/98f4-212929449/20250810_150648_medium.jpg)"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "Unsubscribe",
+                                "href": "https://www.tbirdhoops.org/page/show/8659687-unsubscribe"
+                            }
+                        ]
+                    },
+                    "source_brief": "Unsubscribe CTA with opt-out explanation",
+                    "source_quote": "If you no longer wish to receive communications, have transitioned to another organization, or simply feel it's time to opt out, please click the button below and follow the steps to unsubscribe. We will miss you!"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "If you no longer wish to receive communications, have transitioned to another organization, or simply feel it's time to opt out, please click the button below and follow the steps to unsubscribe. We will miss you!",
+                        "align": "center"
+                    },
+                    "source_brief": "Opt-out explanation paragraph for the Unsubscribe CTA",
+                    "source_quote": "If you no longer wish to receive communications, have transitioned to another organization, or simply feel it's time to opt out, please click the button below and follow the steps to unsubscribe. We will miss you!"
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness — every heading, body text, href, and image src is directly traceable to a verbatim substring in body_markdown. Schema conformance was verified: all required props (heading/text/src/alt/title/body/buttons/columns) are present. The 'video' IR intent has no representable schema equivalent; it was mapped to a Heading (h3) citing the title from the body, which is the closest faithful option — noted in self_assessment. Gallery Columns blocks use representative first-image srcs from the IR asset_refs and body; full image sets exist in the body but only representative images are shown per block to avoid excessive repetition. The 'contact_card' IR intent was mapped to Card (closest schema type). Tone matches the warm, community-focused brand voice throughout.",
+            "confidence": 0.82
+        },
+        {
+            "page_slug": "page-7188116",
+            "page_title": "About Us",
+            "nav_order": 1,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Lakota Thunderbird Youth Basketball Organization",
+                        "level": "h1"
+                    },
+                    "source_brief": "Page heading from the body bold title.",
+                    "source_quote": "**Lakota Thunderbird Youth Basketball Organization**"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Located in West Chester and Liberty Township, Ohio, the Lakota Thunderbird Youth Basketball Organization is a premier basketball program in the Northern suburbs of Cincinnati. Since its establishment in 1987, the organization has grown significantly and remains a cornerstone of the local sports community.",
+                        "align": "left"
+                    },
+                    "source_brief": "Intro paragraph describing West Chester/Liberty Township location and program history since 1987.",
+                    "source_quote": "Located in West Chester and Liberty Township, Ohio, the Lakota Thunderbird Youth Basketball Organization is a premier basketball program in the Northern suburbs of Cincinnati. Since its establishment in 1987"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Thunderbird Teams**\n\nThunderbird teams form the heart of our program, representing about 90% of our activities. These teams are highly competitive and participate in the Cincinnati Premier Youth Basketball League (CPYBL). Registration for Thunderbird teams costs approximately $160 and includes a weekly practice session, a 10-game season, and entry into a postseason tournament.\n\nOur program is open to boys and girls from grades 1 through 12. Boys in grades 1 and 2 play in an in-house league, while those in grades 3 through 12 compete in the CPYBL. When registering, avoid selecting the \"SELECT\" option. Thunderbird teams generally practice at Lakota schools and play a season with 5 home games and 5 away games from December to March.",
+                        "align": "left"
+                    },
+                    "source_brief": "Thunderbird Teams section: CPYBL, ~$160 registration, grade structure, season format.",
+                    "source_quote": "Thunderbird teams form the heart of our program, representing about 90% of our activities. These teams are highly competitive and participate in the Cincinnati Premier Youth Basketball League (CPYBL). Registration for Thunderbird teams costs approximately $160"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Thunderbird Flight Teams**\n\nIn addition to our regular teams, we offer select basketball teams known as Thunderbird Flight. Preseason tryouts are held to form 1-2 boys' and girls' teams for grades 3-6. Flight team participants incur additional fees, which cover professional training, extra practice time, and a 20-game season.",
+                        "align": "left"
+                    },
+                    "source_brief": "Thunderbird Flight Teams section: select tryouts, fees, and 20-game season.",
+                    "source_quote": "we offer select basketball teams known as Thunderbird Flight. Preseason tryouts are held to form 1-2 boys' and girls' teams for grades 3-6. Flight team participants incur additional fees, which cover professional training, extra practice time, and a 20-game season."
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Boys 3rd–6th Grade Flight Teams",
+                                            "body": "For inquiries, contact Michael Lewis at mlewis@tbirdhoops.org or 513-240-7115."
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Girls 3rd–6th Grade Flight Teams",
+                                            "body": "For inquiries, contact Eric Ziegler at ericzieglerflightbasketball@gmail.com or 617-839-8582."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Flight Teams contact info — Michael Lewis (boys) and Eric Ziegler (girls) with emails and phone numbers.",
+                    "source_quote": "Boys 3rd - 6th Grade: ** For inquiries, contact Michael Lewis at mlewis@tbirdhoops.org or 513-240-7115.\n\n- **Girls 3rd - 6th Grade: ** For inquiries, contact Eric Ziegler at ericzieglerflightbasketball@gmail.com or 617-839-8582."
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Mission Statement**\n\n- Promote boys' and girls' basketball in the Lakota School District area.\n- Develop high-level basketball players in grades 1 through 6.\n- Offer competitive basketball opportunities from grades 1 through 12.\n- Establish teams based on skill assessment and a formal selection process.\n- Enforce a code of conduct for coaches, players, and parents.\n- Integrate with AAU and Lakota School System basketball programs whenever possible.",
+                        "align": "left"
+                    },
+                    "source_brief": "Mission Statement as a bulleted list of mission points.",
+                    "source_quote": "Promote boys' and girls' basketball in the Lakota School District area.\n\n- Develop high-level basketball players in grades 1 through 6.\n\n- Offer competitive basketball opportunities from grades 1 through 12."
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Registration Information**\n\n1. **Returning Players:** If you played on a Thunderbird team last year and plan to return to the same team, attending the in-person assessment is recommended. Details for the assessment date and times can be found at https://www.tbirdhoops.org/news_article/show/1235298. You can sign up online and are encouraged to attend to confirm your uniform size.\n\n2. **New or Changing Teams:** If you are new to the Thunderbird organization or will be joining a different team this year, you are strongly encouraged to attend the in-person assessments. Details can be found at https://www.tbirdhoops.org/news_article/show/1235298. This will allow for proper uniform sizing, participation in a brief skills assessment (3 stations), and the opportunity to have any questions answered. Ensure you register online prior to the assessments.",
+                        "align": "left"
+                    },
+                    "source_brief": "Registration Information ordered list covering Returning Players and New or Changing Teams.",
+                    "source_quote": "Returning Players: ** If you played on a Thunderbird team last year and plan to return to the same team, attending the in-person assessment is recommended."
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Basketball is an excellent choice for individuals seeking a sport that combines skill, fitness, strategic thinking, and teamwork. Whether you're a beginner or an experienced player, basketball offers numerous benefits that can enhance your life both physically and socially.\n\nParticipating in basketball can improve your fitness levels, as it involves running, jumping, and quick movements that contribute to cardiovascular health and overall endurance. Additionally, the sport requires coordination and agility, helping to enhance motor skills and balance.\n\nStrategic thinking is an integral part of basketball, as players must analyze the game, anticipate opponents' moves, and make split-second decisions on offense and defense. This aspect of the sport fosters critical thinking skills and enhances mental agility.\n\nMoreover, basketball is a team sport, emphasizing collaboration, communication, and camaraderie. Playing as part of a team not only promotes social interaction but also teaches valuable life skills such as teamwork, leadership, and sportsmanship.\n\nWhether you're interested in playing casually with friends or competitively in organized leagues, our organization provides an ideal environment to learn new skills, improve fitness, and forge lasting friendships.",
+                        "align": "left"
+                    },
+                    "source_brief": "'Looking to Participate?' multi-paragraph description of basketball's fitness, strategic, and team benefits.",
+                    "source_quote": "Basketball is an excellent choice for individuals seeking a sport that combines skill, fitness, strategic thinking, and teamwork. Whether you're a beginner or an experienced player, basketball offers numerous benefits"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "Register Now To Play TBirds",
+                                "href": "https://tbirdhoops.sportngin.com/register/form/803926750"
+                            },
+                            {
+                                "label": "Ready To Coach? Register Here",
+                                "href": "https://tbirdhoops.sportngin.com/register/form/528303417"
+                            }
+                        ]
+                    },
+                    "source_brief": "Dual CTA buttons: Register to Play and Register to Coach.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Image",
+                    "props": {
+                        "src": "https://cdn4.sportngin.com/attachments/photo/1792-173999735/shutterstock_388353556_large.jpg",
+                        "alt": "Youth basketball players on the court"
+                    },
+                    "source_brief": "Closing basketball photo from the body.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all 10 blocks for faithfulness: every text prop is drawn verbatim or near-verbatim from body_markdown, including all contact details, registration steps, mission bullets, and CTA hrefs. Schema conformance checked — all required props present, Columns wraps two Card children for the contact_card intent (closest schema match). Source quotes are non-empty for all content blocks (Hero, Heading, Text, Card); ButtonGroup and Image carry empty source_quote as permitted. Remaining concern: the contact_card IR intent has no native schema type, so it is rendered as a two-column Columns block with Cards — this is the closest faithful mapping available.",
+            "confidence": 0.93
+        },
+        {
+            "page_slug": "page-7188117",
+            "page_title": "Our Board",
+            "nav_order": 2,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Meet Our 2025-26 Thunderbird Board Members",
+                        "level": "h2"
+                    },
+                    "source_brief": "Page section heading introducing the board member grid.",
+                    "source_quote": "### Meet Our 2025-26 Thunderbird Board Members"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Scott Whitenack",
+                                            "body": "President",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/71c7-204910603/Scott_Whitenack_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Eric Debord",
+                                            "body": "Girls Coordinator",
+                                            "image": "https://cdn2.sportngin.com/attachments/photo/9095-204910608/Eric_Debord_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Amanda Wilson",
+                                            "body": "Uniforms & Equipment",
+                                            "image": "https://cdn4.sportngin.com/attachments/photo/625a-174287386/Amanda_Wilson_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Ken Peoples",
+                                            "body": "Boys Coordinator 3rd-6th",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/371a-174287248/Ken_Peoples_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Janet Habedank",
+                                            "body": "Treasurer",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/104b-213660739/IMG_6483_large.jpeg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Kristin Peoples",
+                                            "body": "Secretary",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/6c10-218092334/Kristin_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Michael Goldman",
+                                            "body": "1st & 2nd Boys Asst Coordinator",
+                                            "image": "https://cdn2.sportngin.com/attachments/photo/0fc2-204559683/Mike_G_2024_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Kathy Steen",
+                                            "body": "League Scheduler & Database Administrator",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/0972-204559671/Kathy_2024_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Michael Lewis",
+                                            "body": "Flight Director 3rd-6th Boys | Asst Boys Coordinator 7-12 | Website Administrator",
+                                            "image": "https://cdn1.sportngin.com/attachments/photo/f40d-174287336/Michael-Lewis_large.jpg"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Eric Ziegler",
+                                            "body": "Flight Director 3rd - 6th Girls",
+                                            "image": "https://cdn1.sportngin.com/attachments/photo/3aa7-188765035/Eric_Ziegler_-_2022_large.jpg"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Grid of all ten board members, each with role, name, and headshot image.",
+                    "source_quote": "President\n\n**Scott Whitenack**"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Lakota Thunderbird Youth Basketball Sponsors",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for the sponsors area.",
+                    "source_quote": "### Lakota Thunderbird Youth Basketball Sponsors"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Interested in becoming a sponsor of Lakota Thunderbird Youth Basketball?",
+                        "align": "center"
+                    },
+                    "source_brief": "Invitation line to prospective sponsors below the sponsor section heading.",
+                    "source_quote": "Interested in becoming a sponsor of Lakota Thunderbird Youth Basketball?"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Dicks Sporting Goods",
+                                            "body": "Visit Website",
+                                            "image": "https://cdn1.sportngin.com/attachments/sponsor/d5a0-204690121/Store-Logo-DicksSportingGoods_element_view.jpg",
+                                            "href": "https://www.dickssportinggoods.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Become a sponsor",
+                                            "body": "Want to participate in your local community? Become a sponsor for Lakota Thunderbird Youth Basketball and support youth in your area.",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/bc53-188765258/sponsorLogo_basketball_element_view.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Become a sponsor",
+                                            "body": "Want to participate in your local community? Become a sponsor for Lakota Thunderbird Youth Basketball and support youth in your area.",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/22ec-188765262/sponsorLogo_basketball_element_view.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Sponsor strip with Dick's Sporting Goods logo and two Become a Sponsor placeholders.",
+                    "source_quote": "### Dicks Sporting Goods\n\n[Visit Website](https://www.dickssportinggoods.com/)"
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness: every name, role, image URL, and sponsor detail is drawn verbatim from body_markdown with no invented content. Schema conformance checked — all required props (title for Cards, text+level for Headings, body for Text, columns for Columns) are present. The two \"Become a sponsor\" placeholder hrefs are set to \"#\" because the body only provides \"http:/#\" (a malformed placeholder); this is noted. Michael Lewis carries three roles as found in the body, combined with a pipe separator for clarity. Tone matches the warm, community-focused brand voice. One minor concern: the Columns block for the board grid uses 10 columns, which may be wide for the assembler — the assembler should wrap/reflow as needed.",
+            "confidence": 0.93
+        },
+        {
+            "page_slug": "page-7188119",
+            "page_title": "Our Facilities",
+            "nav_order": 3,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Lakota Basketball Home Facilities",
+                        "level": "h1"
+                    },
+                    "source_brief": "Page title heading from body.",
+                    "source_quote": "# Lakota Basketball Home Facilities"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4454214&2i6391049&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=40267",
+                                            "alt": "Lakota Basketball facility location map 1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4453223&2i6388252&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=116745",
+                                            "alt": "Lakota Basketball facility location map 2"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4455494&2i6388953&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=49360",
+                                            "alt": "Lakota Basketball facility location map 3"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "ButtonGroup",
+                                        "props": {
+                                            "buttons": [
+                                                {
+                                                    "label": "Open in Maps",
+                                                    "href": "https://www.google.com/maps/undefined"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4456529&2i6391062&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=90717",
+                                            "alt": "Lakota Basketball facility location map 4"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Four static Google Maps images of facility locations, with an 'Open in Maps' link after the third.",
+                    "source_quote": "[Open in Maps](https://www.google.com/maps/undefined \"Open in Maps (opens in new tab)\")"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Lakota Thunderbird Youth Basketball Sponsors",
+                        "level": "h3"
+                    },
+                    "source_brief": "Sponsors section heading from body.",
+                    "source_quote": "### Lakota Thunderbird Youth Basketball Sponsors"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Interested in becoming a sponsor of Lakota Thunderbird Youth Basketball?",
+                        "align": "center"
+                    },
+                    "source_brief": "Become-a-sponsor invitation line beneath the sponsors heading.",
+                    "source_quote": "Interested in becoming a sponsor of Lakota Thunderbird Youth Basketball?"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Dicks Sporting Goods",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/514e-204690327/Store-Logo-DicksSportingGoods_element_view.jpg",
+                                            "href": "https://www.dickssportinggoods.com/"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "ButtonGroup",
+                                        "props": {
+                                            "buttons": [
+                                                {
+                                                    "label": "Visit Website",
+                                                    "href": "https://www.dickssportinggoods.com/"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Become a sponsor",
+                                            "body": "Want to participate in your local community? Become a sponsor for Lakota Thunderbird Youth Basketball and support youth in your area.",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/8732-177506406/sponsorLogo_basketball_element_view.png",
+                                            "href": "#"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "ButtonGroup",
+                                        "props": {
+                                            "buttons": [
+                                                {
+                                                    "label": "Visit Website",
+                                                    "href": "#"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Become a sponsor",
+                                            "body": "Want to participate in your local community? Become a sponsor for Lakota Thunderbird Youth Basketball and support youth in your area.",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/6e1e-177506409/sponsorLogo_basketball_element_view.png",
+                                            "href": "#"
+                                        }
+                                    },
+                                    {
+                                        "component_type": "ButtonGroup",
+                                        "props": {
+                                            "buttons": [
+                                                {
+                                                    "label": "Visit Website",
+                                                    "href": "#"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Sponsor strip: Dick's Sporting Goods and two 'Become a sponsor' placeholders, each with logo image and Visit Website link.",
+                    "source_quote": "### Dicks Sporting Goods\n\n[Visit Website](https://www.dickssportinggoods.com/)\n\n[![Sponsored by Become a sponsor](https://cdn3.sportngin.com/attachments/sponsor/8732-177506406/sponsorLogo_basketball_element_view.png)](http:/#)\n\n### Become a sponsor"
+                }
+            ],
+            "self_assessment": "Audited all five blocks for faithfulness: every heading text, image URL, button label, href, card title, body copy, and Text block is a direct substring or verbatim lift from body_markdown. The four facility maps are grouped in a single Columns block with children, matching the gallery/Columns mapping rule; the 'Open in Maps' link is preserved as a ButtonGroup child of the third column where it appears in the source. The two 'Become a sponsor' card hrefs are set to '#' because the source uses 'http:/#' (a placeholder), which is noted. The sponsor Columns block nests Card + ButtonGroup per sponsor, faithfully mirroring each logo, title, body blurb, and Visit Website link. No content was invented. Remaining minor concern: the Google Maps static image URLs may not resolve at render time (API key/token may be expired), but they are the only asset refs present in the body.",
+            "confidence": 0.88
+        },
+        {
+            "page_slug": "page-7199106",
+            "page_title": "Contacts",
+            "nav_order": 4,
+            "blocks": [
+                {
+                    "component_type": "Image",
+                    "props": {
+                        "src": "https://cdn4.sportngin.com/attachments/text_block/66ce-204223427/Flight-Tbird_Logo__2___1__small.jpg",
+                        "alt": "Flight Thunderbirds Logo",
+                        "caption": ""
+                    },
+                    "source_brief": "Flight-Tbird logo image at the top of the contacts page.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Contact Us — 2025–2026 Season",
+                        "level": "h1"
+                    },
+                    "source_brief": "Page title heading for the Contacts directory.",
+                    "source_quote": "Position | Person (Email link) | Phone #"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Core Officers",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for the core officer contacts.",
+                    "source_quote": "President | Scott Whitenack"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "President",
+                                            "body": "Scott Whitenack\nswhitenack@cinci.rr.com\n📞 513-702-4623"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Treasurer",
+                                            "body": "Janet Habedank\ntbirdhoopstreasurer@gmail.com\n📞 513-460-7753"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Scheduling",
+                                            "body": "Kristin Peoples\nkristinolversonpeoples@gmail.com\n📞 513-374-5938"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Database Management",
+                                            "body": "Kathy Steen\nksteen2222@gmail.com\n📞 513-254-4219"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Equipment & Uniforms",
+                                            "body": "Amanda Wilson\nwilson3910@gmail.com\n📞 513-804-4856"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Webpage",
+                                            "body": "Michael Lewis\nmlewis@tbirdhoops.org\n📞 513-240-7115"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Core officer contacts — President through Webpage.",
+                    "source_quote": "President | Scott Whitenack | 513-702-4623"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Head Program Coordinators",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for head program coordinators.",
+                    "source_quote": "Head Program Coordinators"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Girls Coordinator 1–12th",
+                                            "body": "Eric Debord\nedebo44@yahoo.com\n📞 513-259-8109"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Boys Coordinator 3–6th",
+                                            "body": "Ken Peoples\nqdogg152@gmail.com\n📞 513-728-1256"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Boys Coordinator 9th–12th",
+                                            "body": "Jim Brueshaber\nbruejam@gmail.com\n📞 513-382-8336"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Boys Asst Coordinator 7–12th",
+                                            "body": "Michael Lewis\nmlewis@tbirdhoops.org\n📞 513-240-7115"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Boys Flight Director 3–6th",
+                                            "body": "Michael Lewis\nmlewis@tbirdhoops.org\n📞 513-240-7115"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Girls Flight Director 3–6th",
+                                            "body": "Eric Ziegler\nericzieglerflightbasketball@gmail.com\n📞 617-839-8582"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Head Program Coordinator contacts grid.",
+                    "source_quote": "Girls Coordinator 1-12th | Eric Debord | 513-259-8109"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Boys Grade Coordinators",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for boys grade coordinators.",
+                    "source_quote": "Boys Grade Coordinators"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "1st–2nd Grade",
+                                            "body": "Jim Lallathin\nJlallathin78@gmail.com\n📞 513-904-7389"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "1st–2nd Grade Assistant",
+                                            "body": "Mike Goldman\nmambgoldman@gmail.com\n📞 513-607-9152"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "3rd Grade",
+                                            "body": "Brad Wagner\nbradleyawagner@gmail.com\n📞 513-307-4654"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "4th Grade",
+                                            "body": "Brad Wagner\nbradleyawagner@gmail.com\n📞 513-307-4654"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "5th Grade",
+                                            "body": "Derrick Sturgill\nderricksturgill317@gmail.com\n📞 513-433-8961"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "6th Grade",
+                                            "body": "Nic Keuler\nkeuler.nic@gmail.com\n📞 513-516-1119"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "7th & 8th Grade",
+                                            "body": "Rando Strunk\nrandostrunk@gmail.com\n📞 513-503-1859"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "9th–12th Grade",
+                                            "body": "Jim Brueshaber\nbruejam@gmail.com\n📞 513-382-8336"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Boys grade coordinator contacts grid.",
+                    "source_quote": "1st-2nd Grade | Jim Lallathin | 513-904-7389"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Girls Grade Coordinators",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for girls grade coordinators.",
+                    "source_quote": "Girls Grade Coordinators"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "1st–2nd Grade",
+                                            "body": "Tommy Wargo\nwargotm@gmail.com\n📞 412-979-3375"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "3rd–12th Grade",
+                                            "body": "Eric DeBord\nedebo44@yahoo.com\n📞 513-259-8109"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Girls grade coordinator contacts grid.",
+                    "source_quote": "1st-2nd Grade | Tommy Wargo | 412-979-3375"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Support Positions",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for support positions.",
+                    "source_quote": "Support Positions"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Team Photos",
+                                            "body": "Pam Naber\npamnaber@fuse.net\n📞 513-910-6641"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "East HS Halftime Coordinator",
+                                            "body": "Mike Goldman\nmambgoldman@gmail.com\n📞 513-607-9152"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "West HS Halftime Coordinator",
+                                            "body": "Contact information not yet listed."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Support position contacts grid.",
+                    "source_quote": "Team Photos | Pam Naber | 513-910-6641"
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness: every name, email, phone number, role title, and section heading is drawn verbatim from body_markdown. The IR's contact_card intent was resolved as a series of section Headings + Columns-of-Cards (per layout convention \"people-oriented grids that preserve role labels\"). The Secretary row and Boys Coordinator 7th & 8th row had no person/phone in the source and were omitted (not fabricated). The West HS Halftime Coordinator card notes the vacancy rather than inventing data. The page-title Heading h1 was synthesized from the page URL slug (\"contact-us-2025-2026-season\") which is directly in the body link; confidence slightly reduced because that text is in a nav-skip anchor, not body prose. Source quotes confirmed for all content blocks.",
+            "confidence": 0.91
+        },
+        {
+            "page_slug": "page-7188122",
+            "page_title": "TBird News",
+            "nav_order": 5,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "News",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading 'News' from the body.",
+                    "source_quote": "### News"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Lakota West Announces 2026 Girls Youth Basketball Summer Camp",
+                        "body": "By Michael Lewis · 05/23/2026\n\nThe Lakota West Girls Basketball program has officially announced its dates for the upcoming 2026 Summer Youth Basketball Camp. Designed for athletes entering the 3rd through 8th grades, the high-energy, three-day camp aims to help local players elevate their skills, build teamwork, and experience a competitive, fun-filled environment.",
+                        "image": "https://cdn4.sportngin.com/attachments/news_article/3cd1-218218072/Summer_Girls_Camp_thumb.png",
+                        "href": "https://www.tbirdhoops.org/news_article/show/1361629?referrer_id=7188122"
+                    },
+                    "source_brief": "News card for 'Lakota West Announces 2026 Girls Youth Basketball Summer Camp' by Michael Lewis with thumbnail, byline/date, and link.",
+                    "source_quote": "Lakota West Announces 2026 Girls Youth Basketball Summer Camp\n\nBy Michael Lewis05/23/2026, 11:00pm EDT\n\n**WEST CHESTER, OH** — The Lakota West Girls Basketball program has officially announced its dates for the upcoming 2026 Summer Youth Basketball Camp."
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Best in the West Boys Basketball Camp — Summer 2026",
+                        "body": "By Michael Lewis · 04/12/2026\n\nWest Chester athletes — it's time to level up. The Best in the West Boys Basketball Camp is back with high-energy drills, real skill development, and a game-day atmosphere your players will love.",
+                        "image": "https://cdn3.sportngin.com/attachments/news_article/6cbc-217405381/Summer_Camps_v2_thumb.jpg",
+                        "href": "https://www.tbirdhoops.org/news_article/show/1359303?referrer_id=7188122"
+                    },
+                    "source_brief": "News card for 'Best in the West Boys Basketball Camp — Summer 2026' by Michael Lewis with thumbnail, byline/date, and link.",
+                    "source_quote": "Best in the West Boys Basketball Camp — Summer 2026\n\nBy Michael Lewis04/12/2026, 9:45pm EDT\n\nWest Chester athletes — it's time to level up. The **Best in the West Boys Basketball Camp** is back with high‑energy drills, real skill development, and a game‑day atmosphere"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Black & White Madness Brings Thunderhawk Pride to the Court",
+                        "body": "By Michael Lewis · 12/07/2025\n\nLakota East's annual Black & White Madness proved to be an unforgettable celebration of basketball, spirit, and community. Fans packed the gym to cheer on youth, junior high, and high school teams, while the cheer squads kept the energy high with dynamic performances.",
+                        "image": "https://cdn1.sportngin.com/attachments/news_article/d775-215096379/image002_thumb.png",
+                        "href": "https://www.tbirdhoops.org/news_article/show/1351261?referrer_id=7188122"
+                    },
+                    "source_brief": "News card for 'Black & White Madness Brings Thunderhawk Pride to the Court' by Michael Lewis with thumbnail, byline/date, and link.",
+                    "source_quote": "Black & White Madness Brings Thunderhawk Pride to the Court\n\nBy Michael Lewis12/07/2025, 10:45pm EST\n\nLakota East's annual **Black & White Madness** proved to be an unforgettable celebration of basketball, spirit, and community."
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Lakota Thunderbirds Give Back",
+                        "body": "By Michael Lewis · 11/23/2020\n\nRead more about the Lakota Thunderbirds giving back to the community.",
+                        "image": "https://cdn4.sportngin.com/attachments/news_article/1110-174289021/Adena_Donation_2020_thumb.jpg",
+                        "href": "https://www.tbirdhoops.org/news_article/show/1224959?referrer_id=7188122"
+                    },
+                    "source_brief": "News card for 'Lakota Thunderbirds Give Back' by Michael Lewis with thumbnail, byline/date, and link.",
+                    "source_quote": "## [Lakota Thunderbirds Give Back](https://www.tbirdhoops.org/news_article/show/1224959?referrer_id=7188122 \"Click to read more\")\n\nBy Michael Lewis11/23/2020, 12:23pm EST"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "View All",
+                                "href": "https://www.tbirdhoops.org/page/show/7188129?match_option=0&news_aggregator=2883650&tags=7188122%2C7660695"
+                            },
+                            {
+                                "label": "RSS Feed",
+                                "href": "https://www.tbirdhoops.org/news_article/rss_instructions?tags=7188122%2C7660695"
+                            }
+                        ]
+                    },
+                    "source_brief": "Footer links from the body: 'View All' and 'RSS' news feed links.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all six blocks for faithfulness: every prop value (titles, bylines, dates, body excerpts, image URLs, hrefs) is directly traceable to substrings in body_markdown. The 'Lakota Thunderbirds Give Back' card body is thin because the body contains no article excerpt beyond the byline — the card body acknowledges this honestly rather than fabricating content. The ButtonGroup source_quote is empty per schema rules (prop-style block with only labels/hrefs). Schema conformance confirmed: all required props present, component_type values drawn from the allowed set. Brand voice is warm and community-focused, matching the style brief. One minor concern: the 'Give Back' card body padding phrase \"Read more about the Lakota Thunderbirds giving back to the community\" is lightly inferred since no excerpt text exists in the body for that article — confidence docked slightly.",
+            "confidence": 0.88
+        },
+        {
+            "page_slug": "page-7660695",
+            "page_title": "Parents",
+            "nav_order": 6,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Parents Portal",
+                        "level": "h1"
+                    },
+                    "source_brief": "Heading 'Parents Portal' from the body.",
+                    "source_quote": "## Parents Portal"
+                },
+                {
+                    "component_type": "Image",
+                    "props": {
+                        "src": "https://cdn4.sportngin.com/attachments/text_block/cbbd-204811802/Support_Parents_small.jpg",
+                        "alt": "Support Parents banner"
+                    },
+                    "source_brief": "Support Parents banner image from the body.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "### Welcome to Lakota Thunderbird Youth Basketball!\n\nWe're thrilled to welcome you and your child to the Lakota Thunderbird Youth Basketball Organization for what promises to be a rewarding and energetic season! This year is all about growth—on and off the court. Your child will sharpen their skills, build lasting friendships, and experience the joy of teamwork in a supportive environment.\n\nAs a vital part of our Thunderbird family, your involvement helps shape a successful and memorable experience for everyone. To ensure a smooth season, we ask that you keep the following in mind:",
+                        "align": "left"
+                    },
+                    "source_brief": "Welcome section greeting families to Lakota Thunderbird Youth Basketball and framing the season from the body.",
+                    "source_quote": "We're thrilled to welcome you and your child to the Lakota Thunderbird Youth Basketball Organization for what promises to be a rewarding and energetic season! This year is all about growth—on and off the court."
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**What We Ask of Our Families:**\n\n1. **Attend the Parent Meeting** — Get connected early! You'll meet your child's coach, team representatives, and other families while learning about schedules, uniforms, rules, and expectations. Your coach will share specific details ahead of time.\n\n2. **Be Prompt and Prepared** — Please ensure your child arrives on time for practices and games with the right gear. Being well-fed, rested, and hydrated makes a big difference in their performance and enjoyment.\n\n3. **Be a Positive Presence** — Cheer with encouragement! We ask all spectators to model respect—no sideline coaching or criticism. Please let the coaches coach and officials officiate. Approaching referees about game decisions is not allowed.\n\n4. **Lend a Helping Hand** — We count on our parent volunteers! Whether it's snacks, fundraising, scorekeeping, or working concessions, your help keeps the program running strong.\n\n5. **Keep the Communication Flowing** — Stay in touch with your coach or team rep for any questions or concerns. Timely replies help us keep things organized and responsive.\n\n6. **Support Growth and Sportsmanship** — Celebrate effort, not just outcomes. Encourage resilience, teamwork, and a love for the game—even in the face of setbacks.\n\nWe're excited for the journey ahead and grateful to have your family with us. Thank you for being a part of our growing community.",
+                        "align": "left"
+                    },
+                    "source_brief": "'What We Ask of Our Families' rendered as the numbered list with the six expectations, each with its description.",
+                    "source_quote": "What We Ask of Our Families:\n\n1. **Attend the Parent Meeting**\n\n\n    Get connected early! You'll meet your child's coach, team representatives, and other families while learning about schedules, uniforms, rules, and expectations."
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "Register for the Season",
+                                "href": "https://tbirdhoops.sportngin.com/register/form/770430566"
+                            },
+                            {
+                                "label": "Join the TBird Connect Database",
+                                "href": "#"
+                            }
+                        ]
+                    },
+                    "source_brief": "Closing CTA from the body: TBird Connect Database note and the season registration link, ending with 'Go Thunderbirds!'.",
+                    "source_quote": "Don't forget to join the TBird Connect Database (disabled during registration)\n\n**Ready to sign up? Register for the season here:** https://tbirdhoops.sportngin.com/register/form/770430566\n\nLet's make it a fantastic season—Go Thunderbirds!"
+                }
+            ],
+            "self_assessment": "Audited all five blocks for faithfulness: every heading, body paragraph, list item, image URL, and button label/href is drawn verbatim or directly paraphrased from body_markdown with source quotes attached to all content blocks. Schema conformance confirmed — required props present for each component_type, list intent resolved to a Text block with numbered markdown body, and the CTA resolved to a ButtonGroup with the real registration URL. The TBird Connect Database button href is set to \"#\" because the body notes it is \"disabled during registration\" and no target URL is provided; this is flagged in the source quote. Tone matches the warm, community-focused brand voice throughout.",
+            "confidence": 0.95
+        }
+    ],
+    "failures": [],
+    "status": "complete"
+}

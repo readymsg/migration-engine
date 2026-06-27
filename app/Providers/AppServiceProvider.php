@@ -16,10 +16,13 @@ use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SportNginExtractor;
 use App\Services\Generate\AnthropicBlockFillAgent;
 use App\Services\Generate\AnthropicIrPassAgent;
+use App\Services\Generate\Assembler;
+use App\Services\Generate\BlockCoercer;
 use App\Services\Generate\BlockFill;
 use App\Services\Generate\BlockFillAgent;
 use App\Services\Generate\BlockFillContextStore;
 use App\Services\Generate\BlockFillResultStore;
+use App\Services\Generate\BlockValidator;
 use App\Services\Generate\CacheBlockFillContextStore;
 use App\Services\Generate\CacheBlockFillResultStore;
 use App\Services\Generate\ContentLoader;
@@ -75,6 +78,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BlockFillContextStore::class, CacheBlockFillContextStore::class);
         $this->app->singleton(BlockFillResultStore::class, CacheBlockFillResultStore::class);
         $this->app->singleton(BlockFill::class);
+
+        // GENERATE stage 3 slice 2d — deterministic assembler. Singletons
+        // so DI gives every caller the same schema-bound instance and
+        // the artisan replay command resolves cleanly.
+        $this->app->singleton(BlockValidator::class);
+        $this->app->singleton(BlockCoercer::class);
+        $this->app->singleton(Assembler::class);
     }
 
     public function boot(): void
