@@ -234,7 +234,58 @@ Diff universe is EXACTLY `BlockFillResult.pages`. The assembler does NOT consult
 
 Canonical replayable `BlockFillResult` captured from a one-time real Sonnet 4.6 run against the tbirdhoops captured bodies. **Read by**: `AssemblerFixtureReplayTest`, the `engine:assemble-from-fixture` artisan command, and every downstream slice (draft-landing, preview, SCORE & LOG) that wants real FilledPages without re-spending LLM credits. **Regenerate** with `QUEUE_CONNECTION=sync php artisan engine:capture-tbirdhoops-block-fill` — costs ~1 Opus call (IR pass) + ~7 Sonnet calls (block-fill); no Firecrawl (`LocalDiskFirecrawlClient` reads from `storage/app/private/orgs/ngin-63620/scrapes/`). The captured run produced 7 FilledPages, status complete, and assembled with ZERO coercions of any kind under the current Assembler — `AssemblerFixtureReplayTest` enforces that going forward.
 
+## GENERATE — platform-block renderer (v1, slice 2e — deterministic, schema-aware)
+
+`App\Services\Generate\PlatformBlockRenderer::run(SitePlan, Manifest): PlatformRenderResult` is the renderer for `DecisionAction::PlatformDynamic` ledger entries — the pages PLAN classified as live-data features (Schedule, Roster, Teams, Divisions, Contacts, Calendar, News, etc.) that IR-pass deliberately filtered out before block-fill. Deterministic — NO LLM. Pure code over a closed PlatformBlockType → Puck-type table. Disjoint universe from the assembler by construction (the assembler reads `BlockFillResult.pages`; the renderer reads `SitePlan.ledger`).
+
+### Schema shape — two scoped methods, one provider
+
+`ComponentSchema` carries two methods that return disjoint sets:
+
+- `all()` / `get()` / `types()` — CONTENT components. The closed set the block-fill LLM may emit; the set the assembler validates against.
+- `platformBlocks()` — PLATFORM components. The closed set the renderer constructs from PLAN. The block-fill LLM is NEVER told about these.
+
+The "assembler is the one schema-aware validation point" property holds correctly scoped: validate→coerce→re-validate runs over CONTENT blocks (where fabrication risk lives). Platform blocks are constructed from a closed table — no LLM, no fabrication, no coerce/repair pipeline needed. When `ProductClient.getComponentSchema()` lands, it'll deliver one export with both sets, slotting into this shape with no re-merge.
+
+### PlatformBlockType → Puck mapping
+
+Every enum value in `App\Data\PlatformBlockType` maps to a single Puck component. v1 carries ONE prop — `org_id` from `Manifest.org_id`. No `team_id` (v1 doesn't walk team subtrees per the site-rebuild scope cut), no `layout` knob (no source signal), no baked data. **"Placeholder" doesn't mean placeholder text** — the renderer emits a structurally-valid `Platform<X>` block; the runtime React component owns the empty-state ("Roster will appear here when teams are added") when day-1 the database has no rows for that org_id.
+
+| `PlatformBlockType` | Puck `type` |
+| --- | --- |
+| `Schedule`, `Scores`, `Standings`, `Roster`, `Teams`, `Divisions`, `Contacts`, `Calendar`, `News` | `PlatformSchedule`, `PlatformScores`, `PlatformStandings`, `PlatformRoster`, `PlatformTeams`, `PlatformDivisions`, `PlatformContacts`, `PlatformCalendar`, `PlatformNews` |
+
+Drift between the enum and `platformBlocks()` is caught by `PlatformBlockRendererTest::every_platform_block_type_enum_has_a_schema_definition` — adding a 10th `PlatformBlockType` without a matching definition fails the test loud.
+
+### Faithful-rebuild guarantee + three defensive failure modes
+
+Diff universe is EXACTLY the `PlatformDynamic` ledger entries. Each entry → one `PuckOutput` in `pages` OR one `PlatformRenderFailure` in `failures`, exactly once. NEVER a blank PuckOutput, NEVER a silent absence — same posture as `AssemblyResult` / `BlockFillResult` / `IrPassResult`. The renderer surfaces three failure modes even though two are unreachable under current invariants (the discipline is what's caught real bugs in adjacent stages):
+
+1. **target-not-in-kept_pages** — defensive. `RootNavPlanner::decideIa` keeps PlatformDynamic pages in `kept_pages`, so this is currently unreachable. If PLAN ever drops them, the renderer surfaces the failure instead of silently skipping.
+2. **null platform_block_type on PlatformDynamic entry** — defensive. The planner only emits PlatformDynamic with a non-null type (`applyRecallBias` requires `platform_block_type !== null`; the two deterministic emitters always set it).
+3. **enum-with-no-schema-definition** — reachable in practice; catches enum/schema drift.
+
+`PlatformRenderStatus` has NO `Failed` case — the renderer is a leaf of a deterministic table lookup, no upstream signal can fail it wholesale. `Complete` when every entry rendered cleanly; `Partial` when ≥1 PlatformRenderFailure was surfaced.
+
+### Slug uses `PageSlug::of()` — same as content pages
+
+The renderer's PuckOutput `page_slug` comes from `PageSlug::of(InventoryPage)` — the same helper IR-pass and block-fill use, so platform-page slugs share a convention with content-page slugs (`page-{node_id}` when `page_node_id` is set, label-slug fallback otherwise). Single-sourced via `PageSlug` so a future planner change can't silently fork the slug rule.
+
+### The 2e/2f boundary
+
+Slice 2e produces ONE thing: `PlatformRenderResult`. It does NOT merge with `AssemblyResult`, does NOT build `createDraftSite()`'s `array<page_slug, page_json>` payload, does NOT call `createDraftSite()`, does NOT log conversion status. That's slice 2f's job (draft-landing). 2f folds `AssemblyResult.pages ⊎ PlatformRenderResult.pages` into one map, unions the failure streams, decides per-conversion status, and lands the draft.
+
+### Real-fixture replay
+
+`PlatformBlockRendererFixtureReplayTest` runs PLAN (with `FakeClassifierAgent`) + the renderer against the rootNav fixtures we already have — no LLM, no network. Confirmed outputs:
+
+- **tenacityvolleyball** → 2 platform PuckOutputs: TEAMS (name-matched → `PlatformTeams`, `page_slug=page-8116200`) and CALENDAR (Calendar node_type → `PlatformCalendar`, `page_slug=page-8115918`). Subsumed TEAMS children (11s & 12s, 13s & 14s, 15s-18s) are absent from the rendered pages — the parent's block represents them.
+- **langdondiamonds** → 1 platform PuckOutput: Calendar (Calendar node_type → `PlatformCalendar`, `page_slug=page-7507237`). Cross-fixture confirmation that the calendar route isn't tenacity-specific.
+- **tbirdhoops offline replay → 0 platform pages** is correct for the offline rootNav fixture, which contains no name-matching or NewsNode/Calendar pages. Whether tbirdhoops surfaces platform pages under a live PLAN run (real Haiku) is **unverified offline** — the LLM might classify pages the FakeClassifier keeps. The renderer ITSELF is validated against real platform pages via tenacityvolleyball + langdondiamonds; the tbirdhoops zero is a renderer-correctness signal ("doesn't phantom-render"), NOT a claim about the production tbirdhoops site's platform-content shape.
+
 ## Known gaps / next slices
+
+- **Nav slug ≠ page slug — 2f must reconcile before draft-landing.** `RootNavPlanner::slugOf()` uses `Str::slug($page->label)` ("home", "about-us") for `NavItem.page_slug`. `PageSlug::of()` uses `page-{page_node_id}` ("page-7188115") for IR-pass / block-fill / the slice-2e PlatformBlockRenderer. The tbirdhoops BlockFillResult fixture shows both conventions in one file: `style_brief.nav[].page_slug = "home"` while `pages[].page_slug = "page-7188115"`. When 2f folds `AssemblyResult.pages ⊎ PlatformRenderResult.pages` into the `array<page_slug, page_json>` payload for `ProductClient.createDraftSite()`, the nav entries WON'T resolve against the page-map keys — the rebuilt site has broken nav. Not a regression (this drift predates slice 2e); a known unsolved seam. 2f MUST reconcile by either (a) normalizing `NavItem.page_slug` to `PageSlug::of()` in the planner, or (b) building a label-slug → page-id index in the draft-landing layer and rewriting nav references before submitting to `createDraftSite()`. Until 2f lands, the engine produces correct page JSON but a nav structure that won't actually link to those pages.
 
 - **SE-platform CONTENT — page-level: handled. Block-level: NOT yet handled — and now CONFIRMED PRESENT IN REAL PUCK OUTPUT.** PLAN's phase 1.5 (`SePlatformContentDetector` + the body-content park in `RootNavPlanner`) parks pages whose ENTIRE body is SE platform/tutorial content (validated on tbirdhoops: SE Parents page + Unsubscribe page). Detector requires all three of: ≥3 outbound links to SE-platform-tutorial hosts, ≥0.70 ratio, ≥2 distinct SE-platform vocabulary phrases. **Block-level scrubbing still missing**, and slice 2d confirms it in real assembled output: the tbirdhoops Home `PuckOutput` (saved at `tests/Fixtures/blockfill/tbirdhoops.json`) contains a `ButtonGroup` block whose three buttons are `"Stay Connected to Your Team with SportsEngine"` (href `#`), `"SportsEngine for Apple Users"` (iTunes URL), and `"SportsEngine for Android Users"` (Google Play URL). The block-fill prompt has no rule against rendering SE-promo body sections; the deterministic assembler validates the ButtonGroup as schema-conformant and emits it faithfully. **This is the known-gap manifesting, not a regression** — page-level park is correctly NOT firing on Home (the page is overwhelmingly org content), but the embedded SE-promo block survives end-to-end. The first preview rendered from the fixture WILL show a SE-promo widget on the Home page until the block-level scrub slice lands. Project read: catch upstream via an IR-pass-prompt addendum ("skip body sections whose primary content is SE onboarding/tutorial") plus a downstream deterministic `SePlatformBlockScrubber` (post-assemble) reusing `SePlatformContentDetector`'s patterns at block level — two cheap reinforcing catches, neither in the block-fill prompt itself (would mix faithful-rendering with selective-omission). Path forward when the slice lands: a single Sonnet re-run of block-fill regenerates the fixture; reviewers diff the JSON to confirm the SE-promo ButtonGroup is gone.
 

@@ -14,6 +14,9 @@ final class DefaultPuckComponentSchema implements ComponentSchema
     /** @var array<string, ComponentDefinition>|null */
     private ?array $cache = null;
 
+    /** @var array<string, ComponentDefinition>|null */
+    private ?array $platformCache = null;
+
     public function all(): array
     {
         return $this->cache ??= [
@@ -114,5 +117,36 @@ final class DefaultPuckComponentSchema implements ComponentSchema
     public function types(): array
     {
         return array_keys($this->all());
+    }
+
+    // Platform-block definitions. v1 carries ONE prop — org_id — which the
+    // runtime block uses to query TeamLinkt's own data. No team_id (v1
+    // doesn't walk team subtrees), no layout (no source signal), no baked
+    // data. Empty-state on day 1 is rendered by the runtime React component
+    // when the org has no teams/games yet; the engine's job is just to
+    // place a structurally-valid platform block.
+    public function platformBlocks(): array
+    {
+        return $this->platformCache ??= [
+            'PlatformSchedule' => $this->platformDefinition('PlatformSchedule'),
+            'PlatformScores' => $this->platformDefinition('PlatformScores'),
+            'PlatformStandings' => $this->platformDefinition('PlatformStandings'),
+            'PlatformRoster' => $this->platformDefinition('PlatformRoster'),
+            'PlatformTeams' => $this->platformDefinition('PlatformTeams'),
+            'PlatformDivisions' => $this->platformDefinition('PlatformDivisions'),
+            'PlatformContacts' => $this->platformDefinition('PlatformContacts'),
+            'PlatformCalendar' => $this->platformDefinition('PlatformCalendar'),
+            'PlatformNews' => $this->platformDefinition('PlatformNews'),
+        ];
+    }
+
+    private function platformDefinition(string $type): ComponentDefinition
+    {
+        return new ComponentDefinition(
+            type: $type,
+            fields: [
+                'org_id' => new FieldDefinition(type: 'text', required: true),
+            ],
+        );
     }
 }

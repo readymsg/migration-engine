@@ -28,6 +28,7 @@ use App\Services\Generate\CacheBlockFillResultStore;
 use App\Services\Generate\ContentLoader;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\IrPassAgent;
+use App\Services\Generate\PlatformBlockRenderer;
 use App\Services\Plan\AnthropicClassifierAgent;
 use App\Services\Plan\ClassifierAgent;
 use App\Services\Plan\Planner;
@@ -85,6 +86,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BlockValidator::class);
         $this->app->singleton(BlockCoercer::class);
         $this->app->singleton(Assembler::class);
+
+        // GENERATE stage 3 slice 2e — deterministic platform-block renderer.
+        // Same posture as the assembler: schema-bound singleton so 2f's
+        // draft-landing orchestrator gets one instance via DI.
+        $this->app->singleton(PlatformBlockRenderer::class);
     }
 
     public function boot(): void

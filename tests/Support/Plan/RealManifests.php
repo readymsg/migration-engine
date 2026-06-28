@@ -190,6 +190,33 @@ final class RealManifests
         return $extractor->extract('https://www.tenacityvolleyball.com/');
     }
 
+    public static function tbirdhoops(): Manifest
+    {
+        $html = new FixtureHtmlFetcher;
+        $html->preloadFromFile(
+            requestedUrl: 'https://www.tbirdhoops.org/',
+            finalUrl: 'https://www.tbirdhoops.org/',
+            path: self::FIXTURES.'/tbirdhoops.homepage.html',
+        );
+
+        $nav = new FixtureRootNavFetcher;
+        $nav->preloadFromFile(7188115, self::FIXTURES.'/tbirdhoops.rootnav.json');
+        $nav->preloadFromFile(7188116, self::FIXTURES.'/tbirdhoops.node.7188116.json');
+        $nav->preloadFromFile(7660695, self::FIXTURES.'/tbirdhoops.node.7660695.json');
+
+        $uploader = new FakeAssetUploader;
+        $extractor = new SportNginExtractor(
+            $html,
+            $nav,
+            new FakeFirecrawlClient,
+            $uploader,
+            new BrandExtractor,
+            new SeCdnRehoster($uploader),
+        );
+
+        return $extractor->extract('https://www.tbirdhoops.org/');
+    }
+
     public static function langdondiamonds(): Manifest
     {
         $html = new FixtureHtmlFetcher;
