@@ -6,8 +6,16 @@
         "build": "vite build",
         "dev": "vite"
     },
+    "dependencies": {
+        "@measured/puck": "0.19.3",
+        "react": "18.3.1",
+        "react-dom": "18.3.1"
+    },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
+        "@types/react": "18.3.18",
+        "@types/react-dom": "18.3.5",
+        "@vitejs/plugin-react": "^5.0.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^3.1",
         "tailwindcss": "^4.0.0",

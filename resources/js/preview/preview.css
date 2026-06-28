@@ -1,0 +1,112 @@
+/* THROWAWAY (BUILD.md step 7). Minimal styles for the preview bundle.
+   Goal: render the engine's PuckOutput legibly so a reviewer can see
+   what was produced; NOT to look like the source SE site. Visual style
+   is intentionally generic — the rebuilt-site styling will come from
+   real GlobalStyleBrief application in a later slice. */
+
+:root {
+    color-scheme: light;
+    --pv-fg: #1a1a1a;
+    --pv-muted: #6b7280;
+    --pv-border: #e5e7eb;
+    --pv-bg: #ffffff;
+    --pv-accent: #1f3a93;
+    --pv-warn-bg: #fff7ed;
+    --pv-warn-fg: #9a3412;
+    --pv-warn-border: #fdba74;
+    --pv-fail-bg: #fef2f2;
+    --pv-fail-fg: #991b1b;
+    --pv-fail-border: #fca5a5;
+    --pv-ok-bg: #f0fdf4;
+    --pv-ok-fg: #166534;
+    --pv-ok-border: #86efac;
+}
+
+body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--pv-fg); background: #f6f7f8; }
+
+.preview-shell { max-width: 1080px; margin: 0 auto; padding: 16px; }
+.preview-shell--loading,
+.preview-shell--error { padding: 32px; }
+
+.preview-ribbon { border: 1px solid var(--pv-border); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; }
+.preview-ribbon--completed { background: var(--pv-ok-bg); border-color: var(--pv-ok-border); color: var(--pv-ok-fg); }
+.preview-ribbon--partial { background: var(--pv-warn-bg); border-color: var(--pv-warn-border); color: var(--pv-warn-fg); }
+.preview-ribbon--failed { background: var(--pv-fail-bg); border-color: var(--pv-fail-border); color: var(--pv-fail-fg); }
+.preview-ribbon__title { display: flex; gap: 12px; align-items: baseline; }
+.preview-ribbon__title strong { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+.preview-ribbon__meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; opacity: 0.85; }
+.preview-ribbon__counts { margin-top: 4px; font-size: 13px; }
+.preview-ribbon__list { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+.preview-ribbon__list li { margin: 2px 0; }
+.preview-ribbon__list code { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+
+.preview-nav { background: var(--pv-bg); border: 1px solid var(--pv-border); border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; }
+.preview-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.preview-nav__item { padding: 6px 10px; border-radius: 6px; }
+.preview-nav__item a { color: var(--pv-fg); text-decoration: none; font-weight: 500; }
+.preview-nav__item:hover { background: #f3f4f6; }
+.preview-nav__item--active { background: var(--pv-accent); }
+.preview-nav__item--active a { color: white; }
+.preview-nav__item--unresolved { border: 1px solid var(--pv-fail-border); background: var(--pv-fail-bg); color: var(--pv-fail-fg); cursor: help; }
+.preview-nav__item--external { border: 1px dashed var(--pv-border); color: var(--pv-muted); cursor: help; }
+.preview-nav__flag { display: inline-block; margin-left: 6px; font-weight: 700; }
+.preview-nav__flag--ext { font-weight: 400; }
+
+.preview-page { background: var(--pv-bg); border: 1px solid var(--pv-border); border-radius: 8px; overflow: hidden; }
+
+/* Per-block layout — generic, the goal is to show structure, not to look
+   like the source SE site. */
+.preview-block { padding: 16px 24px; }
+
+.preview-hero { position: relative; min-height: 280px; padding: 64px 32px; color: white; }
+.preview-hero__overlay { background: rgba(0,0,0,0.45); display: inline-block; padding: 16px 24px; border-radius: 4px; max-width: 720px; }
+.preview-hero__heading { margin: 0 0 8px; font-size: 28px; }
+.preview-hero__subheading { margin: 0 0 12px; }
+.preview-hero__cta { display: inline-block; background: white; color: var(--pv-fg); padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: 600; }
+
+.preview-heading { margin: 16px 24px; }
+.preview-heading--h1 { font-size: 32px; font-weight: 700; }
+.preview-heading--h2 { font-size: 26px; font-weight: 700; }
+.preview-heading--h3 { font-size: 22px; font-weight: 600; }
+.preview-heading--h4 { font-size: 18px; font-weight: 600; }
+.preview-heading--h5 { font-size: 16px; font-weight: 600; }
+.preview-heading--h6 { font-size: 14px; font-weight: 600; }
+
+.preview-text p { margin: 0 0 12px; line-height: 1.55; }
+.preview-text p:last-child { margin-bottom: 0; }
+
+.preview-image { margin: 16px 24px; padding: 0; }
+.preview-image img { max-width: 100%; height: auto; display: block; border-radius: 4px; }
+.preview-image figcaption { font-size: 13px; color: var(--pv-muted); margin-top: 4px; }
+.preview-image--missing { color: var(--pv-muted); font-style: italic; }
+
+.preview-columns { display: flex; gap: 16px; padding: 16px 24px; flex-wrap: wrap; }
+.preview-column { flex: 1 1 240px; border: 1px solid var(--pv-border); border-radius: 6px; padding: 12px; background: #fafafa; }
+.preview-column--w-1-2 { flex-basis: calc(50% - 8px); }
+.preview-column--w-1-3 { flex-basis: calc(33.333% - 11px); }
+.preview-column--w-2-3 { flex-basis: calc(66.666% - 6px); }
+.preview-column--w-1-4 { flex-basis: calc(25% - 12px); }
+.preview-column--w-3-4 { flex-basis: calc(75% - 4px); }
+.preview-column .preview-block { padding: 8px; }
+
+.preview-card { border: 1px solid var(--pv-border); border-radius: 6px; overflow: hidden; background: white; margin: 8px 0; padding: 0; display: block; text-decoration: none; color: inherit; }
+.preview-card__image { width: 100%; max-height: 200px; object-fit: cover; display: block; }
+.preview-card__body { padding: 12px 16px; }
+.preview-card__title { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.preview-card__text { margin: 0; color: var(--pv-muted); font-size: 14px; }
+.preview-card--linked:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+.preview-buttongroup { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 24px; }
+.preview-button { display: inline-block; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; border: 1px solid transparent; }
+.preview-button--primary { background: var(--pv-accent); color: white; }
+.preview-button--secondary { background: white; color: var(--pv-accent); border-color: var(--pv-accent); }
+.preview-button--ghost { color: var(--pv-accent); background: transparent; }
+
+.preview-platform { border: 2px dashed var(--pv-accent); background: #f8faff; border-radius: 8px; margin: 16px 24px; padding: 24px; text-align: center; }
+.preview-platform__label { display: inline-block; background: var(--pv-accent); color: white; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+.preview-platform__copy { margin-top: 12px; color: var(--pv-muted); }
+.preview-platform__meta { margin-top: 8px; font-size: 12px; color: var(--pv-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.preview-unknown { background: var(--pv-fail-bg); color: var(--pv-fail-fg); border: 1px solid var(--pv-fail-border); border-radius: 6px; margin: 8px 24px; padding: 12px 16px; font-size: 13px; }
+
+.preview-empty { padding: 48px; text-align: center; color: var(--pv-muted); }
