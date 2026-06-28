@@ -26,6 +26,7 @@ use App\Services\Generate\BlockValidator;
 use App\Services\Generate\CacheBlockFillContextStore;
 use App\Services\Generate\CacheBlockFillResultStore;
 use App\Services\Generate\ContentLoader;
+use App\Services\Generate\DraftLanding;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\IrPassAgent;
 use App\Services\Generate\PlatformBlockRenderer;
@@ -91,6 +92,13 @@ class AppServiceProvider extends ServiceProvider
         // Same posture as the assembler: schema-bound singleton so 2f's
         // draft-landing orchestrator gets one instance via DI.
         $this->app->singleton(PlatformBlockRenderer::class);
+
+        // GENERATE stage 3 slice 2f — draft-landing orchestrator. Folds
+        // the two PuckOutput streams + reconciles nav + calls
+        // ProductClient::createDraftSite. Singleton so the ProductClient
+        // binding (StubProductClient today, real HTTP later) flows
+        // through DI consistently.
+        $this->app->singleton(DraftLanding::class);
     }
 
     public function boot(): void

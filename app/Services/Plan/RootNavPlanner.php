@@ -17,6 +17,7 @@ use App\Data\PageInventory;
 use App\Data\PlatformBlockType;
 use App\Data\SitePlan;
 use App\Services\Generate\ContentLoader;
+use App\Services\Generate\PageSlug;
 use Illuminate\Support\Str;
 use Spatie\LaravelData\DataCollection;
 
@@ -568,6 +569,7 @@ final class RootNavPlanner implements Planner
                     confidence: $resp->confidence,
                 );
             }
+
             // High-confidence Park — passthrough with the model's own reason.
             return new DecisionEntry(
                 target: $target,
@@ -717,8 +719,13 @@ final class RootNavPlanner implements Planner
         return 'label:'.Str::slug($page->label);
     }
 
+    // Single source of truth: defer to PageSlug::of() so NavItem.page_slug
+    // matches the slug IR-pass, block-fill, the assembler, and the platform-
+    // block renderer all use. A fork here would break nav references on
+    // the rebuilt site — every consumer that looks up a page by slug
+    // would silently miss-match. See PageSlug docblock.
     private function slugOf(InventoryPage $page): string
     {
-        return Str::slug($page->label !== '' ? $page->label : 'page');
+        return PageSlug::of($page);
     }
 }
