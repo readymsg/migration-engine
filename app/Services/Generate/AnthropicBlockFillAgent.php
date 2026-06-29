@@ -265,17 +265,25 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
         $blocks = [];
         $rawBlocks = $decoded['blocks'] ?? [];
         // Schema declares `blocks` as a required array. If Sonnet emits a
-        // non-array value, the gateway's tool-call schema validation
-        // SHOULD reject it before we get here — refusing to silently
-        // accept it makes the faithful-rebuild guarantee hold by
-        // construction rather than by transport accident. If laravel/ai
-        // ever changes its structured-output path away from tool calls,
-        // this throw becomes the load-bearing check.
+        // non-array value, refuse to silently accept it — that makes the
+        // faithful-rebuild guarantee hold by construction.
+        //
+        // Diagnosed cause: on the laravel/ai tool-call structured-output
+        // path, Sonnet sometimes emits the `blocks` array as a STRINGIFIED
+        // JSON array (a string containing the JSON instead of a native
+        // array). The model also under-escapes literal quotes inside the
+        // stringified content (e.g. `("EP")` in a rulebook body breaks the
+        // inner escape layer), so the inner string isn't valid JSON either.
+        // Native `output_config` structured-outputs fixes this but
+        // requires a discriminated per-component-type prop schema — see
+        // CLAUDE.md "Known gaps" for the scoped slice definition.
         if (! is_array($rawBlocks)) {
             $type = get_debug_type($rawBlocks);
             throw new RuntimeException(
                 "Block-fill response had non-array 'blocks' field for {$input->page_slug} ".
-                "(got {$type}); structured-output validation should have caught this — gateway change?"
+                "(got {$type}). Sonnet stringified the blocks array on the tool-call path ".
+                '(known quirk on legal-document-shaped bodies with embedded quoted phrases) — '.
+                'the native output_config path fixes this but requires a schema rewrite, see CLAUDE.md.'
             );
         }
         foreach ($rawBlocks as $i => $rawBlock) {
@@ -283,7 +291,8 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
                 $type = get_debug_type($rawBlock);
                 throw new RuntimeException(
                     "Block-fill response had non-array block at index {$i} for {$input->page_slug} ".
-                    "(got {$type}); structured-output validation should have caught this — gateway change?"
+                    "(got {$type}). Sonnet emitted a non-object block on the tool-call path — ".
+                    'unexpected shape, see CLAUDE.md "Known gaps" for the stringify diagnosis.'
                 );
             }
             $rawProps = $rawBlock['props'] ?? [];

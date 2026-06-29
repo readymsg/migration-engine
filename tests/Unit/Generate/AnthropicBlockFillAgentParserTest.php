@@ -19,12 +19,15 @@ use Spatie\LaravelData\DataCollection;
 use Tests\TestCase;
 
 // Tests the parser-throw hardening in AnthropicBlockFillAgent::
-// filledPageFromDecoded. The parser used to silently `continue` past
-// non-array `blocks` entries — an unreachable code path today (the
-// laravel/ai Anthropic gateway uses tool-call structured output with
-// strict schema validation) BUT a latent silent-loss vector if the
-// gateway ever changes. Hardening converts "safe by transport accident"
-// into "safe by construction."
+// filledPageFromDecoded.
+//
+// Diagnosed cause (CLAUDE.md "Known gaps"): on the laravel/ai tool-call
+// structured-output path, Sonnet sometimes emits the `blocks` array as
+// a STRINGIFIED JSON array (a string containing JSON instead of a
+// native array), and under-escapes literal quotes inside the
+// stringified content. The pre-hardening parser silently `continue`-d
+// past this and emitted an empty FilledPage; the hardening converts
+// this to a visible BlockFillFailure.
 //
 // AnthropicBlockFillAgent is final + filledPageFromDecoded is private,
 // so we invoke via reflection rather than subclassing. The production
