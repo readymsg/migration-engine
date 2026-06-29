@@ -264,31 +264,47 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
         /** @var array<int, FilledBlock> $blocks */
         $blocks = [];
         $rawBlocks = $decoded['blocks'] ?? [];
-        if (is_array($rawBlocks)) {
-            foreach ($rawBlocks as $rawBlock) {
-                if (! is_array($rawBlock)) {
-                    continue;
-                }
-                $rawProps = $rawBlock['props'] ?? [];
-                /** @var array<string, mixed> $props */
-                $props = is_array($rawProps) ? $rawProps : [];
-
-                $sourceQuote = $rawBlock['source_quote'] ?? null;
-                $sourceQuote = is_string($sourceQuote) && $sourceQuote !== ''
-                    ? $sourceQuote
-                    : null;
-
-                $blocks[] = new FilledBlock(
-                    component_type: is_string($rawBlock['component_type'] ?? null)
-                        ? $rawBlock['component_type']
-                        : '',
-                    props: $props,
-                    source_brief: is_string($rawBlock['source_brief'] ?? null)
-                        ? $rawBlock['source_brief']
-                        : '',
-                    source_quote: $sourceQuote,
+        // Schema declares `blocks` as a required array. If Sonnet emits a
+        // non-array value, the gateway's tool-call schema validation
+        // SHOULD reject it before we get here — refusing to silently
+        // accept it makes the faithful-rebuild guarantee hold by
+        // construction rather than by transport accident. If laravel/ai
+        // ever changes its structured-output path away from tool calls,
+        // this throw becomes the load-bearing check.
+        if (! is_array($rawBlocks)) {
+            $type = get_debug_type($rawBlocks);
+            throw new RuntimeException(
+                "Block-fill response had non-array 'blocks' field for {$input->page_slug} ".
+                "(got {$type}); structured-output validation should have caught this — gateway change?"
+            );
+        }
+        foreach ($rawBlocks as $i => $rawBlock) {
+            if (! is_array($rawBlock)) {
+                $type = get_debug_type($rawBlock);
+                throw new RuntimeException(
+                    "Block-fill response had non-array block at index {$i} for {$input->page_slug} ".
+                    "(got {$type}); structured-output validation should have caught this — gateway change?"
                 );
             }
+            $rawProps = $rawBlock['props'] ?? [];
+            /** @var array<string, mixed> $props */
+            $props = is_array($rawProps) ? $rawProps : [];
+
+            $sourceQuote = $rawBlock['source_quote'] ?? null;
+            $sourceQuote = is_string($sourceQuote) && $sourceQuote !== ''
+                ? $sourceQuote
+                : null;
+
+            $blocks[] = new FilledBlock(
+                component_type: is_string($rawBlock['component_type'] ?? null)
+                    ? $rawBlock['component_type']
+                    : '',
+                props: $props,
+                source_brief: is_string($rawBlock['source_brief'] ?? null)
+                    ? $rawBlock['source_brief']
+                    : '',
+                source_quote: $sourceQuote,
+            );
         }
 
         $confidence = $decoded['confidence'] ?? 0.0;
