@@ -1,0 +1,2310 @@
+{
+    "style_brief": {
+        "brand_voice": "Warm, community-driven, and down-to-earth — the voice of a volunteer-run small-town ball association that speaks directly to families, players, coaches, and sponsors like neighbours. Tone is encouraging and practical, mixing genuine gratitude (especially toward sponsors and volunteers) with a playful, fun-loving streak (the adult softball \"Did Ya Know?\" rule explainers and country-music sponsor thank-yous). Information is delivered clearly and helpfully so parents and coaches always know what to do next.",
+        "palette": [],
+        "layout_conventions": [],
+        "nav": [
+            {
+                "label": "Home",
+                "page_slug": "page-7507227",
+                "order": 0
+            },
+            {
+                "label": "About Us",
+                "page_slug": "page-7507229",
+                "order": 1
+            },
+            {
+                "label": "LD 2026 Sponsorships",
+                "page_slug": "page-9375862",
+                "order": 2
+            },
+            {
+                "label": "League Registration",
+                "page_slug": "page-7507235",
+                "order": 3
+            },
+            {
+                "label": "Langdon Leagues",
+                "page_slug": "page-9366269",
+                "order": 4
+            },
+            {
+                "label": "Tournament Registration",
+                "page_slug": "page-8956868",
+                "order": 5
+            },
+            {
+                "label": "Langdon Tournaments",
+                "page_slug": "page-9366270",
+                "order": 6
+            },
+            {
+                "label": "Fundraising",
+                "page_slug": "page-7556862",
+                "order": 7
+            },
+            {
+                "label": "Exec.Meeting Minutes",
+                "page_slug": "page-7556989",
+                "order": 8
+            },
+            {
+                "label": "Calendar",
+                "page_slug": "page-7507237",
+                "order": 9
+            },
+            {
+                "label": "Events",
+                "page_slug": "page-7507238",
+                "order": 10
+            },
+            {
+                "label": "News",
+                "page_slug": "page-7507236",
+                "order": 11
+            }
+        ]
+    },
+    "pages": [
+        {
+            "page_slug": "page-7507227",
+            "page_title": "Home",
+            "nav_order": 0,
+            "blocks": [
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "- Thu Jun 25 @ 7:15pm — Fishhooks Reg 2026 **16** vs Why Not! Reg 2026 **16** — Final\n- Fri Jun 26 @ 6:00pm — BROOKS BRONCOS **2** vs Minors Summer Ball **16** — Final\n- Fri Jun 26 @ 6:30pm — Maj Chestermere 1 Royal vs Majors Strikers 1 Red — Scheduled\n- Sat Jun 27 @ 9:00am — NorthWest **9** vs Juniors Summer Ball **11** — Final\n- Sat Jun 27 @ 9:00am — ROCKY MOUNTAIN RED **6** vs Minors Summer Ball **18** — Final\n- Sat Jun 27 @ 3:00pm — MEDICINE HAT MAV'S **5** vs Minors Summer Ball **16** — Final\n- Sat Jun 27 @ 3:00pm — Bow Valley **7** vs Juniors Summer Ball **15** — Final\n- Sun Jun 28 @ 9:00am — Juniors Summer Ball **11** vs Airdrie A's **3** — Final\n- Sun Jun 28 @ 12:00pm — Juniors Summer Ball vs Foothills Cardinals — Cancelled\n- Sun Jun 28 @ 12:00pm — confederation vs Minors Summer Ball — Cancelled\n- Mon Jun 29 @ 7:15pm — Average AF Reg 2026 vs Brew Crew Reg 2026 — Scheduled\n- Mon Jun 29 @ 7:15pm — Hits N Giggles Reg 2026 vs AlcoBallics Reg 2026 — Scheduled\n- Tue Jun 30 @ 7:15pm — Sportin Wood Reg 2026 vs Tripods & Flashers Reg 2026 — Scheduled\n- Tue Jun 30 @ 7:15pm — Brew Crew Reg 2026 vs Fishhooks Reg 2026 — Scheduled\n- Thu Jul 2 @ 6:30pm — MasterBatters Reg 2026 vs Why Not! Reg 2026 — Scheduled\n- Thu Jul 2 @ 6:30pm — Beerhunters Reg 2026 vs Yank Deez Reg 2026 — Scheduled\n- Thu Jul 2 @ 7:45pm — MasterBatters Reg 2026 vs Yank Deez Reg 2026 — Scheduled\n- Thu Jul 2 @ 7:45pm — Beerhunters Reg 2026 vs Why Not! Reg 2026 — Scheduled\n- Fri Jul 3 @ 6:00pm — Foothills Cardinals vs Juniors Summer Ball — Scheduled\n- Sat Jul 4 @ 10:00am — D8 TEENAGE TITANS vs Juniors Summer Ball — Scheduled\n- Sat Jul 4 @ 4:00pm — Airdrie A's vs Juniors Summer Ball — Scheduled\n- Sun Jul 5 @ 9:00am — FOOTHILLS vs Juniors Summer Ball — Scheduled",
+                        "align": "left"
+                    },
+                    "source_brief": "Upcoming/recent game schedule feed from the body as a list (date, matchup, score/status).",
+                    "source_quote": "Thu Jun 25 @ 7:15pmFishhooks Reg 202616Why Not! Reg 202616Final"
+                },
+                {
+                    "component_type": "Hero",
+                    "props": {
+                        "heading": "Welcome to the Langdon Diamonds",
+                        "subheading": "Welcome to Langdon Little League, Langdon Softball and Langdon Girls Fastpitch!"
+                    },
+                    "source_brief": "Lead welcome message greeting Langdon Little League, Langdon Softball and Langdon Girls Fastpitch.",
+                    "source_quote": "Welcome to the Langdon Diamonds\n\nWelcome to Langdon Little League, Langdon Softball and Langdon Girls Fastpitch!"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "For Registration: Please go to the **Registration TAB**\n\nFor information about Langdon Little League, Langdon Adult Softball & Langdon Girls Fastpitch, please go to the **About Us** tab.\n\nIron Horse Diamonds are closed from **October – April** (Weather Dependant).\n\nFor additional information please email: **RENTALS@LANGDONDIAMONDS.COM**",
+                        "align": "left"
+                    },
+                    "source_brief": "Orientation copy directing visitors to Registration tab, About Us tab, Oct–April closure note, and contact email.",
+                    "source_quote": "For Registration: Please go to the Registration TAB\n\nFor Information in regards to Langdon Little League / Langdon Adult Softball & Langdon Girls Fastpitch, Please go to ABOUT US tab.\n\nIron Horse Diamonds Are closed from October - April (Weather Dependant)\n\nFor Additional information please email:\n\nRENTALS@LANGDONDIAMONDS.COM"
+                },
+                {
+                    "component_type": "Image",
+                    "props": {
+                        "src": "https://cdn1.sportngin.com/attachments/contact/43b3-210532335/iron_horse_-_Copy.jpg",
+                        "alt": "BOOK THE LANGDON IRON HORSE DIAMONDS LANGDON PARK / IRON HORSE FIELDS",
+                        "caption": "Book the Langdon Iron Horse Diamonds — Langdon Park / Iron Horse Fields"
+                    },
+                    "source_brief": "Booking image for Langdon Iron Horse Diamonds / Langdon Park / Iron Horse Fields.",
+                    "source_quote": "BOOK THE LANGDON IRON HORSE DIAMONDSLANGDON PARK / IRON HORSE FIELDS"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "Langdon Softball Facebook Group",
+                                "href": "https://www.facebook.com/share/g/1AthpfwXUr/"
+                            },
+                            {
+                                "label": "Langdon Little League Facebook Group",
+                                "href": "https://www.facebook.com/share/g/16D3p6iH3D/"
+                            },
+                            {
+                                "label": "Online Diamond Booking Website",
+                                "href": "https://www.gomotionapp.com/team/canlsa/page/home"
+                            }
+                        ]
+                    },
+                    "source_brief": "Social/booking links: Langdon Softball Facebook Group, Langdon Little League Facebook Group, Online Diamond Booking Website.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Western Canada Regional Little League Juniors Championship",
+                        "body": "The Western Canada Regional Little League Juniors Championship is coming up! Click below for tournament information, game schedule, and sponsorship details.",
+                        "image": "https://cdn3.sportngin.com/attachments/photo/b17d-218292592/Junior_League_Championship_2026_West__1__large.jpg",
+                        "href": "https://www.langdondiamonds.ca/page/show/9519259-western-regional-champi-western-regional-championship-llc-"
+                    },
+                    "source_brief": "Western Canada Regional Little League Juniors Championship promo card with info link and tournament/schedule/sponsorship note.",
+                    "source_quote": "Western Canada Regional Little League Juniors Championship\n\n#### [CLICK HERE FOR WESTERN REGIONAL CHAMPIONSHIP INFORMATION]\n\n*TOURNAMENT INFORMATION\n*GAME SCHEDULE\n*SPONSORSHIP"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "2026 Langdon Days",
+                        "body": "Help Sponsor 2026 Langdon Days! Click below to view sponsorship packages and get involved.",
+                        "image": "https://cdn1.sportngin.com/attachments/photo/133e-217161333/LD_2026_large.jpg",
+                        "href": "https://forms.gle/JHeoswxbXVPf18EA6"
+                    },
+                    "source_brief": "2026 Langdon Days countdown promo card with sponsorship packages CTA and 'Help Sponsor 2026 Langdon Days!' line.",
+                    "source_quote": "2026 LANGDON DAYS\n\n#### [CLICK HERE FOR LANGDON DAYS SPONSORSHIP PACKAGES]\n\nHELP SPONSOR 2026 LANGDON DAYS!"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/d80c-215917437/Rental_Rates_Per_Field_large.jpg",
+                                            "alt": "Rental Rates Per Field"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/2d7c-215917443/Langdon_Park_Tournament_Packages_large.jpg",
+                                            "alt": "Langdon Park Tournament Packages"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/ed39-215917453/Langdon_Park_Tournament_Packages_Pg_2_large.jpg",
+                                            "alt": "Langdon Park Tournament Packages Page 2"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery of rental rate and Langdon Park tournament package poster images.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness: every prop value (headings, body copy, URLs, image srcs, button labels/hrefs) is traceable to a verbatim substring in body_markdown. Schema conformance checked — all required props present, component_types match the allowed schema list, and the social_links intent (not in schema) was resolved to ButtonGroup per instructions. Source quotes are non-empty for all content blocks (Hero, Text, Card) and empty-OK for ButtonGroup and the Columns wrapper. The Card body copy for the championship and Langdon Days cards is a brief synthesis of the bullet points and CTA labels present in the body rather than a direct quote, but all facts (tournament info, game schedule, sponsorship, help sponsor line) are present verbatim. Confidence is moderate because the game schedule list is very long and the body doesn't provide a compact summary format — the Text block faithfully renders all entries but may be visually unwieldy without a dedicated schedule component.",
+            "confidence": 0.82
+        },
+        {
+            "page_slug": "page-7507229",
+            "page_title": "About Us",
+            "nav_order": 1,
+            "blocks": [
+                {
+                    "component_type": "Hero",
+                    "props": {
+                        "heading": "Welcome to Langdon Little League & Langdon Softball",
+                        "subheading": "We are excited for the season to get underway!"
+                    },
+                    "source_brief": "Lead hero greeting and season-excitement message from the body.",
+                    "source_quote": "Welcome to Langdon Little League & Langdon Softball\n\nWe are excited for the season to get underway!"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "The Langdon Little League & Iron Horse Collab board has been working hard behind the scenes to ensure everything is prepped and ready to go for another great year with all the players!\n\n- For **PARENT** information — click on **FOR PARENTS**\n- For **COACH** information — click on **FOR COACHES**\n- For **ADULT Langdon Softball** information — click on **LANGDON SOFTBALL**\n- View our Diamond Locations — under **FACILITIES**\n- Have a question for our Board? — Go to **OUR BOARD**",
+                        "align": "left"
+                    },
+                    "source_brief": "Body copy about the board prepping for the season and routing directions to key sections.",
+                    "source_quote": "The Langdon Little League & Iron Horse Collab board has been working hard behind the scenes to ensure everything is prepped and ready to go for another great year with all the players!"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/8f57-208002403/IMG_0338_large.jpg",
+                                            "alt": "Langdon Little League & Langdon Softball — photo 1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/cd9d-179546740/Little_League_large.JPG",
+                                            "alt": "Langdon Little League — photo 2"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Two About Us photos from the body displayed side by side.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all three blocks for faithfulness: Hero heading and subheading are verbatim from the body; Text body draws directly from the board prep sentence and the five routing bullets present in the body (link labels inferred from the body's own phrasing, not invented); Columns wraps the two image URLs exactly as listed in body_image_urls and body_markdown — no fabricated alt text beyond descriptive labels since the body provides no captions. Schema conformance confirmed: all required props present, no extra props added. Tone is warm and community-driven per brand voice. One minor concern: the routing directions are rendered as a bulleted markdown list (bold labels matching the body's ALL-CAPS cues) but the body itself provides no actual hrefs for those navigation links, so no href props were set. source_quote is intentionally empty on the Columns wrapper as children carry their own references.",
+            "confidence": 0.88
+        },
+        {
+            "page_slug": "page-7507231",
+            "page_title": "Our Board",
+            "nav_order": 12,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Board",
+                        "level": "h3"
+                    },
+                    "source_brief": "Render the 'Board' heading from the body.",
+                    "source_quote": "### Board"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Langdon Little League and Langdon Softball holds monthly board meetings each month.\n\nActive members in good standing of Langdon Little League and Langdon Softball are welcome to attend board meetings. Please contact the board Secretary to confirm the meeting time and location.",
+                        "align": "left"
+                    },
+                    "source_brief": "Render the body note about monthly board meetings and contacting the Secretary to confirm meeting time and location.",
+                    "source_quote": "Langdon Little League and Langdon Softball holds monthly board meetings each month.\n\nActive members in good standing of Langdon Little League and Langdon Softball are welcome to attend board meetings. Please contact the board Secretary to confirm the meeting time and location."
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Regan Turner",
+                                            "body": "President",
+                                            "image": "https://cdn4.sportngin.com/attachments/contact/7b4b-182518632/regan.jpg"
+                                        },
+                                        "source_brief": "Board member card: Regan Turner – President",
+                                        "source_quote": "### ReganTurner\n\nPresident"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Robin Smart",
+                                            "body": "Apparel & Safety Coordinator",
+                                            "image": "https://cdn3.sportngin.com/attachments/contact/d2bb-182518883/Bird.jpg"
+                                        },
+                                        "source_brief": "Board member card: Robin Smart – Apparel & Safety Coordinator",
+                                        "source_quote": "### RobinSmart\n\nApparel & Safety Coordinator"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Trish Nordquist",
+                                            "body": "Adult Softball Tournament Coordinator",
+                                            "image": "https://cdn2.sportngin.com/attachments/contact/9765-214009057/trish.jpg"
+                                        },
+                                        "source_brief": "Board member card: Trish Nordquist – Adult Softball Tournament Coordinator",
+                                        "source_quote": "### Trish Nordquist\n\nAdult Softball Tournament Coordinator"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Carly Kurta",
+                                            "body": "Venom Girls Fast Pitch Coordinator",
+                                            "image": "https://cdn1.sportngin.com/attachments/contact/17c1-217719108/Carly.jpg"
+                                        },
+                                        "source_brief": "Board member card: Carly Kurta – Venom Girls Fast Pitch Coordinator",
+                                        "source_quote": "### CarlyKurta\n\nVenom Girls Fast Pitch Coordinator"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Shannon Zingel",
+                                            "body": "Vice President",
+                                            "image": "https://cdn4.sportngin.com/attachments/contact/f0ad-218040231/Shannon.jpg"
+                                        },
+                                        "source_brief": "Board member card: Shannon Zingel – Vice President",
+                                        "source_quote": "### Shannon Zingel\n\nVice President"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Meghan Tudor",
+                                            "body": "Langdon Softball Coordinator",
+                                            "image": "https://cdn4.sportngin.com/attachments/contact/5f6a-207995962/Meghan.jpg"
+                                        },
+                                        "source_brief": "Board member card: Meghan Tudor – Langdon Softball Coordinator",
+                                        "source_quote": "### MeghanTudor\n\nLangdon Softball Coordinator"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Michelle Gordon",
+                                            "body": "Grants / Sponsorships / Fundraising",
+                                            "image": "https://cdn1.sportngin.com/attachments/contact/67fa-207097858/Michelle_Gordon.jpg"
+                                        },
+                                        "source_brief": "Board member card: Michelle Gordon – Grants/Sponsorships/Fundraising",
+                                        "source_quote": "### MichelleGordon\n\nGrants / Sponsorships / Fundraising"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Holly Galambos",
+                                            "body": "Casino Coordinator"
+                                        },
+                                        "source_brief": "Board member card: Holly Galambos – Casino Coordinator",
+                                        "source_quote": "### HollyGalambos\n\nCasino Coordinator"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Erika Paterson",
+                                            "body": "Treasurer",
+                                            "image": "https://cdn4.sportngin.com/attachments/contact/9013-196396280/Erika.jpg"
+                                        },
+                                        "source_brief": "Board member card: Erika Paterson – Treasurer",
+                                        "source_quote": "### ErikaPaterson\n\nTreasurer"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Shaylan Musgreave",
+                                            "body": "Blast Ball Coordinator"
+                                        },
+                                        "source_brief": "Board member card: Shaylan Musgreave – Blast Ball Coordinator",
+                                        "source_quote": "### ShaylanMusgreave\n\nBlast Ball Coordinator"
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Shelly Dougall",
+                                            "body": "Secretary"
+                                        },
+                                        "source_brief": "Board member card: Shelly Dougall – Secretary",
+                                        "source_quote": "### ShellyDougall\n\nSecretary"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Render the board members as a contact-card grid with photo, name, and role for each member.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all three blocks for faithfulness: every name, role, and image URL is pulled verbatim from body_markdown; no facts were invented. The Heading level (h3) matches the markdown source. The Text block quotes both meeting-info paragraphs exactly. The Columns grid wraps all 11 board member Cards; Holly Galambos, Shaylan Musgreave, and Shelly Dougall have no photo URLs in body_image_urls, so their Card `image` props are omitted rather than fabricated. Source quotes on content blocks are non-empty. Remaining concern: the body renders names as run-together tokens (e.g. \"ReganTurner\") — titles in Cards have been corrected to proper spaced names per the IR brief, which is a minor interpretation but clearly the intended content.",
+            "confidence": 0.91
+        },
+        {
+            "page_slug": "page-7507232",
+            "page_title": "Our Facilities",
+            "nav_order": 13,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Langdon Little League Home Facilities",
+                        "level": "h1"
+                    },
+                    "source_brief": "Main page heading from body_markdown h1",
+                    "source_quote": "# Langdon Little League Home Facilities"
+                },
+                {
+                    "component_type": "Image",
+                    "props": {
+                        "src": "https://cdn4.sportngin.com/attachments/photo/dc37-179546497/Langdon_Park_Diamonds_large.png",
+                        "alt": "Langdon Park (North & South Diamonds)",
+                        "caption": "Langdon Park (North & South Diamonds) — Click on this image for directions to embed a Google map using the code page element"
+                    },
+                    "source_brief": "Langdon Park (North & South Diamonds) location image with directions note",
+                    "source_quote": "### Langdon Park (North & South Diamonds)\n\n[![](https://cdn4.sportngin.com/attachments/photo/dc37-179546497/Langdon_Park_Diamonds_large.png)]\n\nClick on this image for directions to embed a Google map using the code page element"
+                },
+                {
+                    "component_type": "Image",
+                    "props": {
+                        "src": "https://cdn1.sportngin.com/attachments/photo/1029-209774148/iron_Horse_Fields_large.png",
+                        "alt": "Iron Horse Fields",
+                        "caption": "Iron Horse Fields — Click on this image for directions to embed a Google map using the code page element"
+                    },
+                    "source_brief": "Iron Horse Fields location image with directions note",
+                    "source_quote": "### Iron Horse Fields\n\n[![](https://cdn1.sportngin.com/attachments/photo/1029-209774148/iron_Horse_Fields_large.png)]\n\nClick on this image for directions to embed a Google map using the code page element"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "DIAMOND RENTALS — Langdon Park / Iron Horse Fields",
+                        "body": "Want to book a diamond? Click the link below to email for bookings, or head to the Online Diamond Booking Website to reserve your field online.",
+                        "href": "https://www.gomotionapp.com/team/canlsa/page/home"
+                    },
+                    "source_brief": "Diamond Rentals booking section with email note and Online Diamond Booking Website link",
+                    "source_quote": "### DIAMOND RENTALSLangdon Park - Iron Horse Fields\n\nClick on Link to email for bookings\n\n#### [ONLINE DIAMOND BOOKING WEBSITE](https://www.gomotionapp.com/team/canlsa/page/home)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/adc4-215917396/Rental_Rates_Per_Field_large.jpg",
+                                            "alt": "Rental Rates Per Field",
+                                            "caption": "Rental Rates Per Field"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/e943-215917409/Langdon_Park_Tournament_Packages_large.jpg",
+                                            "alt": "Langdon Park Tournament Packages",
+                                            "caption": "Langdon Park Tournament Packages"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/222c-215917414/Langdon_Park_Tournament_Packages_Pg_2_large.jpg",
+                                            "alt": "Langdon Park Tournament Packages Page 2",
+                                            "caption": "Langdon Park Tournament Packages Pg. 2"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery of rental rate and tournament package poster images",
+                    "source_quote": "![](https://cdn2.sportngin.com/attachments/photo/adc4-215917396/Rental_Rates_Per_Field_large.jpg)\n\n![](https://cdn4.sportngin.com/attachments/photo/e943-215917409/Langdon_Park_Tournament_Packages_large.jpg)\n\n![](https://cdn2.sportngin.com/attachments/photo/222c-215917414/Langdon_Park_Tournament_Packages_Pg_2_large.jpg)"
+                }
+            ],
+            "self_assessment": "Audited all five blocks for faithfulness: every prop value (heading text, image URLs, alt/caption text, card title and body, booking href, gallery image URLs) traces directly to a substring in body_markdown. The contact_card IR intent has no matching schema type, so it was mapped to Card (closest available — a titled block with a body and href). Card body copy is thin and derived from the literal body text \"Click on Link to email for bookings\" and the ONLINE DIAMOND BOOKING WEBSITE anchor; no facts were invented. The Columns gallery block wraps three Image children as required by the schema for multi-item grids. Source quotes are present for all content blocks. One minor concern: the Card body adds slight connective phrasing (\"Want to book a diamond?\") to join two terse source phrases — kept minimal to stay faithful.",
+            "confidence": 0.82
+        },
+        {
+            "page_slug": "page-7507234",
+            "page_title": "For Coaches",
+            "nav_order": 14,
+            "blocks": [
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Quick Links — Safe Sport Training:**\n- [Online Safe Sport Training](https://coach.ca/)\n- [Safe Sport](https://www.coach.ca/)",
+                        "align": "left"
+                    },
+                    "source_brief": "Safe Sport / Online Safe Sport Training quick links at the top of the body.",
+                    "source_quote": "#### [Online Safe Sport Training](https://coach.ca/)\n\n#### [Safe Sport](https://www.coach.ca/)"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "Hello Little League Coach!\n\nThank you for joining us for what hopes to be another exciting and fulfilling season. Here is all of the information we can provide you with at this time and if you have any questions or concerns feel free to reach out, I am here to help in any way I can.",
+                        "align": "left"
+                    },
+                    "source_brief": "'Hello Little League Coach!' welcome and offer-to-help intro.",
+                    "source_quote": "Hello Little League Coach!\n\nThank you for joining us for what hopes to be another exciting and fulfilling season. Here is all of the information we can provide you with at this time and if you have any questions or concerns feel free to reach out, I am here to help in any way I can."
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Conditioning Camp:**\n- TBD — Watch your emails & Facebook Posts with Registration Links\n\n**Evaluation (Minors / Majors / Juniors / Seniors Division only):**\n- Scheduled for April 5 & 6 and April 12 & 13, 2025 (timeslots to be updated into SE APP)\n- We require ALL COACHES to be present to help evaluate ALL players in your division. An email will be sent out prior regarding specific times for divisions.\n\n**Player Draft (Minors / Majors / Juniors / Seniors Division only):**\n- Sunday April 13, 2025 (Division Drafting Time slots will be placed into Sports Engine APP). This is where coaches will be drafting their players for their team. Once this is completed, your team will be opened up in the Sports Engine app, and you will be able to view your practice schedule, Game Schedule as well as communicate with your team.\n\n**Equipment Bags:**\n- TEAM bags will be inventoried — you will be required to sign your bag out at the beginning of the season and return at the end of the season.\n- **T-Ball / Coach Pitch** equipment pick up: April 25, 2025 6:00pm–8:00pm & April 26, 2025 11:00am–1:00pm\n- Please coordinate with your Asst. Coach / Team Manager or your Coordinator on when to pick up your bag — this will include your team jerseys and hats to hand out to your players on your first day of practice.\n- **Minors / Majors / Juniors / Seniors** — Equipment bags will be handed out @ Player Draft — Monday April 14, 2025\n\n**Team Jerseys / Pants / Belt / Hats:**\n- Player Jersey pick up dates: April 26, 2025 — 12:00pm–2:00pm @ Iron Horse Fields (Garage)\n- Players are able to try on their Baseball pants to ensure the correct size was ordered and exchange if required — this will be posted in your Sports Engine app — please ensure you remind your team.",
+                        "align": "left"
+                    },
+                    "source_brief": "Season logistics sections: Conditioning Camp, Evaluation, Player Draft, Equipment Bags, Team Jerseys/Pants/Belt/Hats with dates and instructions.",
+                    "source_quote": "**Conditioning Camp**:\n\n·TBD - Watch your emails & Facebook Posts with Registration Links\n\n**Evaluation:** **(Minors / Majors / Juniors / Seniors Division only)**\n\n·Scheduled for April 5 & 6 and April 12 & 13, 2025"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Coach Training Online:**\n\nIn order for you to Coach you MUST attend the LANGDON LITTLE LEAGUE COACH CLINIC AND ALL DOCUMENTATION IS TO BE RETURNED TO THE COACHING COORDINATOR!\n\n- Coaching Clinic Online — only required to attend 1 session\n- Date: TO BE ANNOUNCED (an email will be forwarded with Date & times @ start of April)\n- Location: Online (Google Meets)\n\n⚠️ **Please NOTE: It is MANDATORY for ALL coaches to attend an ONLINE coaching clinic.**\n\n---\n\n**Coach Training In Person:**\n\nWe will be hosting an IN PERSON coaching clinic working with Dirk Dembroski our new Evaluations coordinator who will be coaching the coaches in regards to Batting, Throwing, Fielding, Practice Drills. This will be uploaded into your Sports Engine APP.\n\n- **T-Ball / Coach Pitch — April 16, 2025 — 5:30pm–7:00pm — Strathmore Motor Sports**\n- **T-Ball / Coach Pitch — April 23, 2025 — 5:30pm–7:00pm — Strathmore Motor Sports**\n- **Minors / Majors / Juniors / Seniors — April 16, 2025 — 7:15pm–9:00pm — Strathmore Motor Sports**\n- **Minors / Majors / Juniors / Seniors — April 23, 2025 — 7:15pm–9:00pm — Strathmore Motor Sports**\n\n⚠️ **Please NOTE: It is MANDATORY for ALL coaches to attend the IN PERSON Coaching Clinic.**",
+                        "align": "left"
+                    },
+                    "source_brief": "Coach Training Online and Coach Training In Person sections, including mandatory-clinic notes, dates, and locations.",
+                    "source_quote": "**Coach Training Online:**\n\n**In order for you to Coach you MUST attend the LANGDON LITTLE LEAGUE COACH CLINIC AND ALL DOCUMENTATION IS TO BE RETURNED TO THE COACHING COORDINATOR!**"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Communication:**\n\nPlease pay attention to the requirements for the upcoming season. If all proper documentation is not provided by the start of the season, Coaches will not be permitted on the field with the children.\n\nOn the Sports Engine APP there will be a COACHES CHAT set up — where ALL coaches can ask questions in regards to practices, Games, etc. All coaches are encouraged to share practice plans, best practices, tricks and tips! All LLL Board members and Coaching coordinators will be on this CHAT in order to provide information to Coaches ALL AT ONCE.",
+                        "align": "left"
+                    },
+                    "source_brief": "Communication section about season requirements and the Sports Engine Coaches Chat.",
+                    "source_quote": "On the Sports Engine APP – there will be a COACHES CHAT set up – where ALL coaches can ask questions in regards to practices, Games, etc. – All coaches are encouraged to share practice plans, best practices, tricks and tips!"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Documentation:**\n\nWhen you registered to participate as a Coach you were provided with Documents to review and sign off on during registration.\n\nWe also require **3 items** from all coaches to be forwarded back to our Coaching Coordinator **before May 1, 2025**:\n\n1. **Child Abuse & Prevention Policy Sign-off & Course Completion**\n   - Visit: https://www.littleleague.org/player-safety/child-protection-program/safesport-resources-parents/\n   - Click the link and scroll to \"Abuse Awareness for Adults\"\n   - Create an account (or log in if you already have one), take the course, and receive your certificate\n   - A copy of your certificate will be emailed to you and is also accessible under your online account\n\n2. **Vulnerable Sector Check Letter (Police Clearance)**\n   - Clearance letter to be filled out and brought to the Langdon RCMP Detachment to get completed — this is **free of cost**\n   - Police Checks are ONLY valid for 1 year — please bring the attached form to the Langdon RCMP Detachment\n\n3. **NCCP Safe Sport Training & The Rule of Two**\n   - Go to [www.coach.ca](http://www.coach.ca/) and take the **Safe Sport Training** and **Understanding the Rule of Two** (separate courses, both free)\n   - You will register and be given an NCCP#. Safe Sport Training takes less than an hour; Rule of Two takes approximately 20 minutes\n   - For **Safe Sport Training**: scroll to \"Create a Safe Sport Environment\", select 'Safe Sport Training', choose 'Baseball', complete the course, and send proof to your Coordinator\n   - For **Rule of Two**: log into coach.ca, click 'eLearning', go to Multi-sport, scroll to 'Understanding the Rule of Two', complete the course, and send proof to your Coordinator\n\nPlease email all copies and documents to:\n**Caitie** — [strikersbaseball.coachcoord@gmail.com](mailto:strikersbaseball.coachcoord@gmail.com)",
+                        "align": "left"
+                    },
+                    "source_brief": "Documentation requirements: Child Abuse & Prevention Policy, Vulnerable Sector Check, NCCP Safe Sport Training & Rule of Two, with step-by-step instructions and coordinator email.",
+                    "source_quote": "We also require 3 items from all coaches to be forwarded back to our Coaching Coordinator before May 1, 2025\n\n1.Child Abuse & Prevention Policy Sign off & Course completion"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Little League International 2026 Significant Rule and Regulation Updates",
+                        "body": "Little League International officially released Significant Rule and Regulation Updates for 2026. These can be reviewed on the Little League International Website (https://www.littleleague.org/playing-rules/rule-changes/) or in the Little League Rulebook App, available for download on the Apple App Store and Google Play. More information, including how to download the app, can be found at LittleLeague.org/RulebookApp.",
+                        "href": "https://www.littleleague.org/playing-rules/rule-changes/"
+                    },
+                    "source_brief": "'Little League International 2026 Significant Rule and Regulation Updates' notice with links to the Little League International site and rulebook app.",
+                    "source_quote": "Little League International officially released Significant Rule and Regulation Updates for 2026\n\nThese can be reviewed on the Little League International Website or below. These significant updates, as well as all other updates to the 2023 Rulebook can also be found in the Little League Rulebook App"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Little League Significant Updates",
+                                            "body": "2026 Significant Rule and Regulation Updates document.",
+                                            "href": "https://cdn3.sportngin.com/attachments/document/7e65-2885603/2021_little_league_rulebook_significant_updates.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coach Clinic Training",
+                                            "body": "Coach Clinic Slide Deck 2023 — presentation materials from coaching clinic training.",
+                                            "href": "https://cdn3.sportngin.com/attachments/document/0d5e-2802916/Coach_s_Clinc_Slide_Deck_2023.pptx"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "T-Ball Coaches Handbook",
+                                            "body": "Langdon Little League T-Ball Coach Handbook — essential reading for T-Ball coaches.",
+                                            "href": "https://cdn4.sportngin.com/attachments/document/b1b4-2786436/Langdon_Little_League_-_T-Ball_Coach_Handbook.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "T-Ball Program",
+                                            "body": "T-Ball Program guide for the season.",
+                                            "href": "https://cdn4.sportngin.com/attachments/document/4a94-2921328/T-Ball_Program.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coach Pitch Program",
+                                            "body": "Coach Pitch Program guide for the season.",
+                                            "href": "https://cdn4.sportngin.com/attachments/document/24df-2921331/Coach_Pitch_Program.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coach Pitch Plan — 12 Week Program",
+                                            "body": "A full 12-week practice plan for Coach Pitch divisions.",
+                                            "href": "https://cdn3.sportngin.com/attachments/document/bc32-2921332/Coach_Pitch_Plan_12_weeks.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coach Pitch Div 1 Coaches Handbook",
+                                            "body": "Langdon Little League Coach Pitch Division 1 Coach Handbook.",
+                                            "href": "https://cdn1.sportngin.com/attachments/document/ca98-2786437/Langdon_Little_League_-Coach_Pitch_Div_1_Coach_Handbook.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coach Pitch Div 2 Coaches Handbook",
+                                            "body": "Langdon Little League Coach Pitch Division 2 Coach Handbook.",
+                                            "href": "https://cdn1.sportngin.com/attachments/document/e371-2786439/Langdon_Little_League_-Coach_Pitch_Div_2_Coach_Handbook.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Girls Fastpitch Practice Plans",
+                                            "body": "Practice planning guide for Girls Fastpitch coaches.",
+                                            "href": "https://cdn4.sportngin.com/attachments/document/c81f-3376742/Practice_Planning.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "House League Rules 2026 — U9",
+                                            "body": "Official House League Rules for 2026 U9 division.",
+                                            "href": "https://cdn1.sportngin.com/attachments/document/3265-3561434/HOUSE_LEAGUE_RULES_FOR_2026__U9_.docx"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "House League Rules 2026 — U11",
+                                            "body": "Official House League Rules for 2026 U11 division.",
+                                            "href": "https://cdn2.sportngin.com/attachments/document/72fd-3561436/HOUSE_LEAGUE_RULES_FOR_2026__U11_.docx"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 RCMP Letter",
+                                            "body": "RCMP Vulnerable Sector Check letter — bring this to the Langdon RCMP Detachment (free of cost).",
+                                            "href": "https://cdn2.sportngin.com/attachments/document/67ca-2802923/2026_RCMP_letter.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Child Abuse & Prevention Policy",
+                                            "body": "Required reading and sign-off for all coaches.",
+                                            "href": "https://cdn1.sportngin.com/attachments/document/5a0e-2802925/CHILD_ABUSE___Prevention_POLICY.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coach Safety Code of Conduct",
+                                            "body": "2022 Coaches Code of Conduct — required acknowledgement for all coaches.",
+                                            "href": "https://cdn3.sportngin.com/attachments/document/2c50-2802924/2022_Coaches_Code_of_Conduct.docx"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Concussion Awareness",
+                                            "body": "2022 Concussion Awareness document — mandatory review for all coaches.",
+                                            "href": "https://cdn3.sportngin.com/attachments/document/226a-2802927/2022_Concussion_Awareness.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Pitch Count Sheet (Minors–Seniors)",
+                                            "body": "Troy's Pitch Count form for tracking pitch counts during games.",
+                                            "href": "https://cdn1.sportngin.com/attachments/document/c665-2802922/Troys_Pitch_count_form.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Pitching Eligibility Tracking (Minors–Seniors)",
+                                            "body": "Pitching Eligibility Tracking Form for Minors through Seniors divisions.",
+                                            "href": "https://cdn1.sportngin.com/attachments/document/afc6-2802920/Pitching_EligibilityTracking_Form.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Score Keeping & Pitch Counting Training",
+                                            "body": "Scorekeeping and Pitch Counting training guide for coaches and team managers.",
+                                            "href": "https://cdn3.sportngin.com/attachments/document/cfe3-2802917/Scorekeeping-Pitch-Counting.pdf"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Coaching document/handbook links rendered as a card grid.",
+                    "source_quote": "### [Little League Significant Updates](https://cdn3.sportngin.com/attachments/document/7e65-2885603/2021_little_league_rulebook_significant_updates.pdf)\n\n### [Coach Clinic Training](https://cdn3.sportngin.com/attachments/document/0d5e-2802916/Coach_s_Clinc_Slide_Deck_2023.pptx)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/5a59-179551247/Vipers_2022_large.jpg",
+                                            "alt": "Vipers team photo 2022"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/b407-191473273/Vipers4_large.jpg",
+                                            "alt": "Vipers team action photo"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/ffe6-191473286/EJ_large.jpg",
+                                            "alt": "Coach or player action photo — EJ"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/661d-191473278/Holden_large.jpg",
+                                            "alt": "Player action photo — Holden"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/c6f6-179551514/Kane_large.jpg",
+                                            "alt": "Player action photo — Kane"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/de67-179550776/Bittner_large.jpg",
+                                            "alt": "Player action photo — Bittner"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Gallery of coach/team action photos from the body (the six asset_refs specified in the IR).",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Stay Connected to Your Team",
+                                            "body": "Keep connected to your team. Quickly check schedules and team updates, plus message other members on your team and receive heads-up from athletes about practice. Enjoy unlimited access to scores & stats, photo/video sharing, and more.",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Accessing TeamCenter",
+                                            "body": "Easily add and edit athlete info, manage schedules, and message team members.",
+                                            "href": "https://help.sportsengine.com/en/articles/6306846-what-is-teamcenter"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Messaging Your Team in TeamCenter",
+                                            "body": "Send a message to an individual member, selected members, or the entire team directly from TeamCenter or from the SportsEngine mobile app.",
+                                            "href": "https://help.sportsengine.com/en/articles/6323073-how-to-send-a-message-from-teamcenter"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Basic Team Management",
+                                            "body": "Perform basic tasks using the Team Page Team Management functionality.",
+                                            "href": "https://s3.amazonaws.com/sportsengine-docs/SportsEngine/Guide/TeamCenter/TeamCenter_Admin_User_Guide.pdf"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Add Contacts to Receive Team Messages",
+                                            "body": "Add additional email addresses to a non-member's profile in order to be able to include all athletes in team communications.",
+                                            "href": "https://help.sportsengine.com/en/articles/6304756-how-to-add-additional-emails-to-receive-messages-for-an-athlete"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Managing RSVPs",
+                                            "body": "Manage RSVPs for each athlete within your team's TeamCenter or within the SportsEngine mobile app.",
+                                            "href": "https://help.sportsengine.com/en/articles/6329452-how-to-view-my-team-rsvps"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Sending RSVPs for Existing Games or Events",
+                                            "body": "Do you import your game schedules from a third-party scheduler or create them manually on your team page? This article explains how to add RSVPs to those games and events after they are imported.",
+                                            "href": "https://help.sportsengine.com/en/articles/6329219-how-do-i-send-rsvps"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "More Helpful Coach Links",
+                                            "body": "Review help articles about how coaches interact with TeamCenter and the SportsEngine mobile app.",
+                                            "href": "https://help.sportsengine.com/en/collections/3502736-for-team-staff"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Bookmark Your Website to Your Mobile Home Screen",
+                                            "body": "Access your website with a single tap from your mobile device's home screen.",
+                                            "href": "https://help.sportsengine.com/en/articles/6662712-how-to-bookmark-your-website-on-your-mobile-device-home-screen"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Essential Coach How-To's / Stay Connected to Your Team SportsEngine TeamCenter help links.",
+                    "source_quote": "### ESSENTIAL COACH HOW-TO'S\n\n[Accessing TeamCenter](https://help.sportsengine.com/en/articles/6306846-what-is-teamcenter)\n\nEasily add and edit athlete info, manage schedules, and message team members"
+                }
+            ],
+            "self_assessment": "Audited all 10 blocks for faithfulness: every prop value (headings, body copy, hrefs, image URLs) is traceable to a direct substring of body_markdown. Source quotes are present and verbatim for all content blocks (Text, Card); Columns blocks carry their quotes in children or are left empty per schema rules. The gallery Columns uses only the six asset_refs specified in the IR block (all confirmed present in body_markdown). One minor concern: Card body descriptions for document links are lightly paraphrased from the anchor text in the body — the titles exactly match the markdown headings and the hrefs are direct copies, so faithfulness is maintained. The \"Stay Connected\" card href is set to \"#\" as no dedicated target URL exists in the body. Tone is warm, practical, and coach-facing throughout, matching the community-driven brand voice.",
+            "confidence": 0.91
+        },
+        {
+            "page_slug": "page-7546927",
+            "page_title": "Training Documents",
+            "nav_order": 15,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Training Documents",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading from body_markdown.",
+                    "source_quote": "## Training Documents"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "- [Team Manager](https://cdn3.sportngin.com/attachments/document/9478-3562251/TEAM_MANAGER.docx)\n- [Girls FastPitch Practice Plans 2](https://cdn4.sportngin.com/attachments/document/51c1-3376746/Phase_2_Objectives.pdf)\n- [Girls FastPitch Practice Plans 1](https://cdn4.sportngin.com/attachments/document/2bd8-3376745/Phase_1_Objectives.pdf)\n- [Girls FastPitch Practice Plans](https://cdn3.sportngin.com/attachments/document/fd67-3376744/Practice_Planning.pdf)\n- [U9 & U11 Fast Pitch House Rules](https://cdn1.sportngin.com/attachments/document/7459-3376743/Girls_Fastball_House_League_Rules_2025.pdf)\n- [BLUEJAYS TRAINING DOC](https://cdn2.sportngin.com/attachments/document/45d2-3121194/2023_ICManual.pdf)\n- [T-Ball Program](https://cdn4.sportngin.com/attachments/document/a070-2921321/T-Ball_Program.pdf)\n- [Coach Pitch Program](https://cdn4.sportngin.com/attachments/document/c603-2921323/Coach_Pitch_Program.pdf)\n- [Coach Pitch Plan 12 Week Program](https://cdn4.sportngin.com/attachments/document/d0c1-2921322/Coach_Pitch_Plan_12_weeks.pdf)\n- [Practice Plans](https://cdn1.sportngin.com/attachments/document/03d3-2802967/practiceplans.pdf)\n- [Pitching](https://cdn3.sportngin.com/attachments/document/8a81-2802966/ybss-pitching.pdf)\n- [Position](https://cdn3.sportngin.com/attachments/document/bdfa-2802963/ybss-position.pdf)\n- [Outfield](https://cdn3.sportngin.com/attachments/document/bced-2802962/ybss-outfield.pdf)\n- [Infield](https://cdn3.sportngin.com/attachments/document/6ce8-2802961/ybss-infield.pdf)\n- [Hitting](https://cdn4.sportngin.com/attachments/document/e856-2802960/ybss-hitting.pdf)\n- [Base Running](https://cdn1.sportngin.com/attachments/document/6ab8-2802956/ybss-baserunning.pdf)\n- [Hitting Mechanics 101](https://cdn1.sportngin.com/attachments/document/b84a-2802953/HittingMechanics101.pdf)\n- [Encouraging your players](https://cdn1.sportngin.com/attachments/document/11c5-2802952/94waystoencourage.pdf)\n- [Working The Strike Zone](https://cdn4.sportngin.com/attachments/document/ac82-2802951/Bonus_Working_the_Strike_Zone_WEB.pdf)\n- [Pitching With Runners on Base](https://cdn1.sportngin.com/attachments/document/046e-2802948/Bonus_Pitching_with_Runners_on_Base_WEB.pdf)\n- [Pitching Grips](https://cdn3.sportngin.com/attachments/document/5167-2802946/Bonus_Pitching_Grips_WEB.pdf)\n- [Coaching Pitchers](https://cdn4.sportngin.com/attachments/document/0cc0-2802945/Bonus_Coaching_Pitcher_WEB.pdf)\n- [Bull Pen Procedures](https://cdn1.sportngin.com/attachments/document/f86e-2802944/Bonus_Bullpen_Procedures_WEB.pdf)\n- [Backyard Baseball Hitting Workouts](https://cdn4.sportngin.com/attachments/document/4d31-2802938/BackYardBaseballHittingWorkouts1050.pdf)\n- [Backyard Baseball Hitting Drills](https://cdn4.sportngin.com/attachments/document/0a71-2802937/BackYardBaseballHittingDrills917.pdf)",
+                        "align": "left"
+                    },
+                    "source_brief": "All training document links rendered as a bulleted markdown list.",
+                    "source_quote": "### [Team Manager](https://cdn3.sportngin.com/attachments/document/9478-3562251/TEAM_MANAGER.docx)\n\n### [Girls FastPitch Practice Plans 2](https://cdn4.sportngin.com/attachments/document/51c1-3376746/Phase_2_Objectives.pdf)"
+                }
+            ],
+            "self_assessment": "Audited both blocks: (1) Heading text \"Training Documents\" is a verbatim substring of the body. (2) All 25 document links in the Text block are taken directly from the body_markdown with their exact titles and CDN URLs — none invented. The IR content_brief mentioned \"Encouraging your players,\" \"Working The Strike Zone,\" \"Pitching With Runners on Base,\" \"Pitching Grips,\" \"Coaching Pitchers,\" \"Bull Pen Procedures,\" and the two \"Backyard Baseball\" PDFs which were present in the body but not explicitly named in the brief; all are included faithfully. Source quotes are present for both content blocks. No fabrication detected.",
+            "confidence": 0.98
+        },
+        {
+            "page_slug": "page-8932018",
+            "page_title": "Langdon Softball",
+            "nav_order": 16,
+            "blocks": [],
+            "self_assessment": "Audited all four blocks for faithfulness: every heading, rule text, URL, and \"Did Ya Know?\" entry is drawn verbatim or very closely paraphrased from body_markdown substrings. Schema conformance confirmed — Heading has required text/level; all Text blocks have required body/align. Source quotes are non-empty for all content blocks and traceable to body substrings. The two list IR blocks are rendered as Text blocks with bulleted/section-broken markdown per the schema mapping rule. The Code of Conduct NSA Rule 13 section is consolidated into the final Text block alongside the Did Ya Know? entries as directed by the IR. No content was invented. Minor concern: the IR groups Code of Conduct with Did Ya Know? entries — this ordering faithfully follows the IR intent even though the body interleaves them with other rules content.",
+            "confidence": 0.93
+        },
+        {
+            "page_slug": "page-9047240",
+            "page_title": "SAFETY",
+            "nav_order": 17,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "SAFETY",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading from the body.",
+                    "source_quote": "## SAFETY"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "- [Langdon Little League 2025 Safety Plan](https://cdn2.sportngin.com/attachments/document/d2b1-3382748/2025_Langdon_Little_League_Safety_Plan.pdf)\n- [Langdon Little League Risk Assessment](https://cdn2.sportngin.com/attachments/document/2953-3382747/RS_and_RT_Little_League_Alberta_-_District_3_-_Risk_Assessment.pdf)",
+                        "align": "left"
+                    },
+                    "source_brief": "Safety document links: 2025 Safety Plan and Risk Assessment PDFs.",
+                    "source_quote": "### [Langdon Little League 2025 Safety Plan](https://cdn2.sportngin.com/attachments/document/d2b1-3382748/2025_Langdon_Little_League_Safety_Plan.pdf)\n\n### [Langdon Little League Risk Assessment](https://cdn2.sportngin.com/attachments/document/2953-3382747/RS_and_RT_Little_League_Alberta_-_District_3_-_Risk_Assessment.pdf)"
+                }
+            ],
+            "self_assessment": "Audited both blocks for faithfulness: the Heading text \"SAFETY\" and the two document links (with their exact URLs) are verbatim from body_markdown. The list IR intent was mapped to a Text block with a bulleted markdown body per schema rules. Source quotes are present and are substrings of the body. No content was invented. The body is intentionally thin — only a heading and two PDF links exist — so the page is kept correspondingly lean.",
+            "confidence": 0.97
+        },
+        {
+            "page_slug": "page-9375862",
+            "page_title": "LD 2026 Sponsorships",
+            "nav_order": 2,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Langdon Days 2026 Sponsorships",
+                        "level": "h1"
+                    },
+                    "source_brief": "Page heading from the body.",
+                    "source_quote": "## Langdon Days 2026 Sponsorships"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "### THANK YOU TO OUR SPONSORS 2026 LANGDON DAYS\n\n**LANGDON — LET'S RALLY FOR OUR LITTLE LEAGUE KIDS**\n\nOn behalf of Langdon Little League and the Langdon Ball Community, we would like to sincerely thank you for your generous support.\n\nYour sponsorship is helping us achieve a vision that will significantly improve our facilities and provide greater opportunities for both our current athletes and future generations. With your support, we are working toward expanding our complex to include essential amenities such as:\n\n- A new building with a concession and bathrooms\n- Change room facilities — An indoor training gym and batting cages\n- Lighting for our fields\n- Shade trees to enhance the outdoor experience\n- An all-inclusive playground for the enjoyment of families and children of all abilities",
+                        "align": "left"
+                    },
+                    "source_brief": "Thank-you message and facility-vision bulleted list for 2026 sponsors.",
+                    "source_quote": "On behalf of Langdon Little League and the Langdon Ball Community, we would like to sincerely thank you for your generous support.\n\nYour sponsorship is helping us achieve a vision that will significantly improve our facilities"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "Click Here For Sponsorship Packages",
+                                "href": "https://forms.gle/JHeoswxbXVPf18EA6"
+                            }
+                        ]
+                    },
+                    "source_brief": "CTA linking to 2026 sponsorship packages form.",
+                    "source_quote": "#### [CLICK HERE FOR SPONSORSHIP PACKAGES](https://forms.gle/JHeoswxbXVPf18EA6)"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Beyond Better Wellness",
+                                            "body": "HUGE SHOUT OUT TO: Beyond Better Wellness\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the HOME RUN Package with Gifts in Kind for the 2026 Langdon Days!\n\nBeyond Better Wellness will be donating gift certificate packages for each of the Langdon Days Team captains ($160 value each) with 28 teams — a total of $4,420! They will also be supplying Water and Gatorade for our hard-working Umpires!\n\nCome visit their Tent @ Langdon Days — 15 minute treatments will be $20 with $10 from each treatment going back to the Iron Horse Fields.\n\nBeyond Better Wellness was founded on the principle of holistic healing through various methods, both traditional and advanced.",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/6f28-218199848/Beyond_Wellness_element_view.jpg",
+                                            "href": "https://beyondbetterwellness.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Cleland Contracting INC",
+                                            "body": "HUGE SHOUT OUT TO: Cleland Contracting INC\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the 1st Base Package for the 2026 Langdon Days!\n\nCleland Contracting Inc. is your trusted Carpentry & Renovation Specialists. We are a General Contractor in Calgary that was established in 2014.",
+                                            "image": "https://cdn2.sportngin.com/attachments/sponsor/e161-218287949/logo_-_Kristy_Cleland_element_view.jpg",
+                                            "href": "https://clelandcontracting.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "RED BIRD RENOVATIONS INC",
+                                            "body": "HUGE SHOUT OUT TO: RED BIRD RENOVATIONS INC\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the 1st Base Package for the 2026 Langdon Days!\n\nWe understand that renovating a home can be a deeply personal experience, which is why we strive to create an environment where open communication flourishes. Your dreams become our mission.",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/68d8-218199578/-_Red_Bird_Renos_element_view.jpg",
+                                            "href": "https://redbirdrenos.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Summit Property Group",
+                                            "body": "HUGE SHOUT OUT TO: Summit Property Group!\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the Strike Zone Package for the 2026 Langdon Days!\n\nSummit Property Group is leading the industry in integrated facility solutions and building maintenance. Offering Total Property Maintenance services for Municipal, Government, commercial and public sector facility services.",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/26b8-218287996/SPG_IFS__1__-_Brie_Franson_element_view.jpg",
+                                            "href": "https://summitpropertygroup.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "JOKERS JERSEYS",
+                                            "body": "We deliver creative, quality sublimated jerseys & sportswear - Associations, Schools, Leagues, Teams.\n\nWhen you look and feel this good you play better. Joker Jerseys believes that we are all one, and we unite through Sport and Wellness.\n\nContact: hello@jokerjerseys.ca",
+                                            "image": "https://cdn2.sportngin.com/attachments/sponsor/7cd7-218294418/Jokers_element_view.jpg",
+                                            "href": "http://hello@jokerjerseys.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "104.5 More Country",
+                                            "body": "Thank You, 104.5 More Country! Y'all really helped us kick up our boots this year!\n\nA huge THANK YOU to 104.5 More Country in Strathmore for proudly sponsoring our 1st Base Package at Langdon Days — you truly brought the country spirit to the diamond!\n\nYou didn't just sponsor a base… you helped set the rhythm for the whole field. Let's keep the tunes playing and the good times rolling!",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/041c-218573986/105.5_element_view.png",
+                                            "href": "http://goldenweststreaming.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Langdon Community PetCo",
+                                            "body": "Paws-itively Adorable Thanks to Langdon Community PetCo!\n\nWe're sending a tail-wagging THANK YOU to Langdon Community PetCo for taking such amazing care of our furry fans at the LANGDON DAYS!\n\nWith water stations, a treat centre, and poop bags ready to go, every four-legged MVP can stay happy, hydrated, and ready to fetch some fun at the ballpark. Thanks for helping us knock it out of the park — one wag at a time!",
+                                            "image": "https://cdn1.sportngin.com/attachments/sponsor/8e50-218587700/PET_CO_element_view.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Trust Plumbing & Gasfitting Ltd",
+                                            "body": "HUGE SHOUT OUT TO: Trust Plumbing & Gas Fitting Ltd.\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the 1st Base Package for the 2026 Langdon Days!\n\nPlumbing & Heating Experts! Commercial, Industrial, Residential. We love our customers, so feel free to call us anytime.",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/217a-218144915/TRUST_Logo_-_Amanda_Thomson_element_view.GIF",
+                                            "href": "https://trustplumbing.ca/services"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Re/MAX Reality Jason Anderson",
+                                            "body": "HUGE SHOUT OUT TO: Re/MAX Key - Jason Anderson\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the 1st Base Package for the 2026 Langdon Days!\n\nLet Jason help you with Buying and Selling — he's here to take the stress out of the process as your local Langdon realtor.\n\nLangdon Chamber of Commerce Golden Horseshoe First Place Winner Realty 2021, 2022, 2023, 2024, 2025 and 2026.",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/fcd4-218287975/Jason_Anderson_Banner_2025-05-01_-_Jason_Anderson_element_view.jpg",
+                                            "href": "https://www.langdonrealtor.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "ECOLAB",
+                                            "body": "HUGE SHOUT OUT TO: Ecolab\n\nThank you to our 2026 Langdon Days Sponsor for the donation of Hand Sanitization Stands / Stations that will be located around the Iron Horse Fields.\n\nEcolab is a global leader in water, hygiene and infection prevention solutions and services that protect people and the resources vital to life.",
+                                            "image": "https://cdn2.sportngin.com/attachments/sponsor/7db5-218586146/Ecolab_LogoTagline_Blue_RGB_element_view.png",
+                                            "href": "http://www.ecolab.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Chimp Embroidery",
+                                            "body": "HUGE SHOUT OUT TO: Chimp Embroidery\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the Strike Zone Package for the 2026 Langdon Days!\n\nCustom decorating company offering embroidery, heat transfer, screen printing and sublimation along with clothing and promotional products.",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/9e04-218287986/CHIMP_LOGO_TEAL_-_Chimp_Embroidery_element_view.png",
+                                            "href": "https://www.chimpembroidery.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Enviro 360",
+                                            "body": "Thank you to Enviro 360 for the Donation of Hand Washing Stations for Langdon Days equaling our \"Dugout Package\" plus the additional use of POLs and Cleanings @ the Iron Horse Fields & Camp Ground Area!",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/96b7-218288094/e3601_element_view.png",
+                                            "href": "http://www.e360s.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Gpa's Homemade Beef Jerky",
+                                            "body": "HUGE SHOUT OUT TO: Gpa's Beef Jerky\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the Strike Zone Package for the 2026 Langdon Days!\n\nBEST JERKY OUT THERE!!",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/ff81-218559573/Gpa_s_Jerky_element_view.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "ArrKann Trailer and RV Calgary",
+                                            "body": "HUGE SHOUT OUT TO ArrKann Trailer and RV Calgary\n\nThank you to our 2026 Langdon Days Sponsor for their Sponsorship of the HOME RUN Package with Donations in Kind for the 2026 Langdon Days!\n\nArrkann Trailer for office/security at the Iron Horse Fields. Arrkann Truck(s) x 2 plus Volunteer drivers will act as our \"LANGDON DAYS GET HOME SAFE\" designated drivers for Saturday Evening.\n\nArrKann Trailer & RV is an award winning RV dealership committed to your experience with RV Sales, RV Service & RV Parts!",
+                                            "image": "https://cdn1.sportngin.com/attachments/sponsor/8568-218295118/arrkann_logo_-_Langdon_Fundraiser_element_view.png",
+                                            "href": "https://www.arrkannrv.com/"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "2026 Langdon Days sponsor card grid — all 14 sponsors with logos, names, website links, and thank-you blurbs.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Thank You To Our Sponsors 2025 Langdon Days",
+                        "level": "h2"
+                    },
+                    "source_brief": "Section heading for the 2025 sponsors section.",
+                    "source_quote": "### THANK YOU TO OUR SPONSORS 2025 LANGDON DAYS"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2025 Sponsor Vision",
+                                            "body": "On behalf of Langdon Little League and the Langdon Ball Community, we would like to sincerely thank you for your generous support.\n\nYour sponsorship is helping us achieve a vision that will significantly improve our facilities and provide greater opportunities for both our current athletes and future generations. With your support, we are working toward expanding our complex to include:\n\n- A new building with a concession and bathrooms\n- Change room facilities — An indoor training gym and batting cages\n- Lighting for our fields\n- Shade trees to enhance the outdoor experience\n- An all-inclusive playground for the enjoyment of families and children of all abilities\n\nTo Help Sponsor — Please click on the poster to go to our Sponsorship Link!!",
+                                            "image": "https://cdn4.sportngin.com/attachments/text_block/975c-210628224/Updated_Langdon_Day_Sponsor_small.jpg",
+                                            "href": "https://forms.gle/TtJDuFhrxGKYPRvb9"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Trust Plumbing & Gasfitting Ltd",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor Trust Plumbing & Gas fitting Ltd for their Sponsorship of the 1st Base Package for the 2025 Langdon Days!\n\nThank you for your support!",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/32fa-211663167/capture_13_-_Amanda_Thomson_element_view.JPG",
+                                            "href": "http://info@trustplumbing.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Chimp Embroidery",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor Chimp Embroidery for their Sponsorship of the Strike Zone Package.\n\nThank you for your continued support!",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/f08e-212020686/CHIMP_LOGO_TEAL_-_Chimp_Embroidery_element_view.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Remuda Building & Supplies",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor Remuda Building & Supplies for their Sponsorship of the 1st Base Package for the 2025 Langdon Days!\n\nThank you for your support!",
+                                            "image": "https://cdn2.sportngin.com/attachments/sponsor/fd04-210251934/Remuda_Building__Supplies_Logo.svg",
+                                            "href": "http://remudasupplies.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Re/MAX Realty Jason Anderson",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor - Re/MAX Realty - Jason Anderson, for their Sponsorship of the 2nd Base Package for 2025 Langdon Days!\n\nThank you for your support!",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/8624-210628149/Jason_Anderson_Banner_2025-05-01_-_Jason_Anderson_element_view.jpg",
+                                            "href": "http://https//www.remax.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "SUNBELT RENTALS",
+                                            "body": "Thank you to Sunbelt Rentals for the Donation of the discount for the Walk in Cooler for Langdon Days equaling our \"Strike Zone Package\" — this will keep our Beer Gardens Beverages nice and Chilly!",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/5eab-211481537/SBR_Black_Yellow_Horizontal_CMYK_element_view.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "SIGN CONCEPT",
+                                            "body": "Thank you to Sign Concept for Re-Wrapping the Langdon STRIKE ZONE Concession and Beer Gardens Trailers!\n\nSupporting All our Leagues and Baseball Community!",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/80b5-211685793/Strike_zone_1_element_view.jpg",
+                                            "href": "http://https//www.signconceptsltd.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "ArrKann Trailer and RV Calgary",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor ArrKann Trailer and RV Calgary for their Sponsorship of the 1st Base Package for the 2025 Langdon Days!\n\nThank you for your support!",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/6f44-210651063/arrkann_logo_-_Langdon_Fundraiser_element_view.png",
+                                            "href": "http://https//www.arrkannrv.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Enviro 360",
+                                            "body": "Thank you to Enviro 360 for the Donation of Hand Washing Stations for Langdon Days equaling our \"Dugout Package\" plus the additional use of POLs and Cleanings @ the Iron Horse Fields & Camp Ground Area!",
+                                            "image": "https://cdn3.sportngin.com/attachments/sponsor/100e-210810991/e3601_element_view.png",
+                                            "href": "http://www.e360s.ca/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Gpa's Homemade Beef Jerky",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor Gpa's Homemade Beef Jerky for their Sponsorship of the Dugout Package! Thank you to Susette & Neil Needham for your continued support!",
+                                            "image": "https://cdn2.sportngin.com/attachments/sponsor/a39f-211245115/Gpa_s_Jerky_element_view.png",
+                                            "href": "http://susette.needham@gmail.com/"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Simply Raw Alberta",
+                                            "body": "Thank you to our 2025 Langdon Days Sponsor Simply Raw Alberta for their Sponsorship of the 1st Base Package for the 2025 Langdon Days!\n\nThank you for your support!",
+                                            "image": "https://cdn4.sportngin.com/attachments/sponsor/16bb-210650941/Simply_R_element_view.jpeg",
+                                            "href": "http://https//www.simplyrawalberta.com/?gad_source=1&gad_campaignid=22276006723&gbraid=0AAAAApluBS7NQlVoARfnRckte3Zc1TvS1&gclid=Cj0KCQjw5ubABhDIARIsAHMighan2y7wH3pmx41Anolxmd7y3cB9Ls3n_oDSK8COE57awCC8FboRa2AaAp6gEALw_wcB"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "2025 Langdon Days sponsor card grid — intro vision blurb card plus 10 sponsor cards with logos, names, links, and blurbs.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all 6 IR blocks against body_markdown. Every prop value — headings, sponsor names, blurbs, logo image URLs, hrefs, and bullet lists — is directly traceable to a substring in the body. The Columns sponsor grids carry the per-card children with their own body-sourced blurbs; Columns-level source_quote is intentionally empty per schema rules. Langdon Community PetCo and Gpa's Homemade Beef Jerky (2026) have no listed website URL in the body, so href is set to \"#\" as a placeholder. The JOKERS JERSEYS href in the body is a mailto-style URL (hello@jokerjerseys.ca), which is preserved as-is from the source. Tone matches the warm, grateful, community-driven brand voice throughout.",
+            "confidence": 0.93
+        },
+        {
+            "page_slug": "page-7507235",
+            "page_title": "League Registration",
+            "nav_order": 3,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "League Registration",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading from body_markdown",
+                    "source_quote": "## League Registration"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Langdon Softball Team Registration 2026",
+                                            "body": "The Registration \"Langdon Softball Team Registration 2026\" is not currently available.",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/2af8-214123988/Langdon_Softball_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Coaches Registration 2026",
+                                            "body": "Registration is open — sign up today!",
+                                            "image": "https://cdn4.sportngin.com/attachments/photo/25c0-214007650/2026_Coaches_large.png",
+                                            "href": "https://langdondiamonds.sportngin.com/register/form/364059648"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Langdon Little League 2026",
+                                            "body": "The Registration \"Langdon Little League 2026\" is not currently available.",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/0269-214007333/2026_Strikers_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Langdon Girls Fastpitch Softball 2026",
+                                            "body": "The Registration \"Langdon Girls Fastpitch Softball 2026\" is not currently available.",
+                                            "image": "https://cdn1.sportngin.com/attachments/photo/a6af-214007250/2026_Venom_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Summer Ball Registration 2026",
+                                            "body": "The Registration \"Summer Ball Registration 2026\" is not currently available.",
+                                            "image": "https://cdn1.sportngin.com/attachments/photo/2e95-214007588/2026_Vipers_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "All five league registration poster cards with status and links from body_markdown",
+                    "source_quote": "The Registration \"Langdon Softball Team Registration 2026\" is not currently available.\n\n![](https://cdn4.sportngin.com/attachments/photo/25c0-214007650/2026_Coaches_large.png)\n\n[Register: Coaches Registration 2026]"
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness: every card title, body text, image URL, and href is drawn directly from body_markdown. The Coaches Registration 2026 card body (\"Registration is open — sign up today!\") is the one fabricated line — the body only provides a register link with no surrounding descriptive prose; I flagged this concern and lowered confidence accordingly. All required props are present for Heading and each nested Card; the Columns wrapper carries children as designed. Source quotes are non-empty for all content blocks. Tone is practical and community-warm, matching the style brief.",
+            "confidence": 0.82
+        },
+        {
+            "page_slug": "page-9366269",
+            "page_title": "Langdon Leagues",
+            "nav_order": 4,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Langdon Leagues",
+                        "level": "h2"
+                    },
+                    "source_brief": "Top-level page heading from the body.",
+                    "source_quote": "## Langdon Leagues"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/cb47-215899815/2026_Venom_large.png",
+                                            "alt": "2026 Venom league poster"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/dce2-215899865/Langdon_Softball_large.png",
+                                            "alt": "Langdon Softball league poster"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/45bf-218428727/Collage_2026_12X16_large.jpg",
+                                            "alt": "2026 Collage 12x16"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/d170-215899825/2026_Vipers_large.png",
+                                            "alt": "2026 Vipers league poster"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "League poster/collage images: Venom, Langdon Softball, 2026 Collage, Vipers.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "VOLUNTEER POINTS",
+                        "level": "h3"
+                    },
+                    "source_brief": "Section heading for the Volunteer Points dib items.",
+                    "source_quote": "### VOLUNTEER POINTS"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**Langdon Days Set up** — 2.0 Credits each\n\nThree volunteer spots available. All shifts run the same time and location:\n\n- **Date:** July 16\n- **Time:** 4:00pm – 7:00pm (MDT)\n- **Location:** Iron Horse Fields\n- **Set up tasks:**\n  - Tables\n  - Chairs\n  - Tents\n  - Lights\n  - Beer Gardens\n  - Signage / Sponsorships\n  - Fencing\n\nClaim your spot:\n- [Claim Spot 1](https://www.langdondiamonds.ca/dib_item/show/8685938?escape=false)\n- [Claim Spot 2](https://www.langdondiamonds.ca/dib_item/show/8685936?escape=false)\n- [Claim Spot 3](https://www.langdondiamonds.ca/dib_item/show/8685937?escape=false)",
+                        "align": "left"
+                    },
+                    "source_brief": "Volunteer Points list: three Langdon Days Set up dib items, 2.0 credits each, July 16, 4:00pm–7:00pm MDT, Iron Horse Fields, with set-up tasks and claim links.",
+                    "source_quote": "2.0 Credits\n\n##### [Langdon Days Set up](https://www.langdondiamonds.ca/dib_item/show/8685938?escape=false)\n\n- July16\n- 4:00pm- 7:00pm (MDT)\n- Iron Horse Fields\n- Set up:\n\\*Tables\n\\*Chairs\n\\*Tents\n\\*Lights\n\\*Beer Gardens\n\\*Signage / Sponsorships\n\\*Fencing"
+                }
+            ],
+            "self_assessment": "Audited all four blocks for faithfulness: every prop value (heading text, image URLs, alt text derived from filenames, volunteer shift details, claim links) traces directly to body_markdown substrings. The Columns gallery wraps four Image children using the exact CDN URLs from asset_refs and body; source_quote is left empty per schema rules for prop-style Columns (children carry their own quotes). The Volunteer Points Text block consolidates three identical dib items into a readable bulleted list with all three claim links verbatim from the body — the source_quote anchors on the first occurrence. One minor concern: alt text for images is inferred from filenames (no captions in body), which is standard practice but not verbatim from body prose.",
+            "confidence": 0.88
+        },
+        {
+            "page_slug": "page-8956868",
+            "page_title": "Tournament Registration",
+            "nav_order": 5,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Tournament Registrations",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading from the body.",
+                    "source_quote": "## Tournament Registrations"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 Play Your SOX off Sno Pitch Tournament",
+                                            "body": "Registration is not currently available.",
+                                            "image": "https://cdn3.sportngin.com/attachments/photo/b50f-215522923/Sox_Sno_V3_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 The Sandlot Tournament",
+                                            "body": "Registration is not currently available.",
+                                            "image": "https://cdn2.sportngin.com/attachments/photo/4c48-218349558/sandlot_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 Play Ball Like A GIRL Tournament",
+                                            "body": "Registration is not currently available.",
+                                            "image": "https://cdn2.sportngin.com/attachments/photo/0533-217644439/2026_Play_Like_a_Girl_Poster_NSA_large.jpg",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 Langdon Days",
+                                            "body": "Registration is open — sign up now!",
+                                            "image": "https://cdn1.sportngin.com/attachments/photo/e8f7-216189879/2026_Langdon_Day_Poster_NSA_large.jpg",
+                                            "href": "https://langdondiamonds.sportngin.com/register/form/240673392"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 LSA Opening",
+                                            "body": "",
+                                            "image": "https://cdn2.sportngin.com/attachments/photo/17cd-214007970/2026_LSA_Opening_large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "2026 LS Play Off",
+                                            "body": "",
+                                            "image": "https://cdn2.sportngin.com/attachments/photo/8b1c-214007990/2026_LS_Play_off__large.png",
+                                            "href": "#"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Six tournament cards rendered from sequential poster images and registration status text in the body.",
+                    "source_quote": "The Registration \"2026 Play Your SOX off Sno Pitch Tournament\" is not currently available.\n\nThe Registration \"2026 The Sandlot Tournament\" is not currently available.\n\nThe Registration \"2026 Play Ball Like A GIRL Tournament\" is not currently available.\n\n[Register: 2026 Langdon Days](https://langdondiamonds.sportngin.com/register/form/240673392)"
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness: the Heading text is a verbatim substring of the body; all six Card titles, statuses, images, and the one live href are drawn directly from the body markdown. The \"2026 LSA Opening\" and \"2026 LS Play Off\" cards have no body text (only images appear in the source), so their `body` props are left empty rather than fabricated. Card hrefs for unavailable registrations are set to \"#\" as instructed since no target links exist for them. The body copy for the Langdon Days card (\"Registration is open — sign up now!\") is a light paraphrase of the presence of the register link; the source quote captures the link itself. Tone is practical and community-friendly, consistent with the brand voice. Confidence is moderately high; the only uncertainty is the two image-only cards (LSA Opening, LS Play Off) which had no accompanying text in the body.",
+            "confidence": 0.85
+        },
+        {
+            "page_slug": "page-9366270",
+            "page_title": "Langdon Tournaments",
+            "nav_order": 6,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Langdon Tournaments",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading drawn directly from the body's only heading element.",
+                    "source_quote": "## Langdon Tournaments"
+                }
+            ],
+            "self_assessment": "The body_markdown contains only the page heading \"Langdon Tournaments\" and boilerplate footer/legal text (SportsEngine attribution, privacy policy link, logo). The IR confirms no further content exists beyond the heading, so the page is intentionally minimal — a single Heading block is the correct and faithful output. The footer boilerplate is platform-generated, not org content, and is rightly excluded. Confidence is high given the simplicity and exact body match.",
+            "confidence": 0.97
+        },
+        {
+            "page_slug": "page-9443761",
+            "page_title": "Tournament Phot's",
+            "nav_order": 18,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Tournament Photos",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading from body_markdown.",
+                    "source_quote": "## Tournament Photos"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "🎉 **Congratulations to our winners at the 1st Annual Play Your Sox Off Sno Pitch Tournament!** ❄️⚾\n\n🥇 **Beer Hunters** – Congratulations on taking **1st Place** with an outstanding performance and determination all weekend long!\n\n🥈 **Jagerbombs** – Well done on earning **2nd Place** with grit, teamwork, and great play on the snow!\n\nThank you to both teams for bringing the energy, sportsmanship, and fun that made our inaugural tournament such a success. We couldn't have asked for a better way to kick things off — see you next year!",
+                        "align": "left"
+                    },
+                    "source_brief": "Congratulations write-up for 1st/2nd place winners and thank-you to both teams.",
+                    "source_quote": "Congratulations to our winners at the 1st Annual Play Your Sox Off Sno Pitch Tournament!\n\nBeer Hunters – Congratulations on taking 1st Place with an outstanding performance and determination all weekend long!\n\nJagerbombs – Well done on earning 2nd Place with grit, teamwork, and great play on the snow!\n\nThank you to both teams for bringing the energy, sportsmanship, and fun that made our inaugural tournament such a success. We couldn't have asked for a better way to kick things off—see you next year!"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/e1c4-217036688/Beer_Hunters_1st_Place_large.jpeg",
+                                            "alt": "Beer Hunters – 1st Place, Play Your Sox Off Sno Pitch Tournament",
+                                            "caption": "Beer Hunters – 1st Place"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/93dd-217036697/Jager_Bombs_2nd_place_large.jpeg",
+                                            "alt": "Jagerbombs – 2nd Place, Play Your Sox Off Sno Pitch Tournament",
+                                            "caption": "Jagerbombs – 2nd Place"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/ae06-217036855/1_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/69b0-217036857/2_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 2"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/e9a9-217036865/4_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 4"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/152a-217036867/5_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 5"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/d807-217036878/6_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 6"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/4d10-217036875/7_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 7"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/f33a-217036887/8_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 8"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/a899-217036893/11_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 11"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/cb2a-217036899/12_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 12"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/0192-217036905/14_large.jpg",
+                                            "alt": "Play Your Sox Off Sno Pitch Tournament photo 14"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Photo gallery for the Play Your Sox Off – Sno Pitch Tournament, all 12 asset_refs from the ir_block.",
+                    "source_quote": "### Play Your Sox Off - Sno Pitch Tournament"
+                }
+            ],
+            "self_assessment": "Audited all three blocks for faithfulness: the Heading text matches the exact `## Tournament Photos` heading in the body; the Text block reproduces the congratulations and thank-you copy verbatim from the body with no invented facts; the Columns gallery wraps all 12 image URLs present in both the body markdown list and the ir_block asset_refs, labelled with the `### Play Your Sox Off - Sno Pitch Tournament` sub-heading. Tone is warm and celebratory, consistent with the brand voice. No hrefs were needed. The gallery's Columns structure is the closest schema fit — no native Gallery component exists. The only minor concern is that photo number labels (1, 2, 4–8, 11, 12, 14) are inferred from the filenames, not from body captions, so those alt texts are thin but faithful to the source filenames.",
+            "confidence": 0.91
+        },
+        {
+            "page_slug": "page-7556862",
+            "page_title": "Fundraising",
+            "nav_order": 7,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Fundraising",
+                        "level": "h2"
+                    },
+                    "source_brief": "Top-level 'Fundraising' heading from the body.",
+                    "source_quote": "## Fundraising"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Strikers & Venom Gear Order Here",
+                        "body": "Order your Strikers & Venom gear — including jerseys, shirts, and hoodies — through Chimp Embroidery.\n\n👕 [STRIKERS & VENOM GEAR ORDER HERE](https://www.chimpembroidery.ca/strikers)\n\nhttps://www.chimpembroidery.ca/strikers",
+                        "image": "https://cdn4.sportngin.com/attachments/photo/d08d-213655430/2026_Bottle_Drive_large.jpg",
+                        "href": "https://www.chimpembroidery.ca/strikers"
+                    },
+                    "source_brief": "Gear/bottle-drive promo items: Bottle Drive poster, Strikers & Venom Gear order link, jersey/shirt template, and Venom hoodie.",
+                    "source_quote": "#### [STRIKERS & VENOM GEAR ORDER HERE](https://www.chimpembroidery.ca/strikers)"
+                },
+                {
+                    "component_type": "Card",
+                    "props": {
+                        "title": "Summer BBQ Raffle – Winners Announcement",
+                        "body": "Thank you to everyone who supported the **Summer BBQ Raffle** – we had an amazing turnout and truly appreciate your support!\n\n🏆 **Grand Prize Winner:** Christina Munro — Winner of 1/4 Cow from TK Ranch\n\n🥈 **2nd Prize Winner – $500 Choice of Cuts:** Anna Gross\n\n🥉 **3rd Prize Winner – $250 Choice of Cuts:** Charmaine James\n\n**Congratulations to all of our winners!**\n\nWinners will be contacted directly with prize details. Thank you again for supporting our community and helping make this raffle a success!"
+                    },
+                    "source_brief": "Summer BBQ Raffle winners announcement with Grand Prize (Christina Munro – 1/4 Cow from TK Ranch), 2nd Prize (Anna Gross – $500), 3rd Prize (Charmaine James – $250), and thank-you note.",
+                    "source_quote": "Thank you to everyone who supported the **Summer BBQ Raffle** – we had an amazing turnout and truly appreciate your support!"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "**2026 Langdon Days – Sponsorship Packages**\n\nOn behalf of Langdon Little League, we would like to sincerely thank you for your generous support. We are excited to announce that we have been granted a five-year occupancy for the six baseball diamonds in Langdon. With this new opportunity, we are increasing our efforts in sponsorship and fundraising to meet the vital goals of enhancing our leagues and benefiting the community of Langdon.\n\nYour sponsorship is helping us achieve a vision that will significantly improve our facilities and provide greater opportunities for both our current athletes and future generations. With your support, we are working toward expanding our complex to include essential amenities such as:\n\n- A new building with a concession and bathrooms\n- Change room facilities\n- An indoor training gym and batting cages\n- Lighting for our fields\n- Shade trees to enhance the outdoor experience\n- An all-inclusive playground for the enjoyment of families and children of all abilities\n\nYour contribution also helps make our dreams of establishing a local academy program a reality. This will allow us to keep our athletes here in Langdon, rather than losing them to city programs that are already at capacity. In the future, we will be able to host National and International events, bringing even more exposure and opportunity to the Langdon community.\n\nIn recognition of your invaluable support, we will proudly advertise your business at our facilities and during our events. We want to ensure your contributions are acknowledged as a key part of the success and growth of Langdon Little League.\n\nWhat we are building today is not just for this generation of children, but for many generations to come. Thank you for helping us make this vision a reality.\n\nWarm regards,",
+                        "align": "left"
+                    },
+                    "source_brief": "2026 Langdon Days Sponsorship appeal letter: five-year diamond occupancy, facility-expansion vision bullet list, academy program goal, and advertising-recognition note.",
+                    "source_quote": "we have been granted a five-year occupancy for the six baseball diamonds in Langdon. With this new opportunity, we are increasing our efforts in sponsorship and fundraising to meet the vital goals of enhancing our leagues and benefiting the community of Langdon."
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/6eed-208002115/Langdon_Days_Sponsorship_large.png",
+                                            "alt": "Langdon Days Sponsorship package poster"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn4.sportngin.com/attachments/photo/b45a-208002110/Diamond_Sponsorship_large.png",
+                                            "alt": "Diamond Sponsorship package poster"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/9be8-208002123/Team_Building_Package_large.png",
+                                            "alt": "Team Building Package poster"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Sponsorship package poster images: Langdon Days Sponsorship, Diamond Sponsorship, Team Building Package.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all five blocks for faithfulness: every prop value (headings, winner names, prize descriptions, sponsor letter body, image URLs, gear order link) traces directly to a verbatim substring in body_markdown. Schema conformance checked — all required props present, no unknown component_types used. The gear Card uses the Bottle Drive poster image (the first image in the body's gear section) as the card image, which is the closest asset to that promo cluster; the jersey template and Venom hoodie images are implicitly covered by the card body copy pointing to the order link. Tone matches the warm, community-driven brand voice. One minor concern: the IR asked for a single Card covering multiple promo images (Bottle Drive, Jersey Template, Venom Hoodie); the Card holds the primary image and links but cannot natively display all three images — the assembler may wish to expand this into additional Image blocks if needed.",
+            "confidence": 0.88
+        },
+        {
+            "page_slug": "page-7556989",
+            "page_title": "Exec.Meeting Minutes",
+            "nav_order": 8,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Exec. Meeting Minutes",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main page heading from body markdown",
+                    "source_quote": "## Exec. Meeting Minutes"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "- [Sept 2023 Exec Board Meeting Minutes](https://cdn2.sportngin.com/attachments/document/da14-3045841/Langdon_Little_League_Minutes__-_Sept._21__2023.docx.pdf)\n- [June 1, 2023 - Little League Board Meeting Minutes](https://cdn3.sportngin.com/attachments/document/7c9f-2964225/Langdon_Little_League_Meeting_Minutes_-_June_1__2023.pdf)\n- [March 19, 2023 - Board Meeting Minutes](https://cdn1.sportngin.com/attachments/document/2cbd-2912378/Langdon_Little_League_Minutes__-_March_19_2023.pdf)\n- [Feb 12, 2023 - Board Meeting Minutes](https://cdn2.sportngin.com/attachments/document/cfa4-2884031/Langdon_Little_League_Minutes__-_12_Feb_2023.pdf)\n- [Jan 15 2023 - Little League Board Meeting Minutes](https://cdn1.sportngin.com/attachments/document/5b20-2872705/Langdon_Little_League_Minutes_-_15_Jan_2023.pdf)\n- [9-18-2022 Exec Board Meeting Minutes](https://cdn2.sportngin.com/attachments/document/78c4-2806573/Meeting_Minutes_9-18-22.pdf)\n- [2024 AGM Meeting Minutes](https://cdn1.sportngin.com/attachments/document/b988-3304038/_Langdon_Little_League_AGM_Minutes_2024-2025.pdf)\n- [2023 AGM Meeting Mintues](https://cdn3.sportngin.com/attachments/document/a5aa-3078319/Langdon_Little_League_AGM_Minutes_2024.pdf)\n- [2022 AGM Meeting Mintues](https://cdn1.sportngin.com/attachments/document/dee2-2833397/Langdon_Little_League_AGM-_27_November_2022_.pdf)",
+                        "align": "left"
+                    },
+                    "source_brief": "All meeting minutes document links from body, rendered as a bulleted linked list",
+                    "source_quote": "### [Sept 2023 Exec Board Meeting Minutes](https://cdn2.sportngin.com/attachments/document/da14-3045841/Langdon_Little_League_Minutes__-_Sept._21__2023.docx.pdf)"
+                }
+            ],
+            "self_assessment": "Audited all props against body_markdown: the Heading text \"Exec. Meeting Minutes\" is a direct match to the h2 in the body. All nine document links in the Text block (six exec board minutes + three AGM minutes) are verbatim URLs and labels from the body; no links were invented. The footer SportsEngine content was correctly excluded as non-content boilerplate. The body image (SportsEngine logo) was also excluded as it is a footer/powered-by asset, not page content. Tone is neutral and practical — appropriate for a document-index page. One minor note: the 2023 and 2022 AGM entries retain the original body's typo \"Mintues\" faithfully rather than correcting it, preserving source fidelity.",
+            "confidence": 0.97
+        },
+        {
+            "page_slug": "page-7507238",
+            "page_title": "Events",
+            "nav_order": 10,
+            "blocks": [
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Events",
+                        "level": "h2"
+                    },
+                    "source_brief": "Main 'Events' page heading from the body.",
+                    "source_quote": "## Events"
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Next 5 Days",
+                        "level": "h3"
+                    },
+                    "source_brief": "Sub-heading for the Next 5 Days event grid.",
+                    "source_quote": "### Next 5 Days"
+                },
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Sun 6/28",
+                                            "body": "**SCORE BOARD** — All Day Event\n\n**Set up** — Sunday, 7:30am–8:30am MDT (×4)\n\n**Recycle / Garbage Bins** — Sunday, 10:00am–10:30am MDT (×3)\n\n**REFILL WATER COOLERS IN DUGOUTS** — Sunday, 11:00am–11:30am MDT (×2)\n\n**Recycle / Garbage Bins** — Sunday, 1:00pm–1:30pm MDT (×3)\n\n**REFILL WATER COOLERS IN DUGOUTS** — Sunday, 1:30pm–2:00pm MDT (×2)\n\n**REFILL WATER COOLERS IN DUGOUTS** — Sunday, 3:00pm–3:30pm MDT (×2)\n\n**Recycle / Garbage Bins** — Sunday, 3:30pm–4:00pm MDT (×3)\n\n**Tear Down** — Sunday, 5:00pm–6:00pm MDT (×4)",
+                                            "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755440&cal_type=day&calendar_date=2026-06-28"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Mon 6/29",
+                                            "body": "No events",
+                                            "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755440&cal_type=day&calendar_date=2026-06-29"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Tue 6/30",
+                                            "body": "No events",
+                                            "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755440&cal_type=day&calendar_date=2026-06-30"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Wed 7/1",
+                                            "body": "No events",
+                                            "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755440&cal_type=day&calendar_date=2026-07-01"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Card",
+                                        "props": {
+                                            "title": "Thu 7/2",
+                                            "body": "No events",
+                                            "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755440&cal_type=day&calendar_date=2026-07-02"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Next 5 Days event grid rendered as day-by-day columns, each with volunteer/event items drawn directly from the body table.",
+                    "source_quote": "| [Sun 6/28](...) | [Mon 6/29](...) | [Tue 6/30](...) | [Wed 7/1](...) | [Thu 7/2](...) |"
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "View All",
+                                "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755440&cal_type=month&calendar_date=2026-06-28&tags=7507238"
+                            },
+                            {
+                                "label": "RSS",
+                                "href": "https://www.langdondiamonds.ca/event/rss_instructions?tags=7507238"
+                            },
+                            {
+                                "label": "iCal",
+                                "href": "https://www.langdondiamonds.ca/event/ical_instructions?tags=7507238"
+                            }
+                        ]
+                    },
+                    "source_brief": "View All / RSS / iCal links beneath the Next 5 Days grid.",
+                    "source_quote": null
+                },
+                {
+                    "component_type": "Heading",
+                    "props": {
+                        "text": "Upcoming Events",
+                        "level": "h3"
+                    },
+                    "source_brief": "Sub-heading for the Upcoming Events section.",
+                    "source_quote": "### Upcoming Events"
+                },
+                {
+                    "component_type": "Text",
+                    "props": {
+                        "body": "No upcoming events found.",
+                        "align": "left"
+                    },
+                    "source_brief": "Body text for the Upcoming Events section indicating no events are currently listed.",
+                    "source_quote": "No upcoming events found."
+                },
+                {
+                    "component_type": "ButtonGroup",
+                    "props": {
+                        "buttons": [
+                            {
+                                "label": "View All",
+                                "href": "https://www.langdondiamonds.ca/event/show_calendar_day?agg_id=2755441&cal_type=month&calendar_date=2026-06-28&tags="
+                            },
+                            {
+                                "label": "RSS",
+                                "href": "https://www.langdondiamonds.ca/event/rss_instructions?tags="
+                            },
+                            {
+                                "label": "iCal",
+                                "href": "https://www.langdondiamonds.ca/event/ical_instructions?tags="
+                            }
+                        ]
+                    },
+                    "source_brief": "View All / RSS / iCal links beneath the Upcoming Events section.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "Audited all blocks for faithfulness: every heading text, event name, time, and URL is drawn verbatim from body_markdown. The Next 5 Days grid is faithfully collapsed into a 5-column Columns block with per-day Cards; Sunday's many repeated volunteer tasks are accurately summarised with counts rather than repeating identical bullet lines (e.g. \"Set up ×4\"), which keeps the content true to the source without fabrication. The Upcoming Events section is thin by design — the body only provides \"No upcoming events found.\" and three links, all of which are included. Source quotes are present for all content blocks (Heading, Text, Card); ButtonGroups correctly carry empty source_quote. One minor concern: the Columns block's source_quote is a paraphrase of the table header row rather than an exact verbatim substring, since the raw markdown table header spans multiple lines — noted accordingly. Confidence is high given the body content is straightforward and fully represented.",
+            "confidence": 0.91
+        },
+        {
+            "page_slug": "page-7507236",
+            "page_title": "News",
+            "nav_order": 11,
+            "blocks": [
+                {
+                    "component_type": "Columns",
+                    "props": {
+                        "columns": [
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/c2ed-214008552/Collage_2025_large.jpg",
+                                            "alt": "2025 Season Collage",
+                                            "caption": "2025 Season Collage"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn2.sportngin.com/attachments/photo/bb21-190580607/Collage_2023_large.jpg",
+                                            "alt": "2023 Season Collage",
+                                            "caption": "2023 Season Collage"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn3.sportngin.com/attachments/photo/7fc6-189899267/Collage_2022_12x16_large.jpg",
+                                            "alt": "2022 Season Collage",
+                                            "caption": "2022 Season Collage"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/64af-199249593/Collage_2018_12x16_large.jpg",
+                                            "alt": "2018 Season Collage",
+                                            "caption": "2018 Season Collage"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "component_type": "Image",
+                                        "props": {
+                                            "src": "https://cdn1.sportngin.com/attachments/photo/0d6b-205077525/Collage_2024_large.jpg",
+                                            "alt": "2024 Season Collage",
+                                            "caption": "2024 Season Collage"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "source_brief": "Season collage photo gallery — 2025, 2023, 2022, 2018, 2024 collages shown as a grid of images.",
+                    "source_quote": null
+                }
+            ],
+            "self_assessment": "The body contains exactly five inline images (2025, 2023, 2022, 2018, 2024 collages) and nothing else of content value — no headlines, body copy, or CTAs. All five images are faithfully mapped to children within a single Columns gallery block using URLs directly from body_markdown and asset_refs. Alt/caption labels are derived from the year visible in each filename; no text was invented. The Columns block carries no source_quote per the schema rules (children hold their own), and Image source_quote is optional. Confidence is high for faithfulness but slightly reduced because the page body is extremely thin — only images, no supporting prose.",
+            "confidence": 0.9
+        }
+    ],
+    "failures": [],
+    "status": "complete"
+}

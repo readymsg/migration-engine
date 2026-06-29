@@ -1,0 +1,257 @@
+{
+    "style_brief": {
+        "brand_voice": "",
+        "palette": [],
+        "layout_conventions": [],
+        "nav": [
+            {
+                "label": "Home",
+                "page_slug": "page-1254223",
+                "order": 0
+            },
+            {
+                "label": "CJFLTV",
+                "page_slug": "page-4432772",
+                "order": 1
+            },
+            {
+                "label": "CJFL Apparel",
+                "page_slug": "page-2926828",
+                "order": 2
+            },
+            {
+                "label": "Teams",
+                "page_slug": "page-9362356",
+                "order": 3
+            },
+            {
+                "label": "News",
+                "page_slug": "page-1265597",
+                "order": 4
+            },
+            {
+                "label": "Multimedia",
+                "page_slug": "page-1281095",
+                "order": 5
+            },
+            {
+                "label": "Our League",
+                "page_slug": "page-1285401",
+                "order": 6
+            },
+            {
+                "label": "Contact",
+                "page_slug": "page-1281100",
+                "order": 7
+            }
+        ]
+    },
+    "pages": [],
+    "failures": [
+        {
+            "page_slug": "page-1254223",
+            "page_title": "Home",
+            "page_node_id": 1254223,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1281095",
+            "page_title": "Multimedia",
+            "page_node_id": 1281095,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1289097",
+            "page_title": "Media",
+            "page_node_id": 1289097,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1285401",
+            "page_title": "Our League",
+            "page_node_id": 1285401,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1285408",
+            "page_title": "All-Canadians",
+            "page_node_id": 1285408,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286260",
+            "page_title": "Alumni",
+            "page_node_id": 1286260,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286268",
+            "page_title": "Awards",
+            "page_node_id": 1286268,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286335",
+            "page_title": "Stewart MacDonald",
+            "page_node_id": 1286335,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286336",
+            "page_title": "Life Membership",
+            "page_node_id": 1286336,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286337",
+            "page_title": "Ed Henick",
+            "page_node_id": 1286337,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286338",
+            "page_title": "Past Commissioners",
+            "page_node_id": 1286338,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286341",
+            "page_title": "Gord Currie",
+            "page_node_id": 1286341,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286342",
+            "page_title": "Rookie of the Year",
+            "page_node_id": 1286342,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286343",
+            "page_title": "Larry Wruck ",
+            "page_node_id": 1286343,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286344",
+            "page_title": "Peter Dalla Riva",
+            "page_node_id": 1286344,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286355",
+            "page_title": "National Semi-Final",
+            "page_node_id": 1286355,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286362",
+            "page_title": "Leader Post",
+            "page_node_id": 1286362,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286363",
+            "page_title": "Armadale Cup",
+            "page_node_id": 1286363,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286364",
+            "page_title": "Paul Kirk",
+            "page_node_id": 1286364,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286365",
+            "page_title": "John M Bannerman",
+            "page_node_id": 1286365,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286366",
+            "page_title": "Canadian Bowl",
+            "page_node_id": 1286366,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1285404",
+            "page_title": "Canadian Bowl Central",
+            "page_node_id": 1285404,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286266",
+            "page_title": "CJFL Records",
+            "page_node_id": 1286266,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1289101",
+            "page_title": "Fan Zone",
+            "page_node_id": 1289101,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286251",
+            "page_title": "All Canadian Teams",
+            "page_node_id": 1286251,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286253",
+            "page_title": "Listen Live!",
+            "page_node_id": 1286253,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286259",
+            "page_title": "History",
+            "page_node_id": 1286259,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-7907973",
+            "page_title": "Letters of Intent",
+            "page_node_id": 7907973,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-3622969",
+            "page_title": "Rick Smoke Award",
+            "page_node_id": 3622969,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286257",
+            "page_title": "Rules & Regs",
+            "page_node_id": 1286257,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286262",
+            "page_title": "Sponsors",
+            "page_node_id": 1286262,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1281100",
+            "page_title": "Contact",
+            "page_node_id": 1281100,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1286263",
+            "page_title": "Donations",
+            "page_node_id": 1286263,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        },
+        {
+            "page_slug": "page-1285409",
+            "page_title": "Contact Us",
+            "page_node_id": 1285409,
+            "reason": "ir-pass-failure: site exceeds single-call IR capacity, chunking not yet implemented (34 pages, limit 25)"
+        }
+    ],
+    "status": "failed"
+}
