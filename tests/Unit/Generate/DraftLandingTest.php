@@ -14,6 +14,7 @@ use App\Data\ConversionStage;
 use App\Data\ConversionStatus;
 use App\Data\DecisionEntry;
 use App\Data\DecisionLedger;
+use App\Data\GlobalStyleBrief;
 use App\Data\InventoryPage;
 use App\Data\Manifest;
 use App\Data\NavItem;
@@ -61,6 +62,7 @@ final class DraftLandingTest extends TestCase
             failures: new DataCollection(AssemblyFailure::class, []),
             block_issues_by_slug: [],
             status: AssemblyStatus::Complete,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -130,6 +132,7 @@ final class DraftLandingTest extends TestCase
                 )],
             ],
             status: AssemblyStatus::Partial,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -166,6 +169,7 @@ final class DraftLandingTest extends TestCase
             failures: new DataCollection(AssemblyFailure::class, []),
             block_issues_by_slug: [],
             status: AssemblyStatus::Complete,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -211,6 +215,7 @@ final class DraftLandingTest extends TestCase
             ]),
             block_issues_by_slug: [],
             status: AssemblyStatus::Failed,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -250,6 +255,7 @@ final class DraftLandingTest extends TestCase
             ]),
             block_issues_by_slug: [],
             status: AssemblyStatus::Partial,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -292,6 +298,7 @@ final class DraftLandingTest extends TestCase
             failures: new DataCollection(AssemblyFailure::class, []),
             block_issues_by_slug: [],
             status: AssemblyStatus::Complete,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -335,6 +342,7 @@ final class DraftLandingTest extends TestCase
             failures: new DataCollection(AssemblyFailure::class, []),
             block_issues_by_slug: [],
             status: AssemblyStatus::Complete,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -396,6 +404,7 @@ final class DraftLandingTest extends TestCase
             failures: new DataCollection(AssemblyFailure::class, []),
             block_issues_by_slug: [],
             status: AssemblyStatus::Complete,
+            style_brief: $this->emptyBrief(),
         );
 
         $platform = new PlatformRenderResult(
@@ -446,6 +455,19 @@ final class DraftLandingTest extends TestCase
             external_subtype: null,
             depth: $depth,
             nav_path: [],
+        );
+    }
+
+    private function emptyBrief(): GlobalStyleBrief
+    {
+        // Style-brief passthrough on AssemblyResult; the lander forwards
+        // it onto ConversionResult but doesn't read it. Synthetic tests
+        // get an empty brief so they don't have to invent a palette.
+        return new GlobalStyleBrief(
+            brand_voice: '',
+            palette: [],
+            layout_conventions: [],
+            nav: new DataCollection(NavItem::class, []),
         );
     }
 

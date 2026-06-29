@@ -41,6 +41,20 @@ export interface PuckPage {
     zones: Record<string, PuckBlock[]>;
 }
 
+export interface BrandData {
+    logo_source: string;
+    logo_asset_ref: string | null;
+    palette: Record<string, string> | never[];
+    voice_hint: string | null;
+}
+
+export interface StyleBrief {
+    brand_voice: string;
+    palette: Record<string, string> | never[];
+    layout_conventions: string[];
+    nav: Array<{ label: string; page_slug: string; order: number }>;
+}
+
 export interface ConversionResultJson {
     conversion_id: string;
     org_id: string;
@@ -52,6 +66,8 @@ export interface ConversionResultJson {
         | Record<string, Array<{ block_index: number; component_type: string; coercion: string; reason: string; path: string | null }>>
         | never[];
     status: ConversionStatus;
+    brand: BrandData;
+    style_brief: StyleBrief;
     draft_id: string | null;
     draft_url: string | null;
 }

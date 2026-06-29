@@ -99,6 +99,7 @@ final class Assembler
             failures: new DataCollection(AssemblyFailure::class, $failures),
             block_issues_by_slug: $issuesBySlug,
             status: $status,
+            style_brief: $blockFill->style_brief,
         );
     }
 
@@ -209,6 +210,7 @@ final class Assembler
             failures: new DataCollection(AssemblyFailure::class, $failures),
             block_issues_by_slug: [],
             status: AssemblyStatus::Failed,
+            style_brief: $blockFill->style_brief,
         );
     }
 }

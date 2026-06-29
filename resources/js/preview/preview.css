@@ -20,6 +20,14 @@
     --pv-ok-bg: #f0fdf4;
     --pv-ok-fg: #166534;
     --pv-ok-border: #86efac;
+
+    /* Brand palette — populated by App.applyBrandPalette() from
+       ConversionResult.style_brief.palette when present. If the IR pass
+       produced no palette these stay unset and the preview defaults
+       above are used. We do NOT invent colors. */
+    --pv-brand-primary: var(--pv-accent);
+    --pv-brand-secondary: var(--pv-fg);
+    --pv-brand-accent: var(--pv-accent);
 }
 
 body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--pv-fg); background: #f6f7f8; }
@@ -45,7 +53,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 .preview-nav__item { padding: 6px 10px; border-radius: 6px; }
 .preview-nav__item a { color: var(--pv-fg); text-decoration: none; font-weight: 500; }
 .preview-nav__item:hover { background: #f3f4f6; }
-.preview-nav__item--active { background: var(--pv-accent); }
+.preview-nav__item--active { background: var(--pv-brand-primary); }
 .preview-nav__item--active a { color: white; }
 .preview-nav__item--unresolved { border: 1px solid var(--pv-fail-border); background: var(--pv-fail-bg); color: var(--pv-fail-fg); cursor: help; }
 .preview-nav__item--external { border: 1px dashed var(--pv-border); color: var(--pv-muted); cursor: help; }
@@ -98,9 +106,13 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 
 .preview-buttongroup { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 24px; }
 .preview-button { display: inline-block; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; border: 1px solid transparent; }
-.preview-button--primary { background: var(--pv-accent); color: white; }
-.preview-button--secondary { background: white; color: var(--pv-accent); border-color: var(--pv-accent); }
-.preview-button--ghost { color: var(--pv-accent); background: transparent; }
+/* Buttons + accent-color surfaces read from --pv-brand-primary, which
+   falls back to --pv-accent when no brand palette is applied. This is
+   how the org's LLM-inferred palette shows up in the preview without
+   us inventing colors. */
+.preview-button--primary { background: var(--pv-brand-primary); color: white; }
+.preview-button--secondary { background: white; color: var(--pv-brand-primary); border-color: var(--pv-brand-primary); }
+.preview-button--ghost { color: var(--pv-brand-primary); background: transparent; }
 
 .preview-platform { border: 2px dashed var(--pv-accent); background: #f8faff; border-radius: 8px; margin: 16px 24px; padding: 24px; text-align: center; }
 .preview-platform__label { display: inline-block; background: var(--pv-accent); color: white; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
@@ -110,3 +122,139 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 .preview-unknown { background: var(--pv-fail-bg); color: var(--pv-fail-fg); border: 1px solid var(--pv-fail-border); border-radius: 6px; margin: 8px 24px; padding: 12px 16px; font-size: 13px; }
 
 .preview-empty { padding: 48px; text-align: center; color: var(--pv-muted); }
+
+/* ── BrandChrome — preview metadata, NOT page content ─────────────────
+   Styled deliberately as a debug/info panel: gray background, monospace
+   key/value lines, "preview chrome — NOT carried into the landed draft"
+   sublabel front and center. The visual distance from the page frame
+   below is the load-bearing thing — anyone scanning the demo can tell
+   at a glance "this is information ABOUT the conversion, not part of
+   the rebuilt site." Same posture as the Partial-status ribbon. */
+.preview-brand-chrome {
+    border: 1px solid var(--pv-border);
+    border-radius: 8px;
+    background: #f9fafb;
+    margin-bottom: 16px;
+    padding: 14px 18px;
+    font-size: 13px;
+}
+.preview-brand-chrome__label {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pv-muted);
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: baseline;
+}
+.preview-brand-chrome__sublabel {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--pv-muted);
+}
+.preview-brand-chrome__grid {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(220px, 2fr);
+    gap: 12px;
+}
+.preview-brand-chrome__cell {
+    background: white;
+    border: 1px solid var(--pv-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.preview-brand-chrome__cell--logo,
+.preview-brand-chrome__cell--voice { grid-column: span 1; }
+.preview-brand-chrome__cell--palette { grid-column: 1 / -1; }
+.preview-brand-chrome__cell--layouts { grid-column: 1 / -1; }
+
+.preview-brand-chrome__cell-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pv-muted);
+    margin-bottom: 6px;
+}
+.preview-brand-chrome__cell-foot {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--pv-muted);
+}
+.preview-brand-chrome__cell-foot code {
+    background: rgba(0,0,0,0.05);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+.preview-brand-chrome__empty {
+    color: var(--pv-muted);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.preview-brand-chrome__logo { max-width: 140px; max-height: 80px; display: block; }
+.preview-brand-chrome__logo-fallback {
+    background: #fafafa;
+    border: 1px dashed var(--pv-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.preview-brand-chrome__logo-fallback-org { font-weight: 600; }
+.preview-brand-chrome__logo-fallback-note {
+    font-size: 11px;
+    color: var(--pv-muted);
+    font-style: italic;
+    margin-top: 2px;
+}
+.preview-brand-chrome__logo-fallback-ref {
+    margin-top: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: var(--pv-muted);
+    word-break: break-all;
+}
+
+.preview-brand-chrome__voice {
+    line-height: 1.45;
+    color: var(--pv-fg);
+}
+
+.preview-brand-chrome__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.preview-brand-chrome__swatch {
+    width: 88px;
+    text-align: center;
+}
+.preview-brand-chrome__swatch-chip {
+    width: 100%;
+    height: 32px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
+.preview-brand-chrome__swatch-name {
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+.preview-brand-chrome__swatch-hex {
+    font-size: 10px;
+    color: var(--pv-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.preview-brand-chrome__layouts {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.preview-brand-chrome__layouts li { margin: 2px 0; }

@@ -31,6 +31,13 @@ use Spatie\LaravelData\DataCollection;
 // lost or substituted at least one block during coercion). Pages that
 // assembled cleanly are not in the map; pages that failed entirely are
 // in `failures`, not here.
+//
+// `style_brief` is a verbatim passthrough of BlockFillResult.style_brief
+// — the assembler doesn't read it (the assembler is the schema-aware
+// validation point for content, not a styling consumer), but the
+// downstream draft-landing / SCORE & LOG layers need it on hand
+// without re-reading the BlockFillResult. Same posture as
+// block_issues_by_slug: sidecar passthrough, not a producer signal.
 final class AssemblyResult extends Data
 {
     /**
@@ -45,5 +52,6 @@ final class AssemblyResult extends Data
         public DataCollection $failures,
         public array $block_issues_by_slug,
         public AssemblyStatus $status,
+        public GlobalStyleBrief $style_brief,
     ) {}
 }

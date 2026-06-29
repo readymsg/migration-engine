@@ -113,6 +113,12 @@ final class DraftLanding
             failures: new DataCollection(ConversionFailure::class, $failures),
             block_issues_by_slug: $assembly->block_issues_by_slug,
             status: $status,
+            // Brand + style_brief are passthrough sidecars (NOT in
+            // page_map, NOT in createDraftSite's payload). See
+            // ConversionResult docblock for the rationale: SCORE & LOG
+            // structural-confidence signals + preview chrome.
+            brand: $manifest->brand,
+            style_brief: $assembly->style_brief,
             draft_id: $draftId,
             draft_url: $draftUrl,
         );

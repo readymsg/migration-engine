@@ -26,6 +26,20 @@ use Spatie\LaravelData\DataCollection;
 // createDraftSite is NOT called (an empty page_map would either error
 // on the product side or create a phantom empty site — neither is
 // useful) and both draft fields stay null.
+// `brand` and `style_brief` are PASSTHROUGH sidecars — same posture as
+// block_issues_by_slug. They are NOT in page_map and they do NOT
+// affect what createDraftSite receives (the rebuilt site is structurally
+// unbranded in v1; the receiving product owns its own branding).
+// They're carried here so that:
+//   - SCORE & LOG (stage 4) has the data it needs for the
+//     "extraction-grounded" structural-confidence signals BUILD.md:73
+//     names — "logo found" reads brand.logo_asset_ref; palette / voice
+//     telemetry reads style_brief.
+//   - The throwaway preview can render preview-chrome that surfaces
+//     what the engine extracted (org logo, palette, brand voice) so a
+//     reviewer can see the brand signals the engine captured. The
+//     preview chrome is metadata about the conversion — NOT a claim
+//     the landed draft is branded.
 final class ConversionResult extends Data
 {
     /**
@@ -44,6 +58,8 @@ final class ConversionResult extends Data
         public DataCollection $failures,
         public array $block_issues_by_slug,
         public ConversionStatus $status,
+        public Brand $brand,
+        public GlobalStyleBrief $style_brief,
         public ?string $draft_id = null,
         public ?string $draft_url = null,
     ) {}

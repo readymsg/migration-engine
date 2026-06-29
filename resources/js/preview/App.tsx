@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Render } from '@measured/puck';
 import { puckConfig } from './puck-config';
 import { ConversionResultJson, ResolvedNavItem } from './types';
 import Nav from './Nav';
 import StatusRibbon from './StatusRibbon';
+import BrandChrome from './BrandChrome';
 import '@measured/puck/puck.css';
 import './preview.css';
 
@@ -34,6 +35,7 @@ export default function App({ slug }: Props) {
                 if (cancelled) return;
                 setLoad({ state: 'ready', data });
                 setActiveSlug(initialSlug(data));
+                applyBrandPalette(data);
             })
             .catch((err: Error) => {
                 if (cancelled) return;
@@ -93,6 +95,11 @@ export default function App({ slug }: Props) {
                 conversionId={data.conversion_id}
                 draftUrl={data.draft_url}
             />
+            <BrandChrome
+                brand={data.brand}
+                styleBrief={data.style_brief}
+                orgId={data.org_id}
+            />
             <Nav nav={sortedNav(data.nav)} activeSlug={activeSlug} onSelect={handleSelect} />
             <main className="preview-page">
                 {page ? (
@@ -105,6 +112,22 @@ export default function App({ slug }: Props) {
             </main>
         </div>
     );
+}
+
+// Applies style_brief.palette as CSS custom properties on :root so
+// preview chrome can pick the org's colors. The palette is LLM-inferred
+// (not measured from the source CSS) — honest about provenance via the
+// BrandChrome's "LLM-inferred" label. If the palette is empty, the
+// defaults in preview.css stay in effect — we never invent colors.
+function applyBrandPalette(data: ConversionResultJson): void {
+    const palette = data.style_brief.palette;
+    if (!palette || Array.isArray(palette)) return;
+    const root = document.documentElement.style;
+    if (palette.primary) root.setProperty('--pv-brand-primary', palette.primary);
+    if (palette.secondary) root.setProperty('--pv-brand-secondary', palette.secondary);
+    if (palette.accent) root.setProperty('--pv-brand-accent', palette.accent);
+    if (palette.background) root.setProperty('--pv-brand-background', palette.background);
+    if (palette.text) root.setProperty('--pv-brand-text', palette.text);
 }
 
 function initialSlug(data: ConversionResultJson): string | null {

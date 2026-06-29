@@ -104,9 +104,28 @@ final class PreviewRouteTest extends TestCase
             'failures',
             'block_issues_by_slug',
             'status',
+            'brand',
+            'style_brief',
         ] as $key) {
             $this->assertArrayHasKey($key, $body, "ConversionResult JSON missing '{$key}'");
         }
+
+        // brand passthrough — same shape as App\Data\Brand. Empty palette
+        // is fine; the BrandExtractor doesn't populate it today (the
+        // preview falls back gracefully when fields are absent).
+        $this->assertIsArray($body['brand']);
+        foreach (['logo_source', 'logo_asset_ref', 'palette', 'voice_hint'] as $k) {
+            $this->assertArrayHasKey($k, $body['brand'], "brand missing '{$k}'");
+        }
+
+        // style_brief passthrough — IR-pass-generated. Populated by Opus,
+        // so the palette has the five canonical tokens.
+        $this->assertIsArray($body['style_brief']);
+        foreach (['brand_voice', 'palette', 'layout_conventions', 'nav'] as $k) {
+            $this->assertArrayHasKey($k, $body['style_brief'], "style_brief missing '{$k}'");
+        }
+        $this->assertIsArray($body['style_brief']['palette']);
+        $this->assertArrayHasKey('primary', $body['style_brief']['palette'], 'tbirdhoops style_brief should carry a populated palette from the fixture');
 
         // status is one of the ConversionStatus enum values.
         $this->assertContains(
