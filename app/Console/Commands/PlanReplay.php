@@ -246,6 +246,94 @@ final class PlanReplay extends Command
             $shown++;
         }
 
+        // --- IR pass with FAKE agents — verifies chunking + reconciliation deterministically ---
+        $this->newLine();
+        $this->info('=== IR pass (FAKE agents — chunking + reconciliation check) ===');
+        $briefAgent = new \Tests\Support\Generate\FakeIrBriefDeriverAgent;
+        $designerAgent = new \Tests\Support\Generate\FakeIrChunkDesignerAgent;
+        $irPass = new \App\Services\Generate\IrPass(
+            $briefAgent,
+            $designerAgent,
+            new ContentLoader(disk: 'local'),
+        );
+
+        $irResult = $irPass->run($plan, $manifest);
+
+        $this->line(sprintf(
+            '  status=%s  ir_pages=%d  failures=%d',
+            $irResult->status->value,
+            $irResult->pages->count(),
+            $irResult->failures->count(),
+        ));
+        $this->line(sprintf(
+            '  brief_deriver_calls=%d  designer_calls=%d',
+            $briefAgent->calls,
+            $designerAgent->calls,
+        ));
+
+        if ($designerAgent->calls > 0) {
+            $this->newLine();
+            $this->info('=== Per-chunk dispatch (verifies partitioning) ===');
+            foreach ($designerAgent->allSeen as $input) {
+                $this->line(sprintf(
+                    '  chunk %d/%d : %d pages',
+                    $input->chunk_index + 1,
+                    $input->total_chunks,
+                    $input->chunk_pages->count(),
+                ));
+            }
+        }
+
+        // --- Reconciliation tie-out ---
+        $this->newLine();
+        $this->info('=== Reconciliation tie-out ===');
+        $expectedSlugs = [];
+        foreach ($plan->kept_pages->items() as $p) {
+            /** @var InventoryPage $p */
+            if ($p->kind === 'page' && ($ledgerByTarget[$this->targetOf($p)] ?? null)?->action === DecisionAction::Keep) {
+                $expectedSlugs[] = \App\Services\Generate\PageSlug::of($p);
+            }
+        }
+        sort($expectedSlugs);
+
+        $actualSlugs = [];
+        foreach ($irResult->pages->items() as $ir) {
+            $actualSlugs[] = $ir->page_slug;
+        }
+        foreach ($irResult->failures->items() as $f) {
+            /** @var \App\Data\IrPassFailure $f */
+            // Skip the sentinel — it's not a real page slug.
+            if ($f->page_slug === \App\Services\Generate\IrPass::BRIEF_FAILURE_SLUG) {
+                continue;
+            }
+            $actualSlugs[] = $f->page_slug;
+        }
+        sort($actualSlugs);
+
+        $missing = array_diff($expectedSlugs, $actualSlugs);
+        $extra = array_diff($actualSlugs, $expectedSlugs);
+        $duplicates = array_diff_key($actualSlugs, array_unique($actualSlugs));
+
+        $this->line(sprintf('  expected (keep+kind=page) : %d', count($expectedSlugs)));
+        $this->line(sprintf('  actual (pages+failures)   : %d', count($actualSlugs)));
+        $this->line(sprintf('  missing                   : %d', count($missing)));
+        $this->line(sprintf('  extra                     : %d', count($extra)));
+        $this->line(sprintf('  duplicate slugs           : %d', count($duplicates)));
+
+        if (count($missing) === 0 && count($extra) === 0 && count($duplicates) === 0) {
+            $this->newLine();
+            $this->info('✓ Reconciliation clean: every keep+kind=page is in pages OR failures, exactly once.');
+        } else {
+            $this->newLine();
+            $this->error('✗ Reconciliation FAILED — see counts above.');
+            if (count($missing) > 0) {
+                $this->line('  missing slugs: '.implode(', ', $missing));
+            }
+            if (count($extra) > 0) {
+                $this->line('  extra slugs: '.implode(', ', $extra));
+            }
+        }
+
         return self::SUCCESS;
     }
 

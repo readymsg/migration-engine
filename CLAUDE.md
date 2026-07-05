@@ -123,47 +123,60 @@ Two SportsEngine-flavored signals, handled completely differently:
 - **SE CDN asset URLs** (`cdn*.sportngin.com`, `assets.ngin.com`, `app-assets*.sportngin.com`) — used by SE for brand logos, banner graphics, content images, theme JS/CSS — are **NEVER** matched by the link-removal rule. The detection logic looks at the URL *path*, not the host, so CDN URLs that happen to fall under sportngin.com don't false-positive.
 - **`TODO (GENERATE):` re-host every `sportngin.com` / `assets.ngin.com` / `app-assets*.sportngin.com` asset URL found in scraped content to S3 (via `S3AssetUploader::putFromUrl`).** The rebuilt site must have **zero** live SportsEngine dependency at serve-time — no images, no JS, no CSS pulled from sportngin/ngin hosts. BrandExtractor already handles the brand logo at INGEST; the rest is a GENERATE concern.
 
-## GENERATE — IR pass (v1, irPass only)
+## GENERATE — IR pass (v1, ALWAYS-CHUNKED two-agent seam)
 
-`App\Services\Generate\IrPass::run(SitePlan, Manifest): IrPassResult` runs ONE structured Opus 4.8 call (via the injectable `IrPassAgent`) to produce:
+`App\Services\Generate\IrPass::run(SitePlan, Manifest): IrPassResult` runs the IR pass as **two agents, always chunked** — no single-call path exists any more. Every conversion pays exactly `1 + ceil(N/15)` Opus 4.8 calls, where N is the keep-content page count:
 
-- a compact **`GlobalStyleBrief`** (brand voice, palette, layout conventions, nav — nav is echoed from `SitePlan.nav`, not re-derived by the LLM); and
-- per-page **`Ir`** (page_slug, page_title, nav_order, ordered abstract block intents).
+1. **Brief-deriver** (`IrBriefDeriverAgent`, prod: `AnthropicIrBriefDeriverAgent`) — ONE call against a **bounded sample** of pages (depth-0 priority + fallback if depth-0 set is thin; capped at `BRIEF_SAMPLE_LIMIT = 12`). Returns the `GlobalStyleBrief` (brand voice, palette, layout conventions, nav — nav echoed from `SitePlan.nav`). The brief is the singular cross-chunk coherence anchor.
+2. **Chunk-designer** (`IrChunkDesignerAgent`, prod: `AnthropicIrChunkDesignerAgent`) — K calls, one per chunk of at most `CHUNK_PAGE_LIMIT = 15` pages. Each receives the brief as LOCKED input and designs per-page `Ir` (page_slug, page_title, nav_order, ordered abstract block intents).
 
-**Scope is tight** — the IR pass is *just* the architecture call. Block-fill (Sonnet 4.6 per BUILD.md), `GeneratePageJob`, and `Bus::batch()` fan-out are built but UNCACHED and not yet exercised against real Sonnet — see "GENERATE — block-fill" below. The deterministic assembler, validation/repair, `createDraftSite`, placeholder blocks, asset re-hosting, and the demo are all **not built yet** — separate seams that come after this checkpoint.
+The old combined `IrPassAgent` / `AnthropicIrPassAgent` / `IrPassInput` / `IrPassAgentResponse` are deleted — the single-call path is gone. This replaced the abort mode where a 34-page site (cjfl) exhausted the model's output-token budget and returned nothing; every site now converts.
 
-### IR pass scoping (CRITICAL)
+### Why always-chunked (not "chunked only when large")
 
-IR is generated **only** for pages whose disposition is `keep` AND whose `kind === 'page'`. Everything else is excluded *before* the LLM call:
+Two agents on every site is intentional: it avoids branching orchestration for a special-case tier ("small enough to fit in one call") that would silently regress the moment a site crossed the boundary. Every site now takes the same path, tested by the same fake-agent tests, with predictable cost (small site: 1 brief + 1 chunk = 2 Opus calls; large site: 1 brief + 3-7 chunk calls).
+
+**Incidental win**: the dedicated brief-deriver reliably emits a populated palette where the combined single-call left it empty. Validated on both live captures — cjfl 0→5 hex codes, tenacity 0→5 hex codes. The narrower prompt (brief-only, bounded sample) is what enables it. Not a scored goal; a partial close of a long-standing quality gap.
+
+### IR pass scoping (CRITICAL, unchanged)
+
+IR is generated **only** for pages whose disposition is `keep` AND whose `kind === 'page'`. Everything else is excluded *before* any LLM call:
 
 | Disposition / kind | IR? | Why |
 |---|---|---|
 | `keep` + `kind=page` | **yes** | content page rebuilt from scraped content |
-| `platform_dynamic` (Schedule/Scores/Standings/Roster/Teams/Divisions/Contacts/Calendar/News) | no | becomes a TeamLinkt platform block via a **separate later seam**; the LLM never designs IR for one |
+| `platform_dynamic` (Schedule/Scores/Standings/Roster/Teams/Divisions/Contacts/Calendar/News) | no | becomes a TeamLinkt platform block via a **separate later seam**; neither agent ever designs IR for one |
 | `subsumed` | no | represented by an ancestor `platform_dynamic`'s block |
 | `park` / `drop` | no | absent from the rebuilt site (drop never emitted in v1) |
 | `dynamic` (vestigial) | no | not rebuilt as content |
 | `keep` + `kind=external` (LinkNode / Dibs / etc.) | no | preserved as a nav link only — no content to design |
 
-The filter lives in `IrPass::extractKeepContentPages()`. Tests assert that platform_dynamic, subsumed, parked, and external pages never reach the agent's `$seen->keep_pages`.
+The filter lives in `IrPass::extractKeepContentPages()`. Additionally a per-page body-size guard (`MAX_BODY_BYTES = 50_000`) flags pages with markdown bodies too large to safely send — they land as content-failure `IrPassFailure`s BEFORE any LLM call, never reach the brief sample, never reach a chunk.
 
-### Faithful-rebuild guarantee: validate → targeted retry → flag
+### Faithful-rebuild guarantee — union reconciliation across chunks is the AUTHORITY
 
-Opus is allowed to silently drop pages from a large batch (observed on the first real run: 2 of 16 keep-pages missing from the response). The IR pass NEVER lets that turn into a silent loss:
+Chunking multiplies the surface for silent loss (per-chunk drops AND per-chunk throws), so reconciliation is done at every layer and the whole-conversion diff is the source of truth:
 
-1. After the agent returns, `IrPass` diffs the returned `page_slug`s against the expected slugs (single-sourced via `App\Services\Generate\PageSlug::of()` — the helper the prompt and the orchestration both use; drift here would re-introduce silent loss).
-2. If anything is missing, the agent is called a **second** time with **only the missing pages** (full nav still passed for context; the retry's `style_brief` is discarded — the first call's is authoritative).
-3. If anything is **still** missing after the retry, it lands in `IrPassResult.failures` as an explicit `IrPassFailure` (slug, title, page_node_id, reason). `IrPassResult.status` flips to `Partial` so the ConversionLog can flag the conversion.
+1. **Per-chunk targeted retry** — after each chunk's initial response, `IrPass` diffs returned `page_slug`s against that chunk's expected slugs (via `PageSlug::of()` — the same single-sourced helper the agents use). If anything is missing, that chunk is called AGAIN with ONLY its missing pages. Anything still missing after the retry becomes an `IrPassFailure` for that chunk.
+2. **Per-chunk try/catch** — a chunk that throws (429, malformed response, timeout) synthesises one `IrPassFailure` per page in the chunk. Never short-circuits the loop; remaining chunks still run.
+3. **Whole-conversion diff** — after all chunks: every keep-content page appears in `IrPassResult.pages` OR `IrPassResult.failures`, exactly once. No chunk's success flag is trusted; the diff-the-universe check is.
+4. **Brief-deriver failure degrades gracefully** — a brief-deriver throw becomes an empty brief + a sentinel `*style_brief*` `IrPassFailure`, and chunk-designer calls still run (no coherence anchor, but per-page IR still produced). Partial output beats throwing away all per-page work over a coherence-anchor failure.
+
+**Status resolution**: `Complete` when zero failures; `Partial` when any failure but at least one page designed; `Failed` only when every designable page failed wholesale (the chunked equivalent of the old single-call catastrophe — currently no live path produces this, but it's the correct terminal case).
 
 **Crucially**: missing pages are NEVER replaced by a stub Ir entry with placeholder content. A blank stub masquerading as a rebuilt page is worse than a visible failure — `IrPass` would rather a reviewer see the gap and re-run than ship a fake page.
 
 ### Schema-agnostic IR (still the rule)
 
-`IrBlock.component_type` is an **abstract intent name** (`'hero'`, `'paragraph'`, `'card'`, `'cta'`, `'gallery'`, `'team_grid'`, …), NEVER a Puck-specific PROP name (`'background_image'`, `'subheading'`, `'cta_label'`). The recommended vocabulary lives in the agent's system prompt; the assembler is the only place that maps these abstract intents to real Puck components, and it doesn't exist yet.
+`IrBlock.component_type` is an **abstract intent name** (`'hero'`, `'paragraph'`, `'card'`, `'cta'`, `'gallery'`, `'team_grid'`, …), NEVER a Puck-specific PROP name (`'background_image'`, `'subheading'`, `'cta_label'`). The recommended vocabulary lives in each agent's system prompt; the assembler is the only place that maps these abstract intents to real Puck components.
 
-### Anthropic config gotcha (still applies)
+### Anthropic config gotcha (still applies to both agents)
 
-`AnthropicIrPassAgent` pins `Lab::Anthropic` + `claude-opus-4-8` via `#[Provider]` / `#[Model]` attributes, since `config/ai.php` defaults to OpenAI. The same `HasStructuredOutput` + JSON schema pattern from `AnthropicClassifierAgent`.
+`AnthropicIrBriefDeriverAgent` and `AnthropicIrChunkDesignerAgent` each pin `Lab::Anthropic` + `claude-opus-4-8` via `#[Provider]` / `#[Model]` attributes, since `config/ai.php` defaults to OpenAI. Same `HasStructuredOutput` + JSON schema pattern used by `AnthropicClassifierAgent` and `AnthropicBlockFillAgent`.
+
+### Live-validated on cjfl (34-page abort → 31-page Complete)
+
+The chunking slice was checkpointed against two live sites (~$6 total). cjfl (previously Failed/34-abort under the single-call path) converts as **Complete on IR + block-fill, Partial only from a pre-existing draft-landing Teams-nav gap unrelated to IR**. Coherence across the 3 chunks is strong: the brand_voice names CJFL-specific editorial features by name and grounds in the 1890 founding legacy; layout_conventions carry the domain-specific BCFC/PFC/OFC conference grouping. Tenacity was re-run as a regression check on a site that already worked under the single-call path — voice equivalent, palette 0→5 improved, conventions comparable-to-better. See `tests/Fixtures/blockfill/cjfl.json` (durable large-site replay fixture, new) and `tests/Fixtures/blockfill/tenacityvolleyball.json` (regenerated under the chunked path).
 
 ## GENERATE — block-fill (v1, slice 2c — wired, uncached, not yet exercised against real Sonnet)
 

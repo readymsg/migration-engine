@@ -15,7 +15,8 @@ use App\Services\Extract\RootNavFetcher;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SportNginExtractor;
 use App\Services\Generate\AnthropicBlockFillAgent;
-use App\Services\Generate\AnthropicIrPassAgent;
+use App\Services\Generate\AnthropicIrBriefDeriverAgent;
+use App\Services\Generate\AnthropicIrChunkDesignerAgent;
 use App\Services\Generate\Assembler;
 use App\Services\Generate\BlockCoercer;
 use App\Services\Generate\BlockFill;
@@ -27,8 +28,9 @@ use App\Services\Generate\CacheBlockFillContextStore;
 use App\Services\Generate\CacheBlockFillResultStore;
 use App\Services\Generate\ContentLoader;
 use App\Services\Generate\DraftLanding;
+use App\Services\Generate\IrBriefDeriverAgent;
+use App\Services\Generate\IrChunkDesignerAgent;
 use App\Services\Generate\IrPass;
-use App\Services\Generate\IrPassAgent;
 use App\Services\Generate\PlatformBlockRenderer;
 use App\Services\Plan\AnthropicClassifierAgent;
 use App\Services\Plan\ClassifierAgent;
@@ -68,7 +70,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SePlatformContentDetector::class);
         $this->app->singleton(Planner::class, RootNavPlanner::class);
 
-        $this->app->singleton(IrPassAgent::class, AnthropicIrPassAgent::class);
+        $this->app->singleton(IrBriefDeriverAgent::class, AnthropicIrBriefDeriverAgent::class);
+        $this->app->singleton(IrChunkDesignerAgent::class, AnthropicIrChunkDesignerAgent::class);
         $this->app->singleton(ContentLoader::class, function (Application $app): ContentLoader {
             return new ContentLoader(
                 disk: (string) config('services.scrapes.disk', 's3'),

@@ -44,7 +44,8 @@ use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use Spatie\LaravelData\DataCollection;
 use Tests\Support\Generate\FakeBlockFillAgent;
-use Tests\Support\Generate\FakeIrPassAgent;
+use Tests\Support\Generate\FakeIrBriefDeriverAgent;
+use Tests\Support\Generate\FakeIrChunkDesignerAgent;
 use Tests\Support\Plan\FakeClassifierAgent;
 use Tests\Support\Plan\RealManifests;
 use Tests\TestCase;
@@ -85,9 +86,17 @@ final class BlockFillTest extends TestCase
         $this->app->instance(ContentLoader::class, new ContentLoader(disk: self::DISK));
     }
 
-    private function makeIrPass(FakeIrPassAgent $agent): IrPass
+    private function makeIrPass(): IrPass
     {
-        return new IrPass($agent, new ContentLoader(disk: self::DISK));
+        // Two-agent chunked IR pass; BlockFillTest doesn't care about
+        // the IR-pass internals — it just wants a clean IrPassResult to
+        // hand to BlockFill. The default fakes produce one Ir per
+        // designable page across however many chunks IrPass partitions.
+        return new IrPass(
+            new FakeIrBriefDeriverAgent,
+            new FakeIrChunkDesignerAgent,
+            new ContentLoader(disk: self::DISK),
+        );
     }
 
     private function makeBlockFill(): BlockFill
@@ -108,7 +117,7 @@ final class BlockFillTest extends TestCase
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
         $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
 
-        $irPass = $this->makeIrPass(new FakeIrPassAgent)->run($plan, $manifest);
+        $irPass = $this->makeIrPass()->run($plan, $manifest);
         $this->assertSame(IrPassStatus::Complete, $irPass->status);
         $this->assertGreaterThan(0, $irPass->pages->count());
 
@@ -145,7 +154,7 @@ final class BlockFillTest extends TestCase
         // chance to enforce it.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
         $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
-        $irPass = $this->makeIrPass(new FakeIrPassAgent)->run($plan, $manifest);
+        $irPass = $this->makeIrPass()->run($plan, $manifest);
 
         $agent = new FakeBlockFillAgent;
         $this->app->instance(BlockFillAgent::class, $agent);
@@ -184,7 +193,7 @@ final class BlockFillTest extends TestCase
         // status flips Partial.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
         $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
-        $irPass = $this->makeIrPass(new FakeIrPassAgent)->run($plan, $manifest);
+        $irPass = $this->makeIrPass()->run($plan, $manifest);
 
         $allSlugs = array_map(
             static fn (Ir $ir): string => $ir->page_slug,
@@ -280,7 +289,7 @@ final class BlockFillTest extends TestCase
         // BlockFillResult.pages + failures with no gaps and no dups.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
         $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
-        $irPass = $this->makeIrPass(new FakeIrPassAgent)->run($plan, $manifest);
+        $irPass = $this->makeIrPass()->run($plan, $manifest);
 
         $expected = array_map(
             static fn (Ir $ir): string => $ir->page_slug,
@@ -376,7 +385,7 @@ final class BlockFillTest extends TestCase
         // failures with the upstream reason preserved.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
         $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
-        $cleanResult = $this->makeIrPass(new FakeIrPassAgent)->run($plan, $manifest);
+        $cleanResult = $this->makeIrPass()->run($plan, $manifest);
 
         // Synthesise a Partial IrPassResult: same pages, with one extra
         // upstream failure tacked on.
@@ -421,7 +430,7 @@ final class BlockFillTest extends TestCase
         // FilledBlock → DTO) preserves the schema shape.
         $manifest = RealManifests::stthomasWithContentCaptured(self::DISK);
         $plan = (new RootNavPlanner(new FakeClassifierAgent, new ContentLoader(disk: self::DISK), new SePlatformContentDetector))->plan($manifest);
-        $irPass = $this->makeIrPass(new FakeIrPassAgent)->run($plan, $manifest);
+        $irPass = $this->makeIrPass()->run($plan, $manifest);
 
         $agent = new FakeBlockFillAgent;
         $this->app->instance(BlockFillAgent::class, $agent);
