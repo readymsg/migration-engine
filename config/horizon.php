@@ -197,7 +197,48 @@ return [
     */
 
     'defaults' => [
-        'supervisor-1' => [
+        // Block-fill supervisor: per-page Sonnet calls under Bus::batch.
+        // Long-running (Sonnet + structured output + revision pass on a
+        // heavy body can hit a minute), memory-hungry (Sonnet response
+        // decoding + FilledPage assembly), and CONCURRENT (batch fan-out).
+        //
+        // timeout: 600 — matches GeneratePageJob::$timeout and the
+        //   AnthropicBlockFillAgent HTTP timeout. Anything shorter and
+        //   the worker SIGKILLs the process at the worker level, WITHIN
+        //   the Sonnet call, before the job's try/catch can record a
+        //   BlockFillFailure. Reconciliation would then surface the
+        //   page as "silently absent" — technically correct visibility,
+        //   but the fix here is to give real work enough time to
+        //   complete. See chaos test: 65s-sleep-vs-timeout.
+        // memory: 256 — headroom over the 128M OOM finding on ingest.
+        //   Concurrent block-fill workers need more than the framework
+        //   default; a fatal OOM kills the process before try/catch runs,
+        //   so this is defensive against silent loss.
+        // tries: 1 — a page-level failure surfaces via
+        //   BlockFillFailure INLINE from the job's try/catch (loud, not
+        //   silent). $tries=3+backoff for transient-error retries is a
+        //   known gap deferred to a later slice; see CLAUDE.md.
+        // maxProcesses set per-environment below.
+        'supervisor-block-fill' => [
+            'connection' => 'redis',
+            'queue' => ['block-fill'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 1,
+            'timeout' => 600,
+            'nice' => 0,
+        ],
+
+        // Default supervisor: batch callbacks (ReconcileBlockFillJob),
+        // the scheduled reconcile sweeper, and any other engine jobs
+        // that don't need the block-fill supervisor's memory/timeout
+        // budget. Reconcile is cheap and idempotent — tries: 3 lets a
+        // transient blip retry without stranding the conversion.
+        'supervisor-default' => [
             'connection' => 'redis',
             'queue' => ['default'],
             'balance' => 'auto',
@@ -206,24 +247,35 @@ return [
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 128,
-            'tries' => 1,
-            'timeout' => 60,
+            'tries' => 3,
+            'timeout' => 120,
             'nice' => 0,
         ],
     ],
 
     'environments' => [
         'production' => [
-            'supervisor-1' => [
+            // Concurrency ceiling on Sonnet calls. Anthropic Tier-2 =
+            // 4000 RPM (~66/s); 10 concurrent long-running calls stays
+            // well inside that even if every job takes 60s each.
+            // Re-tune upward if we hit throughput ceilings; downward if
+            // we start bursting 429s.
+            'supervisor-block-fill' => [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-default' => [
+                'maxProcesses' => 3,
+            ],
         ],
 
         'local' => [
-            'supervisor-1' => [
+            'supervisor-block-fill' => [
                 'maxProcesses' => 3,
+            ],
+            'supervisor-default' => [
+                'maxProcesses' => 1,
             ],
         ],
     ],

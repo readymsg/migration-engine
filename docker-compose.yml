@@ -1,0 +1,42 @@
+# Local dev + chaos-test infrastructure for the async Bus::batch block-fill
+# path. The engine RUN itself (Laravel + Horizon workers + artisan) still
+# executes on the host PHP; this file just brings up the Redis backend
+# Horizon needs plus (optionally) a job_batches-friendly MySQL.
+#
+# Bring up: docker compose up -d
+# Tear down: docker compose down
+#
+# NOEVICTION IS LOAD-BEARING. Laravel's Redis queue driver expects the
+# Redis server to REJECT writes when full, not evict old keys — under
+# `allkeys-lru` (a common managed-Redis default) Redis will silently drop
+# queued jobs under memory pressure, breaking the batch's completion
+# guarantee (the pending_jobs counter never decrements, the batch never
+# completes, finally() never fires). The chaos test
+# `chaos_redis_del_of_queued_job` documents this failure mode; the
+# scheduled reconcile sweeper is the ONLY recovery once it happens.
+# maxmemory-policy=noeviction turns silent loss into visible OOM rejects
+# from Redis, which surface as job dispatch errors.
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: migration-engine-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command:
+      - redis-server
+      - --maxmemory-policy
+      - noeviction
+      - --appendonly
+      - "yes"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis-data:

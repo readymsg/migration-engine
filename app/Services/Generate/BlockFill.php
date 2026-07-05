@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Generate;
 
 use App\Data\BlockFillFailure;
+use App\Data\BlockFillReconcileState;
 use App\Data\BlockFillResult;
 use App\Data\BlockFillStatus;
 use App\Data\ContentExtractionFailure;
@@ -17,32 +18,62 @@ use App\Data\IrPassStatus;
 use App\Data\Manifest;
 use App\Data\SitePlan;
 use App\Jobs\GeneratePageJob;
+use App\Jobs\ReconcileBlockFillJob;
+use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
+use RuntimeException;
 use Spatie\LaravelData\DataCollection;
+use Throwable;
 
-// GENERATE stage 3 slice 2c orchestration. Takes the IR pass output plus
-// the SitePlan + source Manifest, dispatches one GeneratePageJob per
-// designed page via Bus::batch on a concurrency-capped Horizon queue, and
-// reconciles the per-page result store into a BlockFillResult.
+// GENERATE stage 3 slice 2c orchestration, ASYNC-CORRECT version.
 //
-// FAITHFUL-REBUILD GUARANTEE: every page that was in IrPassResult.pages
-// is in BlockFillResult.pages OR BlockFillResult.failures — exactly once.
-// Reconciliation is the authority, NOT Bus::batch's success flag — the
-// orchestrator diffs returned FilledPage slugs against the IR's slugs and
-// turns any silent absence into an explicit BlockFillFailure. NEVER
-// synthesises a placeholder FilledPage.
+// Three public methods, split along the async boundary:
 //
-// IR-pass failures pass through untouched: an IrPassFailure becomes a
-// BlockFillFailure with the upstream reason. The conversion's "every
-// keep-content page accounted for" guarantee chains across stages.
+//   1. dispatch(irPass, plan, manifest, conversionId): void
+//      - Preflight-resolves ContentRefs, builds the job list + preflight
+//        failures.
+//      - Writes the BlockFillReconcileState (IR-pass DTO + preflight
+//        failures + expected slug set) to the result store so reconcile()
+//        can run in a DIFFERENT PROCESS.
+//      - Writes the style brief to the context store (jobs read from it).
+//      - Dispatches Bus::batch with ->finally() that dispatches a
+//        ReconcileBlockFillJob to invoke reconcile() on a worker.
+//      - Under sync queue: dispatch() blocks until every per-page job
+//        finishes AND the finally() callback fires AND
+//        ReconcileBlockFillJob runs — the full pipeline is inline.
+//      - Under async queue: dispatch() returns immediately; reconcile()
+//        happens later on a worker.
 //
-// BUS::BATCH SEMANTICS — v1 assumes synchronous queue (test env uses
-// QUEUE_CONNECTION=sync; prod will be Redis + Horizon, wired by step 6).
-// In sync mode, dispatch() completes only after all jobs have executed,
-// so the reconciliation read below sees a fully populated result store.
-// When step 6 wires async dispatch, this class will be split into a
-// pre-dispatch / post-batch pair driven by Bus::batch's then() / catch()
-// — the reconciliation logic itself is unchanged.
+//   2. reconcile(conversionId): BlockFillResult
+//      - Idempotent: if a reconciled result already exists in the store,
+//        returns it unchanged (no re-write, no side effect).
+//      - Reads BlockFillReconcileState, walks the expected slug set,
+//        collects FilledPage / BlockFillFailure per slug, surfaces
+//        "silently absent" for any slug the store doesn't cover.
+//      - Writes the reconciled BlockFillResult to the store (idempotency
+//        marker AND downstream input).
+//      - Safe to call multiple times per conversion. The scheduled
+//        sweeper (engine:reconcile-stuck-conversions, 1-min) relies on
+//        this idempotency.
+//
+//   3. run(irPass, plan, manifest, conversionId): BlockFillResult
+//      - SYNC CONVENIENCE only. Calls dispatch() + reconcile(). Under
+//        QUEUE_CONNECTION=sync, everything runs inline and the result
+//        is populated when this returns. Under async queue, this WILL
+//        return whatever reconcile sees at that moment — likely an
+//        empty result, since the batch is still running on Redis. Do
+//        NOT use run() from an async caller; use dispatch() and read
+//        via the reconciled-result store when the chain proceeds.
+//
+// FAITHFUL-REBUILD GUARANTEE, UNCHANGED across sync/async: every page in
+// IrPassResult.pages ends up in BlockFillResult.pages OR .failures —
+// exactly once, never a stub, never silently absent. The RECONCILE method
+// implements this contract; the DISPATCH method sets up the state
+// reconcile needs.
+//
+// IR-pass failures chain in as `ir-pass-failure:`-prefixed
+// BlockFillFailures so the conversion log sees every page once across
+// stages.
 final class BlockFill
 {
     public function __construct(
@@ -50,24 +81,78 @@ final class BlockFill
         private readonly BlockFillResultStore $resultStore,
     ) {}
 
+    /**
+     * Sync-only convenience. Under QUEUE_CONNECTION=sync, dispatch runs
+     * the whole pipeline inline; reconcile then reads the populated
+     * result store. Under async queue, this will return an empty /
+     * partial result — do NOT use it from an async caller.
+     */
     public function run(
         IrPassResult $irPass,
         SitePlan $plan,
         Manifest $manifest,
         string $conversionId,
     ): BlockFillResult {
-        // IR pass aborted (e.g. over-capacity) → block-fill has nothing
-        // to do. Surface a Failed status with one BlockFillFailure per
-        // IR-pass failure so the conversion log sees every page once.
+        $this->dispatch($irPass, $plan, $manifest, $conversionId);
+
+        // Under sync queue the reconciled result is already in the store
+        // (dispatch → batch inline → finally inline → ReconcileBlockFillJob
+        // inline → reconcile writes result). Under async it isn't yet —
+        // fall through to a same-process reconcile() call, which is
+        // idempotent, so a subsequent worker-side reconcile is a no-op.
+        $reconciled = $this->resultStore->getReconciledResult($conversionId);
+        if ($reconciled !== null) {
+            return $reconciled;
+        }
+
+        return $this->reconcile($conversionId);
+    }
+
+    /**
+     * Preflight + batch dispatch + finally-wired reconcile job. Void
+     * return: callers get the reconciled result via reconcile() or the
+     * store's getReconciledResult().
+     */
+    public function dispatch(
+        IrPassResult $irPass,
+        SitePlan $plan,
+        Manifest $manifest,
+        string $conversionId,
+    ): void {
+        // Clear any stale reconciled marker from a prior run of the same
+        // conversion_id (re-runs after failure). Idempotency guard needs
+        // to see a fresh conversion, not a stale success.
+        $this->resultStore->forget($conversionId);
+
+        // Upstream Failed → no jobs, no batch. Write the reconcile state
+        // + reconciled result inline so downstream stages see a valid
+        // BlockFillResult without waiting for a batch that will never
+        // exist.
         if ($irPass->status === IrPassStatus::Failed) {
-            return $this->failedFromIrPass($irPass);
+            $this->resultStore->putReconcileState(
+                $conversionId,
+                new BlockFillReconcileState(
+                    conversion_id: $conversionId,
+                    ir_pass: $irPass,
+                    preflight_failures: new DataCollection(BlockFillFailure::class, []),
+                    expected_slugs: [],
+                ),
+            );
+            $this->resultStore->putReconciledResult(
+                $conversionId,
+                $this->failedFromIrPass($irPass),
+            );
+
+            return;
         }
 
         /** @var array<int, Ir> $irPages */
         $irPages = $irPass->pages->items();
 
+        // Nothing to design (but upstream not Failed) → same shape:
+        // reconcile-in-place, no batch.
         if ($irPages === []) {
-            return new BlockFillResult(
+            $emptyResult = new BlockFillResult(
                 style_brief: $irPass->style_brief,
                 pages: new DataCollection(FilledPage::class, []),
                 failures: $this->upstreamFailuresAsBlockFailures($irPass),
@@ -75,6 +160,18 @@ final class BlockFill
                     ? BlockFillStatus::Partial
                     : BlockFillStatus::Complete,
             );
+            $this->resultStore->putReconcileState(
+                $conversionId,
+                new BlockFillReconcileState(
+                    conversion_id: $conversionId,
+                    ir_pass: $irPass,
+                    preflight_failures: new DataCollection(BlockFillFailure::class, []),
+                    expected_slugs: [],
+                ),
+            );
+            $this->resultStore->putReconciledResult($conversionId, $emptyResult);
+
+            return;
         }
 
         // Persist the style brief in the per-conversion side store so
@@ -146,41 +243,93 @@ final class BlockFill
             );
         }
 
-        // Dispatch the batch. allowFailures(true) means one page's
-        // terminal failure doesn't cancel the batch — every other page
-        // still gets its chance. The job itself catches Throwable and
-        // records a BlockFillFailure inline so failures land in the
-        // store regardless of allowFailures semantics across drivers.
-        if ($jobs !== []) {
-            Bus::batch($jobs)
-                ->name('block-fill:'.$conversionId)
-                ->allowFailures()
-                ->onQueue('block-fill')
-                ->dispatch();
+        // Write reconcile state BEFORE dispatch — reconcile (running on
+        // a worker after batch.finally, OR from the scheduled sweeper)
+        // reads it back. If reconcile can't read this state, the whole
+        // conversion is unrecoverable, so this must precede any queue
+        // interaction.
+        $this->resultStore->putReconcileState(
+            $conversionId,
+            new BlockFillReconcileState(
+                conversion_id: $conversionId,
+                ir_pass: $irPass,
+                preflight_failures: new DataCollection(BlockFillFailure::class, $preflightFailures),
+                expected_slugs: $expectedSlugs,
+            ),
+        );
+
+        // If every IR page hit preflight failure, no jobs to run. Reconcile
+        // inline (nothing else will trigger it) so the conversion is
+        // immediately readable.
+        if ($jobs === []) {
+            $this->reconcile($conversionId);
+
+            return;
         }
 
-        // Reconcile. Every expected slug must be in FilledPage OR
-        // BlockFillFailure — anything missing becomes a synthetic
-        // failure with a "silently absent" reason so the conversion
-        // log can't quietly lose a page.
-        return $this->reconcile(
-            $irPass,
-            $conversionId,
-            $expectedSlugs,
-            $preflightFailures,
-        );
+        // Dispatch the batch. allowFailures() means one page's terminal
+        // failure doesn't cancel the batch — every other page still gets
+        // its chance. The job itself catches Throwable and records a
+        // BlockFillFailure inline so failures land in the store regardless
+        // of allowFailures semantics across drivers.
+        //
+        // finally() fires after every job completes (success or failure)
+        // — the load-bearing wiring. Uses finally not then so Partial
+        // conversions still get reconciled and reach downstream stages.
+        //
+        // If this finally callback ITSELF fails to fire (batch's own
+        // bookkeeping breaks, Redis blip, worker OOM at exactly the wrong
+        // moment), the scheduled sweeper is the correctness backstop.
+        Bus::batch($jobs)
+            ->name('block-fill:'.$conversionId)
+            ->allowFailures()
+            ->onQueue('block-fill')
+            ->finally(function (Batch $batch) use ($conversionId): void {
+                ReconcileBlockFillJob::dispatch($conversionId);
+            })
+            ->dispatch();
     }
 
     /**
-     * @param  array<int, string>  $expectedSlugs
-     * @param  array<int, BlockFillFailure>  $preflightFailures
+     * Idempotent reconcile. If a reconciled result already exists in the
+     * store, returns it unchanged. Otherwise reads the reconcile state,
+     * walks the expected slug set, produces a BlockFillResult, and
+     * writes it to the store.
+     *
+     * @throws RuntimeException when no reconcile state exists — either
+     *                          dispatch() was never called or the store
+     *                          was cleared. Reviewer must re-run the
+     *                          conversion.
      */
-    private function reconcile(
-        IrPassResult $irPass,
-        string $conversionId,
-        array $expectedSlugs,
-        array $preflightFailures,
-    ): BlockFillResult {
+    public function reconcile(string $conversionId): BlockFillResult
+    {
+        // Idempotency guard: reconciled already, return it. The scheduled
+        // sweeper relies on this — it fires every minute and re-invokes
+        // reconcile for any conversion whose state exists but result
+        // doesn't; re-running against an already-reconciled conversion
+        // is safe and cheap.
+        $existing = $this->resultStore->getReconciledResult($conversionId);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $state = $this->resultStore->getReconcileState($conversionId);
+        if ($state === null) {
+            throw new RuntimeException(
+                "BlockFill::reconcile() called for conversion '{$conversionId}' "
+                .'but no reconcile state exists — either dispatch() was never called '
+                .'or the state was cleared. Re-run the conversion.'
+            );
+        }
+
+        $result = $this->reconcileFromState($state);
+        $this->resultStore->putReconciledResult($conversionId, $result);
+
+        return $result;
+    }
+
+    private function reconcileFromState(BlockFillReconcileState $state): BlockFillResult
+    {
         /** @var array<int, FilledPage> $filledPages */
         $filledPages = [];
         /** @var array<int, BlockFillFailure> $failures */
@@ -190,24 +339,26 @@ final class BlockFill
         // job, so the store has nothing under their slugs.
         /** @var array<string, true> $preflightSlugs */
         $preflightSlugs = [];
-        foreach ($preflightFailures as $pf) {
+        /** @var array<int, BlockFillFailure> $preflight */
+        $preflight = $state->preflight_failures->items();
+        foreach ($preflight as $pf) {
             $failures[] = $pf;
             $preflightSlugs[$pf->page_slug] = true;
         }
 
-        foreach ($expectedSlugs as $slug) {
+        foreach ($state->expected_slugs as $slug) {
             if (isset($preflightSlugs[$slug])) {
                 continue;
             }
 
-            $filled = $this->resultStore->getFilledPage($conversionId, $slug);
+            $filled = $this->resultStore->getFilledPage($state->conversion_id, $slug);
             if ($filled !== null) {
                 $filledPages[] = $filled;
 
                 continue;
             }
 
-            $storedFailure = $this->resultStore->getFailure($conversionId, $slug);
+            $storedFailure = $this->resultStore->getFailure($state->conversion_id, $slug);
             if ($storedFailure !== null) {
                 $failures[] = $storedFailure;
 
@@ -219,7 +370,7 @@ final class BlockFill
             // killed mid-flight, or skipped a write. Surface explicitly.
             $failures[] = new BlockFillFailure(
                 page_slug: $slug,
-                page_title: $this->titleForSlug($irPass, $slug),
+                page_title: $this->titleForSlug($state->ir_pass, $slug),
                 page_node_id: null,
                 reason: 'page silently absent from result store after batch (job never wrote)',
             );
@@ -227,9 +378,10 @@ final class BlockFill
 
         // Chain in upstream IR-pass failures so the conversion log sees
         // every page exactly once across the two stages.
-        foreach ($this->upstreamFailuresAsBlockFailures($irPass)->items() as $upstream) {
-            /** @var BlockFillFailure $upstream */
-            $failures[] = $upstream;
+        /** @var array<int, BlockFillFailure> $upstream */
+        $upstream = $this->upstreamFailuresAsBlockFailures($state->ir_pass)->items();
+        foreach ($upstream as $u) {
+            $failures[] = $u;
         }
 
         $status = $failures === []
@@ -237,7 +389,7 @@ final class BlockFill
             : BlockFillStatus::Partial;
 
         return new BlockFillResult(
-            style_brief: $irPass->style_brief,
+            style_brief: $state->ir_pass->style_brief,
             pages: new DataCollection(FilledPage::class, $filledPages),
             failures: new DataCollection(BlockFillFailure::class, $failures),
             status: $status,
@@ -246,12 +398,10 @@ final class BlockFill
 
     private function failedFromIrPass(IrPassResult $irPass): BlockFillResult
     {
-        $upstreamFailures = $this->upstreamFailuresAsBlockFailures($irPass);
-
         return new BlockFillResult(
             style_brief: $irPass->style_brief,
             pages: new DataCollection(FilledPage::class, []),
-            failures: $upstreamFailures,
+            failures: $this->upstreamFailuresAsBlockFailures($irPass),
             status: BlockFillStatus::Failed,
         );
     }
