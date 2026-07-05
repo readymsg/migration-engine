@@ -92,11 +92,11 @@ Every page lands in the ledger with exactly one `DecisionAction`. v1 is a **fait
 
 - **`keep`** — preserve as content. Default for ambiguous pages.
 - **`platform_dynamic`** — page whose content TeamLinkt **regenerates** via a `PlatformBlockType` Puck block: `Schedule | Scores | Standings | Roster | Teams | Divisions | Contacts | Calendar | News`. The block replaces the source page; the source is NOT scraped. Conservative-by-design — a false `platform_dynamic` destroys real content (replaced by an empty block), so the bar is high.
-- **`subsumed`** — descendant of a `platform_dynamic` node. The ancestor's block represents the whole subtree, so descendants are NOT scraped, classified, or independently rebuilt. Absent from `nav` + `kept_pages`, present in the ledger with reason `"subsumed by parent <BlockType> block at '<parent label>'"`. Reversible — a reviewer can promote one back if the block doesn't cover their case. Crucially, subsumed descendants are NEVER sent to the LLM (deterministic platform_dynamic catches them in phase 1; LLM-returned platform_dynamic catches them retroactively in phase 3).
+- **`subsumed`** — descendant of a `platform_dynamic` node **whose BlockType subsumes** (Calendar, News — see per-BlockType subsumption below). The ancestor's block represents the whole subtree, so descendants are NOT scraped, classified, or independently rebuilt. Absent from `nav` + `kept_pages`, present in the ledger with reason `"subsumed by parent <BlockType> block at '<parent label>'"`. Reversible — a reviewer can promote one back if the block doesn't cover their case. Crucially, subsumed descendants are NEVER sent to the LLM (deterministic platform_dynamic catches them in phase 1; LLM-returned platform_dynamic catches them retroactively in phase 3).
 - **`park`** — set aside, absent from `nav`/`kept_pages`, present in the ledger. Used for high-confidence (> 0.80) LLM parks/drops, unknown-shape nodes, and SE platform/tool/help links.
 - **`drop`** — NEVER emitted in v1. High-confidence drops are rewritten as `park` (reversibility).
 - **`merge`** — NEVER emitted in v1. The engine doesn't auto-fold pages; a model `merge` is rewritten as `keep` with the merge target preserved in the ledger reason for human review.
-- **`dynamic`** — vestigial fallback for unrecognized SE dynamic node types (`dynamic_other`). Calendar and NewsNode no longer use this — they map to `platform_dynamic` with `PlatformBlockType::Calendar` / `News`. v1 should never emit `dynamic` in practice; if you see it in a ledger, that's a signal a new SE dynamic type needs a PlatformBlockType.
+- **`dynamic`** — vestigial fallback for **unrecognized SE Instance types** we haven't mapped yet (`dynamic_other`). Calendar, NewsNode, LeagueInstance, DivisionInstance, and TeamInstance all route to specific `PlatformBlockType`s (see mapping below); anything else (`TournamentInstance`, `SeasonInstance`, …) stays vestigial `dynamic` + a visible ledger note (`"no platform block mapping yet"`). Deliberate safety net: safer to fail visibly on a novel Instance type than mis-map it to something that doesn't fit.
 
 ### Recall thresholds (enforced in `RootNavPlanner::applyRecallBias`)
 
@@ -106,10 +106,37 @@ A model `park`/`drop`/`platform_dynamic` is honored only when confidence is **st
 
 Three deterministic paths run BEFORE the LLM, plus an LLM fallback:
 
-1. **node_type-driven** — `Calendar` → `PlatformBlockType::Calendar`; `NewsNode` → `PlatformBlockType::News`. SE's structural classification is enough; the LLM is never asked.
+1. **node_type-driven** — full SE `node_type` → `PlatformBlockType` mapping:
+   - `Calendar` → `PlatformBlockType::Calendar` (aggregate feed; subsumes descendants)
+   - `NewsNode` → `PlatformBlockType::News` (aggregate feed; subsumes descendants)
+   - `LeagueInstance` → `PlatformBlockType::Teams` (hierarchy directory; does NOT subsume)
+   - `DivisionInstance` → `PlatformBlockType::Divisions` (hierarchy directory; does NOT subsume)
+   - `TeamInstance` → `PlatformBlockType::Team` (singular team page; does NOT subsume)
+   - Any other non-empty `node_type` → `kind = 'dynamic_other'` → `DecisionAction::Dynamic` + visible ledger note. Safety net for unrecognized Instance types (`TournamentInstance`, `SeasonInstance`, …).
+
+   SE's structural classification is enough; the LLM is never asked.
 2. **Name-map** — matches only unambiguous data-listing labels on `kind=page` nodes: `standings` → Standings; `score(s)/result(s)` → Scores; `schedule(s)` → Schedule; `roster(s)` → Roster; `division(s)` → Divisions; `teams` → Teams **only when the node has children** (a leaf "Teams" page is content, a Teams parent of team pages is a directory). Ambiguous words (`tryouts`, `recruiting`, `programs`, `events`, `camps`, `contacts`) are intentionally NOT in the map — they go to the LLM.
-3. **Subsumption** — once a node is `platform_dynamic`, every descendant in its subtree is `subsumed`. `RootNavPlanner::classify()` runs in three phases for this: phase 1 = deterministic + early subsume (deterministic platform_dynamic descendants are never even sent to the LLM); phase 2 = LLM batches for the remaining ambiguous pages; phase 3 = retroactive subsume of LLM-returned platform_dynamic descendants (their LLM verdicts are discarded — the parent's block represents them).
+3. **Per-BlockType subsumption** — a `platform_dynamic` node subsumes its descendants ONLY when `PlatformBlockType::subsumesDescendants()` returns `true`. Rule:
+   - **Subsumes** (aggregate feed — one page carries the whole feature): `Calendar`, `News`.
+   - **Does NOT subsume** (hierarchy — each level is a distinct user destination): `Teams`, `Divisions`, `Team`, `Schedule`, `Scores`, `Standings`, `Roster`, `Contacts`.
+
+   This is the LOAD-BEARING silent-loss gate. Universal subsumption (the pre-slice behavior) would swallow the entire team subtree of cjfl / langdon when their `LeagueInstance` at depth-0 became PlatformDynamic — silently deleting 19 / ~100 team pages. Per-BlockType subsumption preserves the hierarchy while still collapsing aggregate feeds. `RootNavPlanner::classify()` runs three phases: phase 1 = deterministic + early subsume (subsuming platform_dynamic descendants are never even sent to the LLM); phase 2 = LLM batches for remaining ambiguous pages; phase 3 = retroactive subsume of LLM-returned platform_dynamic descendants (only if the LLM's BlockType subsumes).
 4. **LLM fallback** for semantic variants like "Game Schedule" or "League Standings". Strict > 0.80 threshold; below it the page is recall-biased to keep.
+
+### `PlatformBlockType::Team` vs `::Teams`
+
+Two distinct enum values:
+
+- **`Teams` (plural, directory)** — represents a Teams DIRECTORY at the top of a league (cjfl's "Teams" depth-0 nav, tenacity's "TEAMS" name-matched at depth-0). Maps from `LeagueInstance` node_type OR from `kind=page` label-match with children.
+- **`Team` (singular, dedicated page)** — represents ONE team's dedicated page (roster + schedule + team info). Maps from `TeamInstance` node_type. One TeamInstance in SE's hierarchy → one PlatformTeam block per PuckOutput.
+
+Neither one subsumes; a directory Teams page + its underlying Team pages all survive as distinct PuckOutputs. The rebuilt site has both a Teams directory AND the per-team pages under it.
+
+### Engine ROUTES; product renders later (deferred rendering)
+
+This slice makes the engine RECOGNIZE and ROUTE league hierarchy without silent loss — no team subtree gets deleted. It does NOT make league team pages RENDER visibly: the PlatformTeam / PlatformDivisions / PlatformTeams blocks are **placeholder stubs** in the preview renderer (`resources/js/preview/components/PlatformBlockStub.tsx`), and the TeamLinkt product's own builder does not yet have a `PlatformTeam` React component either. A landed draft carries the block; the product catches up when its renderer ships.
+
+Same posture as brand passthrough: the engine emits the correctly-shaped block, the product-side rendering is a separate slice on the product's roadmap. Do NOT re-open this in the engine — the block's shape (`{type: 'PlatformTeam', props: {org_id}}`) is fine; what's missing is a runtime component in TeamLinkt's Puck config that renders it. Structural correctness (page represented in page_map, nav resolves, no silent loss) is what this slice delivers.
 
 ### Registration intent
 

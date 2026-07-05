@@ -305,59 +305,122 @@ final class PlannerTest extends TestCase
     // ─── platform_dynamic: deterministic name-map ──────────────────────────
 
     #[Test]
-    public function tenacity_teams_with_children_is_platform_dynamic_and_descendants_subsumed(): void
+    public function tenacity_teams_directory_platform_dynamic_does_not_subsume_page_children(): void
     {
+        // TEAMS name-matches PlatformBlockType::Teams (a directory block).
+        // Under the per-BlockType subsumption rule, directory blocks do
+        // NOT subsume — Teams/Divisions/Team/League etc. are hierarchy
+        // roots whose descendants are distinct user destinations. The 3
+        // TEAMS children (11s & 12s, 13s & 14s, 15s-18s) get their own
+        // classification (FakeClassifierAgent returns Keep@0.85) and
+        // survive as ordinary content pages in the rebuilt site.
+        //
+        // The previous behavior (Teams subsumes) silently deleted
+        // hierarchy content and is what this slice removed.
         $manifest = RealManifests::tenacityvolleyball();
         $agent = new FakeClassifierAgent;
         $plan = $this->planner($agent)->plan($manifest);
 
         $entries = $plan->ledger->entries->items();
 
-        // TEAMS top-level — deterministic platform_dynamic/teams.
+        // TEAMS top-level — deterministic platform_dynamic/teams (unchanged).
         $teams = $this->ledgerEntryByReasonFragment($entries, "name-matched: 'TEAMS'");
         $this->assertNotNull($teams);
         $this->assertSame(DecisionAction::PlatformDynamic, $teams->action);
         $this->assertSame(PlatformBlockType::Teams, $teams->platform_block_type);
         $this->assertSame(1.0, $teams->confidence);
 
-        // The 3 TEAMS children (11s & 12s, 13s & 14s, 15s-18s) are SUBSUMED
-        // by the Teams block. They appear in the ledger (recoverable) but
-        // are absent from nav and kept_pages, and were NOT sent to the LLM.
+        // NO Subsumed entries — Teams doesn't subsume. Any Subsumed entry
+        // here would be a regression (the load-bearing silent-loss gate).
         $subsumed = array_values(array_filter(
             $entries,
             static fn (DecisionEntry $e) => $e->action === DecisionAction::Subsumed,
         ));
-        $this->assertCount(3, $subsumed, 'all 3 TEAMS children should be Subsumed');
-        foreach ($subsumed as $entry) {
-            $this->assertStringContainsString("subsumed by parent teams block at 'TEAMS'", $entry->reason);
-            $this->assertSame(1.0, $entry->confidence);
-        }
+        $this->assertCount(0, $subsumed, 'Teams directory must NOT subsume descendants');
 
-        // None of TEAMS or its descendants reach the LLM.
+        // TEAMS itself is deterministic — never reaches the LLM. Its 3
+        // children DO reach the LLM (they don't name-match, they're Page
+        // kind, so phase 2 sees them).
         $seenLabels = array_map(static fn (InventoryPage $p): string => $p->label, $agent->seen);
         $this->assertNotContains('TEAMS', $seenLabels);
-        $this->assertNotContains('11s & 12s', $seenLabels);
-        $this->assertNotContains('13s & 14s', $seenLabels);
-        $this->assertNotContains('15s-18s', $seenLabels);
+        $this->assertContains('11s & 12s', $seenLabels);
+        $this->assertContains('13s & 14s', $seenLabels);
+        $this->assertContains('15s-18s', $seenLabels);
 
-        // Subsumed descendants are absent from kept_pages and nav; TEAMS
-        // itself IS in both (it's the platform_dynamic block).
+        // TEAMS AND its 3 children all survive in kept_pages — hierarchy
+        // preserved. The children go through IR + block-fill as content
+        // pages; TEAMS renders as the platform block.
         $keptLabels = array_map(
             static fn (InventoryPage $p): string => $p->label,
             $plan->kept_pages->items(),
         );
         $this->assertContains('TEAMS', $keptLabels);
-        $this->assertNotContains('11s & 12s', $keptLabels);
-        $this->assertNotContains('13s & 14s', $keptLabels);
-        $this->assertNotContains('15s-18s', $keptLabels);
+        $this->assertContains('11s & 12s', $keptLabels);
+        $this->assertContains('13s & 14s', $keptLabels);
+        $this->assertContains('15s-18s', $keptLabels);
     }
 
     #[Test]
-    public function descendants_of_deterministic_platform_dynamic_are_subsumed_in_synthetic_tree(): void
+    public function descendants_of_calendar_platform_dynamic_are_subsumed_in_synthetic_tree(): void
     {
-        // Build a tree: Standings (name-matched → PD/Standings) with 3 child
-        // pages. All 3 children must be Subsumed before phase 2; the LLM
-        // must see zero pages from this subtree.
+        // Build a tree: a Calendar node_type parent (subsuming aggregate
+        // feed) with 3 child Page nodes. All 3 children must be Subsumed
+        // before phase 2; the LLM must see zero pages from this subtree.
+        //
+        // This exercises the SUBSUMING half of the per-BlockType rule.
+        // The non-subsuming half is exercised by
+        // hierarchy_platform_dynamic_does_not_subsume_descendants below.
+        $children = [
+            $this->navNode('January', '/jan', 201),
+            $this->navNode('February', '/feb', 202),
+            $this->navNode('March', '/mar', 203),
+        ];
+        $calendar = new NavNode(
+            label: 'Calendar',
+            url: '/calendar',
+            kind: 'dynamic_calendar',
+            children: new DataCollection(NavNode::class, $children),
+            node_type: 'Calendar',
+            page_node_id: 100,
+        );
+        $manifest = $this->manifestFromNavNodes([$calendar]);
+
+        $agent = new FakeClassifierAgent;
+        $plan = $this->planner($agent)->plan($manifest);
+
+        $entries = $plan->ledger->entries->items();
+        $this->assertCount(4, $entries);
+
+        $this->assertSame(DecisionAction::PlatformDynamic, $entries[0]->action);
+        $this->assertSame(PlatformBlockType::Calendar, $entries[0]->platform_block_type);
+        for ($i = 1; $i <= 3; $i++) {
+            $this->assertSame(DecisionAction::Subsumed, $entries[$i]->action);
+            $this->assertStringContainsString(
+                "subsumed by parent calendar block at 'Calendar'",
+                $entries[$i]->reason,
+            );
+        }
+
+        // No LLM calls — descendants were never queued.
+        $this->assertCount(0, $agent->seen);
+
+        // Subsumed absent from kept_pages and nav.
+        $this->assertCount(1, $plan->kept_pages);
+        $this->assertCount(1, $plan->nav);
+    }
+
+    #[Test]
+    public function hierarchy_platform_dynamic_does_not_subsume_descendants(): void
+    {
+        // The non-subsuming half of the per-BlockType rule. A Standings
+        // parent (directory block, doesn't subsume) with 3 child Page
+        // nodes MUST NOT swallow the children — they go through their own
+        // classification and survive in kept_pages.
+        //
+        // This is the LOAD-BEARING silent-loss gate: without it, mapping
+        // LeagueInstance → PlatformDynamic/Teams (or any hierarchy type)
+        // would silently delete the descendants that make up the league's
+        // real content surface.
         $children = [
             $this->navNode('Eastern Division', '/east', 201),
             $this->navNode('Western Division', '/west', 202),
@@ -379,22 +442,137 @@ final class PlannerTest extends TestCase
         $entries = $plan->ledger->entries->items();
         $this->assertCount(4, $entries);
 
+        // Standings still deterministic PlatformDynamic.
         $this->assertSame(DecisionAction::PlatformDynamic, $entries[0]->action);
         $this->assertSame(PlatformBlockType::Standings, $entries[0]->platform_block_type);
-        for ($i = 1; $i <= 3; $i++) {
-            $this->assertSame(DecisionAction::Subsumed, $entries[$i]->action);
-            $this->assertStringContainsString(
-                "subsumed by parent standings block at 'Standings'",
-                $entries[$i]->reason,
-            );
-        }
 
-        // No LLM calls — descendants were never queued.
+        // Children are NOT subsumed — they reach the LLM and get Keep@0.85
+        // from FakeClassifierAgent's default.
+        $subsumed = array_values(array_filter(
+            $entries,
+            static fn (DecisionEntry $e) => $e->action === DecisionAction::Subsumed,
+        ));
+        $this->assertCount(0, $subsumed, 'directory PlatformDynamic must NOT subsume descendants');
+
+        // All 3 children reached the LLM.
+        $this->assertCount(3, $agent->seen);
+
+        // All 4 nodes survive in kept_pages; only depth-0 (Standings) in nav.
+        $this->assertCount(4, $plan->kept_pages);
+        $this->assertCount(1, $plan->nav);
+    }
+
+    #[Test]
+    public function league_hierarchy_instance_types_route_to_platform_blocks_and_survive_un_subsumed(): void
+    {
+        // The langdon / cjfl case in miniature: LeagueInstance →
+        // DivisionInstance → TeamInstance. Each level maps to a hierarchy
+        // PlatformBlockType, each keeps its own PlatformDynamic entry, and
+        // no subsumption erases anything.
+        //
+        // Real-world equivalent: cjfl's "Teams" LeagueInstance at depth-0
+        // with 3 DivisionInstance children (BCFC/OFC/PFC), each with
+        // TeamInstance grandchildren. Under the new rules ALL of these
+        // survive independently; under the old rules the entire subtree
+        // would have been silently swallowed as Subsumed.
+        $team1 = new NavNode(
+            label: 'Kamloops Broncos',
+            url: '/kamloops',
+            kind: 'dynamic_team',
+            children: new DataCollection(NavNode::class, []),
+            node_type: 'TeamInstance',
+            page_node_id: 301,
+        );
+        $team2 = new NavNode(
+            label: 'Langley Rams',
+            url: '/langley',
+            kind: 'dynamic_team',
+            children: new DataCollection(NavNode::class, []),
+            node_type: 'TeamInstance',
+            page_node_id: 302,
+        );
+        $bcfc = new NavNode(
+            label: 'BCFC',
+            url: '/bcfc',
+            kind: 'dynamic_division',
+            children: new DataCollection(NavNode::class, [$team1, $team2]),
+            node_type: 'DivisionInstance',
+            page_node_id: 201,
+        );
+        $league = new NavNode(
+            label: 'Teams',
+            url: '/teams',
+            kind: 'dynamic_league',
+            children: new DataCollection(NavNode::class, [$bcfc]),
+            node_type: 'LeagueInstance',
+            page_node_id: 100,
+        );
+        $manifest = $this->manifestFromNavNodes([$league]);
+
+        $agent = new FakeClassifierAgent;
+        $plan = $this->planner($agent)->plan($manifest);
+
+        $entries = $plan->ledger->entries->items();
+        $this->assertCount(4, $entries);
+
+        // Every entry is PlatformDynamic with the right block type.
+        $this->assertSame(DecisionAction::PlatformDynamic, $entries[0]->action);
+        $this->assertSame(PlatformBlockType::Teams, $entries[0]->platform_block_type);
+        $this->assertStringContainsString('node_type=LeagueInstance', $entries[0]->reason);
+
+        $this->assertSame(DecisionAction::PlatformDynamic, $entries[1]->action);
+        $this->assertSame(PlatformBlockType::Divisions, $entries[1]->platform_block_type);
+        $this->assertStringContainsString('node_type=DivisionInstance', $entries[1]->reason);
+
+        $this->assertSame(DecisionAction::PlatformDynamic, $entries[2]->action);
+        $this->assertSame(PlatformBlockType::Team, $entries[2]->platform_block_type);
+        $this->assertStringContainsString('node_type=TeamInstance', $entries[2]->reason);
+
+        $this->assertSame(DecisionAction::PlatformDynamic, $entries[3]->action);
+        $this->assertSame(PlatformBlockType::Team, $entries[3]->platform_block_type);
+
+        // NO subsumption — every league-hierarchy entry survives independently.
+        $subsumed = array_values(array_filter(
+            $entries,
+            static fn (DecisionEntry $e) => $e->action === DecisionAction::Subsumed,
+        ));
+        $this->assertCount(0, $subsumed, 'league hierarchy must never subsume — every level is a distinct user destination');
+
+        // Deterministic — nothing reached the LLM.
         $this->assertCount(0, $agent->seen);
 
-        // Subsumed absent from kept_pages and nav.
-        $this->assertCount(1, $plan->kept_pages);
+        // All 4 nodes are in kept_pages (the platform renderer will emit a
+        // PuckOutput per PlatformDynamic entry). Only depth-0 (Teams) in nav.
+        $this->assertCount(4, $plan->kept_pages);
         $this->assertCount(1, $plan->nav);
+    }
+
+    #[Test]
+    public function unknown_se_instance_node_type_still_falls_to_vestigial_dynamic(): void
+    {
+        // TournamentInstance / SeasonInstance / other SE Instance types
+        // we haven't recon'd stay as dynamic_other → DecisionAction::Dynamic
+        // with the "no platform block mapping yet" ledger reason. Safer to
+        // fail visibly than mis-map — a novel Instance type could have
+        // completely different semantics from Team/Division/League.
+        $mystery = new NavNode(
+            label: 'Spring Cup 2026',
+            url: '/spring-cup',
+            kind: 'dynamic_other',
+            children: new DataCollection(NavNode::class, []),
+            node_type: 'TournamentInstance',
+            page_node_id: 400,
+        );
+        $manifest = $this->manifestFromNavNodes([$mystery]);
+
+        $agent = new FakeClassifierAgent;
+        $plan = $this->planner($agent)->plan($manifest);
+
+        $entry = $plan->ledger->entries->items()[0];
+        $this->assertSame(DecisionAction::Dynamic, $entry->action);
+        $this->assertNull($entry->platform_block_type);
+        $this->assertStringContainsString('TournamentInstance', $entry->reason);
+        $this->assertStringContainsString('no platform block mapping yet', $entry->reason);
     }
 
     #[Test]

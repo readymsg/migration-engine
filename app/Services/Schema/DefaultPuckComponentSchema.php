@@ -137,6 +137,12 @@ final class DefaultPuckComponentSchema implements ComponentSchema
             'PlatformContacts' => $this->platformDefinition('PlatformContacts'),
             'PlatformCalendar' => $this->platformDefinition('PlatformCalendar'),
             'PlatformNews' => $this->platformDefinition('PlatformNews'),
+            // Singular team page (one TeamInstance → one PlatformTeam block).
+            // Same runtime posture as the other platform blocks: engine emits
+            // the {org_id} shell, the React component queries TeamLinkt's
+            // data. Product-side rendering may not exist day-1 — accepted
+            // per BUILD.md, the draft lands as-is and the product catches up.
+            'PlatformTeam' => $this->platformDefinition('PlatformTeam'),
         ];
     }
 

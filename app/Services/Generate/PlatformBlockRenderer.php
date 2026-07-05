@@ -46,6 +46,7 @@ final class PlatformBlockRenderer
         'contacts' => 'PlatformContacts',
         'calendar' => 'PlatformCalendar',
         'news' => 'PlatformNews',
+        'team' => 'PlatformTeam',
     ];
 
     public function __construct(

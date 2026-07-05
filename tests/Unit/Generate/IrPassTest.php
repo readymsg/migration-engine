@@ -222,11 +222,22 @@ final class IrPassTest extends TestCase
             }
         }
 
+        // Still filtered: PlatformDynamic pages (TEAMS name-matched to
+        // PlatformBlockType::Teams, CALENDAR routed by node_type) never
+        // reach the IR designer — the platform-block renderer emits their
+        // PuckOutputs deterministically.
         $this->assertNotContains('TEAMS', $seenLabels);
         $this->assertNotContains('CALENDAR', $seenLabels);
-        $this->assertNotContains('11s & 12s', $seenLabels);
-        $this->assertNotContains('13s & 14s', $seenLabels);
-        $this->assertNotContains('15s-18s', $seenLabels);
+
+        // TEAMS's 3 Page-kind children (11s & 12s, 13s & 14s, 15s-18s) DO
+        // reach the designer now: PlatformBlockType::Teams is a hierarchy
+        // directory that does NOT subsume descendants, so those children
+        // keep their own classification (Keep@0.85 from
+        // FakeClassifierAgent) and go through the full IR + block-fill
+        // path as ordinary content pages.
+        $this->assertContains('11s & 12s', $seenLabels);
+        $this->assertContains('13s & 14s', $seenLabels);
+        $this->assertContains('15s-18s', $seenLabels);
 
         $this->assertContains('HOME', $seenLabels);
         $this->assertContains('ABOUT US', $seenLabels);

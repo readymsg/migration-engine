@@ -30,4 +30,43 @@ enum PlatformBlockType: string
     // own event + news data, NOT from SE — zero live SE dependency.
     case Calendar = 'calendar';
     case News = 'news';
+
+    // Singular team page — one TeamInstance in SE's hierarchy becomes one
+    // PlatformTeam block (team overview + roster + schedule + results,
+    // rendered by the runtime component from TeamLinkt's own data). Distinct
+    // from ::Teams (plural directory). Routed from NavNode kind
+    // 'dynamic_team' (node_type=TeamInstance).
+    case Team = 'team';
+
+    // Does a page rendered by this block SUBSUME its descendants? A subsuming
+    // block represents the whole subtree — descendants are absent from the
+    // rebuilt site (present in the ledger with action=Subsumed for
+    // recoverability). A non-subsuming block only represents ITSELF —
+    // descendants keep their own classification and their own PuckOutput.
+    //
+    // This is the load-bearing gate that prevents league-hierarchy content
+    // loss. Historically PlatformDynamic universally subsumed; that was
+    // correct for aggregate feeds (Calendar, News) and catastrophically
+    // wrong for hierarchy directories (Teams, Divisions, Team) where a
+    // parent LINKS to its children as distinct user destinations. If a
+    // League page subsumed, cjfl's 19 team pages and langdon's divisions
+    // would silently disappear.
+    //
+    // Rule: subsume only when the block is a self-contained aggregate feed.
+    //   - Calendar : yes (one calendar carries all events; per-month
+    //                sub-pages are noise).
+    //   - News     : yes (one news feed carries all articles; per-month
+    //                archives are noise).
+    //   - Everything else : no. Schedule/Scores/Standings/Roster/Contacts
+    //                are typically leaf pages anyway (empty children if
+    //                any). Teams/Divisions/Team are hierarchy directories
+    //                whose children are distinct user destinations. Safer
+    //                default: don't swallow.
+    public function subsumesDescendants(): bool
+    {
+        return match ($this) {
+            self::Calendar, self::News => true,
+            default => false,
+        };
+    }
 }

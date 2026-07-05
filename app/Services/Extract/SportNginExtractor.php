@@ -260,10 +260,21 @@ final class SportNginExtractor implements Extractor
             return ['external', null];
         }
 
+        // SE's `Instance` node_types encode the league hierarchy: a site's
+        // league→division→team subtree comes back as LeagueInstance →
+        // DivisionInstance → TeamInstance. Each maps to its own kind so PLAN
+        // can route them to the right PlatformBlockType (Teams / Divisions /
+        // Team) WITHOUT the parent subsuming the children. Unknown Instance
+        // types (TournamentInstance, SeasonInstance, ...) still bucket into
+        // 'dynamic_other' — the vestigial-Dynamic + visible-failure path —
+        // rather than silently mis-mapping to something wrong.
         $kind = match (true) {
             $nodeType === 'Page' => 'page',
             $nodeType === 'Calendar' => 'dynamic_calendar',
             $nodeType === 'NewsNode' => 'dynamic_news',
+            $nodeType === 'LeagueInstance' => 'dynamic_league',
+            $nodeType === 'DivisionInstance' => 'dynamic_division',
+            $nodeType === 'TeamInstance' => 'dynamic_team',
             is_string($nodeType) && $nodeType !== '' => 'dynamic_other',
             default => 'unknown',
         };

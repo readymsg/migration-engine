@@ -29,7 +29,7 @@ export const componentRegistry: Record<string, ComponentType<Record<string, unkn
     Card: Card as ComponentType<Record<string, unknown>>,
     ButtonGroup: ButtonGroup as ComponentType<Record<string, unknown>>,
 
-    // Platform components (9) — DefaultPuckComponentSchema::platformBlocks().
+    // Platform components (10) — DefaultPuckComponentSchema::platformBlocks().
     // All render via one shared <PlatformBlockStub> showing the empty-state.
     PlatformSchedule: platformStub('PlatformSchedule'),
     PlatformScores: platformStub('PlatformScores'),
@@ -40,4 +40,5 @@ export const componentRegistry: Record<string, ComponentType<Record<string, unkn
     PlatformContacts: platformStub('PlatformContacts'),
     PlatformCalendar: platformStub('PlatformCalendar'),
     PlatformNews: platformStub('PlatformNews'),
+    PlatformTeam: platformStub('PlatformTeam'),
 };

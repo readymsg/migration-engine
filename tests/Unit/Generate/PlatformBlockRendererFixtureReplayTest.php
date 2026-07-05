@@ -109,37 +109,52 @@ final class PlatformBlockRendererFixtureReplayTest extends TestCase
     }
 
     #[Test]
-    public function tenacityvolleyball_teams_subsumed_descendants_never_render_as_platform_blocks(): void
+    public function tenacityvolleyball_teams_directory_does_not_subsume_page_children(): void
     {
-        // Pointed assertion: the 3 children of TEAMS are subsumed by PLAN
-        // and present in the ledger with action=Subsumed. The renderer
-        // ONLY looks at PlatformDynamic entries, so subsumed pages never
-        // produce a PuckOutput. This is what keeps the rebuild from
-        // double-counting subtrees.
+        // TEAMS name-matches PlatformBlockType::Teams (a directory block).
+        // Directory blocks do NOT subsume their descendants — the 3 child
+        // pages (11s & 12s, 13s & 14s, 15s-18s) are ordinary Page-kind
+        // nodes that keep their own classification (FakeClassifierAgent
+        // returns Keep@0.85), survive in kept_pages, and get their own
+        // future PuckOutput via block-fill. This is the load-bearing
+        // "don't silently swallow hierarchy children" property — for a
+        // Teams directory in SE, the children are distinct user
+        // destinations, not "detail the directory covers."
+        //
+        // Contrast with the Calendar/News aggregate feed case (see
+        // langdondiamonds_calendar test below and the synthetic Calendar
+        // subsumes test in PlannerTest): those DO subsume, because one
+        // calendar feed carries all events / one news feed carries all
+        // articles.
         $manifest = RealManifests::tenacityvolleyball();
         $plan = $this->planner(new FakeClassifierAgent)->plan($manifest);
 
-        $subsumedTargets = array_map(
-            static fn (DecisionEntry $e): string => $e->target,
-            array_values(array_filter(
-                $plan->ledger->entries->items(),
-                static fn (DecisionEntry $e) => $e->action === DecisionAction::Subsumed,
-            )),
+        // No Subsumed entries in this fixture — TEAMS (the only directory
+        // PlatformDynamic here) doesn't subsume, and there are no
+        // Calendar/News PlatformDynamic ancestors either.
+        $subsumedCount = count(array_filter(
+            $plan->ledger->entries->items(),
+            static fn (DecisionEntry $e) => $e->action === DecisionAction::Subsumed,
+        ));
+        $this->assertSame(0, $subsumedCount, 'TEAMS directory must NOT subsume its Page children');
+
+        // The 3 TEAMS children survive in kept_pages as ordinary content
+        // pages (kind=page, action=Keep).
+        $keptLabels = array_map(
+            static fn (\App\Data\InventoryPage $p): string => $p->label,
+            $plan->kept_pages->items(),
         );
-        $this->assertNotEmpty($subsumedTargets, 'precondition: TEAMS subtree should produce Subsumed entries');
+        $this->assertContains('11s & 12s', $keptLabels);
+        $this->assertContains('13s & 14s', $keptLabels);
+        $this->assertContains('15s-18s', $keptLabels);
 
+        // The renderer still emits only the 2 platform PuckOutputs (TEAMS,
+        // CALENDAR) — the 3 children are content pages, not platform pages.
         $result = $this->renderer()->run($plan, $manifest);
-
         $renderedSlugs = array_map(
             static fn (PuckOutput $p): string => $p->page_slug,
             $result->pages->items(),
         );
-
-        // None of the subsumed targets' slugs leak into rendered pages.
-        // (We don't compare exact slugs because a subsumed page's slug
-        // would come from PageSlug::of(), but the renderer never sees
-        // those entries, so the more useful assertion is the count: only
-        // the 2 PlatformDynamic-rooted pages render.)
         $this->assertCount(2, $renderedSlugs);
     }
 

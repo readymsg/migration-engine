@@ -114,6 +114,7 @@ final class PlatformBlockRendererTest extends TestCase
         yield 'contacts' => [PlatformBlockType::Contacts, 'PlatformContacts'];
         yield 'calendar' => [PlatformBlockType::Calendar, 'PlatformCalendar'];
         yield 'news' => [PlatformBlockType::News, 'PlatformNews'];
+        yield 'team' => [PlatformBlockType::Team, 'PlatformTeam'];
     }
 
     /**
@@ -139,6 +140,7 @@ final class PlatformBlockRendererTest extends TestCase
                 PlatformBlockType::Contacts => 'PlatformContacts',
                 PlatformBlockType::Calendar => 'PlatformCalendar',
                 PlatformBlockType::News => 'PlatformNews',
+                PlatformBlockType::Team => 'PlatformTeam',
             };
             $this->assertArrayHasKey(
                 $puckType,

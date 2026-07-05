@@ -152,7 +152,14 @@ final class RootNavPlanner implements Planner
             $deterministic = $this->deterministicAction($page);
             if ($deterministic !== null) {
                 $entries[$i] = $deterministic;
-                if ($deterministic->action === DecisionAction::PlatformDynamic && $deterministic->platform_block_type !== null) {
+                // Only push a subsuming block onto the ancestor stack —
+                // hierarchy blocks (Teams/Divisions/Team, name-matched
+                // directory blocks) leave descendants intact so they get
+                // their own classification. See PlatformBlockType::
+                // subsumesDescendants for the rule.
+                if ($deterministic->action === DecisionAction::PlatformDynamic
+                    && $deterministic->platform_block_type !== null
+                    && $deterministic->platform_block_type->subsumesDescendants()) {
                     $ancestors[] = [
                         'depth' => $page->depth,
                         'label' => $page->label,
@@ -263,9 +270,14 @@ final class RootNavPlanner implements Planner
             }
 
             $entry = $entries[$i] ?? null;
+            // Same subsumption gate as phase 1: only subsuming blocks push
+            // onto the ancestor stack. A hierarchy PlatformDynamic returned
+            // by the LLM (e.g. an LLM-classified Teams directory) leaves its
+            // descendants' verdicts intact.
             if ($entry !== null
                 && $entry->action === DecisionAction::PlatformDynamic
-                && $entry->platform_block_type !== null) {
+                && $entry->platform_block_type !== null
+                && $entry->platform_block_type->subsumesDescendants()) {
                 $stack[] = [
                     'depth' => $page->depth,
                     'label' => $page->label,
@@ -395,17 +407,25 @@ final class RootNavPlanner implements Planner
             );
         }
 
-        // 4. Dynamic SE features routed by node_type. Calendar and NewsNode
-        //    become TeamLinkt platform blocks (Calendar / News) — same
-        //    "reproduced as our own block, zero live SE dependency" rule that
-        //    applies to Teams / Standings etc. dynamic_other is a vestigial
-        //    fallback for unrecognized SE dynamic types.
+        // 4. Dynamic SE features routed by node_type. Calendar / NewsNode
+        //    become aggregate feed blocks that SUBSUME descendants.
+        //    LeagueInstance / DivisionInstance / TeamInstance become
+        //    hierarchy blocks that do NOT subsume — each level of the
+        //    league→division→team tree is a distinct user destination and
+        //    must survive independently in the rebuilt site (see
+        //    PlatformBlockType::subsumesDescendants). dynamic_other stays as
+        //    the vestigial-Dynamic + visible-failure path for SE Instance
+        //    types we haven't recon'd yet (TournamentInstance,
+        //    SeasonInstance, ...) — safer to fail visibly than mis-map.
         if (str_starts_with($page->kind, 'dynamic_')) {
             $rawType = $page->node_type ?? 'unknown';
 
             $blockType = match ($page->kind) {
                 'dynamic_calendar' => PlatformBlockType::Calendar,
                 'dynamic_news' => PlatformBlockType::News,
+                'dynamic_league' => PlatformBlockType::Teams,
+                'dynamic_division' => PlatformBlockType::Divisions,
+                'dynamic_team' => PlatformBlockType::Team,
                 default => null,
             };
 
