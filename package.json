@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test:frontend-xss": "node tests/frontend/markdown-xss-safety.test.mjs"
     },
     "dependencies": {
         "@measured/puck": "0.19.3",
