@@ -48,4 +48,13 @@ return [
         'disk' => env('SCRAPES_DISK', 's3'),
     ],
 
+    // Tier-4 async fixture replay: when true, bind BlockFillAgent to
+    // FixtureReplayingBlockFillAgent instead of AnthropicBlockFillAgent.
+    // Set BLOCKFILL_FIXTURE_REPLAY=1 in the environment BOTH for the
+    // caller and for `php artisan horizon`. See
+    // FixtureReplayingBlockFillAgent's docblock.
+    'blockfill' => [
+        'fixture_replay' => env('BLOCKFILL_FIXTURE_REPLAY') === '1',
+    ],
+
 ];

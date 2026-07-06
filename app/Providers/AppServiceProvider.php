@@ -79,7 +79,18 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(IrPass::class);
 
-        $this->app->singleton(BlockFillAgent::class, AnthropicBlockFillAgent::class);
+        // Tier-4 async validation escape hatch: when BLOCKFILL_FIXTURE_REPLAY=1
+        // is in the env, replace the real Sonnet agent with the fixture-
+        // replaying stub. The WORKER PROCESS must be started with the same
+        // env (BLOCKFILL_FIXTURE_REPLAY=1 php artisan horizon) — container
+        // binding is per-process. See FixtureReplayingBlockFillAgent's
+        // docblock for the full flow. In production this env var is
+        // unset; the real Anthropic agent is used.
+        if (config('services.blockfill.fixture_replay') === true) {
+            $this->app->singleton(BlockFillAgent::class, \App\Services\Generate\FixtureReplayingBlockFillAgent::class);
+        } else {
+            $this->app->singleton(BlockFillAgent::class, AnthropicBlockFillAgent::class);
+        }
         $this->app->singleton(BlockFillContextStore::class, CacheBlockFillContextStore::class);
         $this->app->singleton(BlockFillResultStore::class, CacheBlockFillResultStore::class);
         $this->app->singleton(BlockFill::class);
