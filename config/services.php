@@ -60,8 +60,24 @@ return [
     // Trigger-endpoint demo config. `demo_token` is the shared secret
     // callers must send as `X-Demo-Token`. Unset → trigger endpoint
     // returns 503 (prevents accidental prod exposure).
+    //
+    // The cost-guard fields are LOAD-BEARING for public exposure. See
+    // ConversionCostGuard docblock + CLAUDE.md "Hosted demo" section.
     'conversion' => [
         'demo_token' => env('DEMO_TOKEN'),
+        // Comma-separated URLs to allowlist (exact-match after
+        // lowercase-trim-trailing-slash normalization). Empty →
+        // no allowlist enforced (dev/local). Non-empty → hosted-demo
+        // safe mode.
+        'url_allowlist' => env('DEMO_URL_ALLOWLIST', ''),
+        // Hard daily spend cap in USD. Cache-backed counter increments
+        // ~$4 per fresh conversion dispatch (dedupe hits skip). When
+        // exceeded, POST returns 429 until UTC midnight.
+        'daily_budget_usd' => env('DEMO_DAILY_BUDGET_USD', 30),
+        // In-flight concurrency ceiling. Second POST while another is
+        // running returns 409 (dedupe hits still succeed — they
+        // don't count as "another").
+        'concurrent_limit' => env('DEMO_CONCURRENT_CONVERSIONS', 1),
     ],
 
 ];

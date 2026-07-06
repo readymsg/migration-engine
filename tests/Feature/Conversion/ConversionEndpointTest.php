@@ -8,6 +8,7 @@ use App\Jobs\ConversionJob;
 use App\Services\Conversion\ConversionStatusStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 
 // End-to-end tests for the trigger + status + result HTTP endpoints.
@@ -28,7 +29,18 @@ final class ConversionEndpointTest extends \Tests\TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.conversion.demo_token' => self::TOKEN]);
+        config([
+            'services.conversion.demo_token' => self::TOKEN,
+            // Bump concurrency high so tests exercising OTHER endpoint
+            // properties (auth, dedupe, url validation, etc.) don't hit
+            // 409s under Bus::fake (no worker → no release). The
+            // dedicated concurrency-limit test in the cost-guard suite
+            // sets this back to 1 explicitly.
+            'services.conversion.concurrent_limit' => 100,
+        ]);
+        // Clear array-cache state between tests — the cost-guard's
+        // counters would otherwise leak across tests.
+        Cache::flush();
         // Prevent real jobs from running — we care about the HTTP
         // behaviors, not the pipeline itself (that's chain-equals-inline's
         // job).

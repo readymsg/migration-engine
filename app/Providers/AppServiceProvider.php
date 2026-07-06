@@ -136,6 +136,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\Conversion\CacheConversionResultStore::class,
         );
         $this->app->singleton(\App\Services\Conversion\ConversionDedupeStore::class);
+        $this->app->singleton(\App\Services\Conversion\ConversionCostGuard::class);
     }
 
     public function boot(): void

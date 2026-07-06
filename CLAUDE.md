@@ -510,6 +510,76 @@ Property test `NoSilentHangTest::status_snapshot_never_reports_non_terminal_stag
 - Prompt caching for block-fill (still deferred).
 - Persistence beyond 24h cache TTL — a 24h-old conversion becomes ungettable; fine for a demo, review-later conversions require re-running.
 
+## Hosted demo — cost-guarded public trigger
+
+Deployment shape for the shareable link. **The load-bearing property**: the trigger endpoint spends real Sonnet/Firecrawl money per call (~$3-6 per conversion), and its token is client-visible (embedded in landing HTML — not a real secret). Cost safety comes from THREE stacked guards, not token secrecy.
+
+### The cost-guard model (Level 2 + Level 1 stacked)
+
+`App\Services\Conversion\ConversionCostGuard`, wired into `ConversionController::trigger`:
+
+1. **URL allowlist** (`DEMO_URL_ALLOWLIST` env, comma-separated) — the primary gate. Only listed URLs trigger conversions; anything else → 400. Empty env → no allowlist enforcement (dev/local). Normalized match: `lowercase + trim + trailing-slash-tolerant`.
+2. **Daily budget cap** (`DEMO_DAILY_BUDGET_USD` env, default 30) — hard ceiling. Cache-backed UTC-day counter increments ~$4 per fresh conversion dispatch. When exceeded, POST returns 429 until UTC midnight. Bounds cost even if the allowlist is expanded.
+3. **Concurrency lock** (`DEMO_CONCURRENT_CONVERSIONS` env, default 1) — at most N conversions in-flight. Second fresh POST returns 409 while another runs. **Dedupe hits BYPASS this check** (visitor B refreshing during A's conversion gets A's id, not a 409 — that would be terrible UX).
+
+Guards fire in the controller in this order:
+```
+1. token middleware       (EnsureDemoToken)
+2. URL validation         (Laravel validator)
+3. allowlist              → 400 if not listed
+4. daily budget           → 429 if cap exceeded
+5. dedupe                 → return existing conversion_id (200) if hit
+6. concurrency            → 409 if another in-flight (fresh dispatch only)
+7. commit spend + dispatch
+```
+
+Release on terminal: `FinalizeConversionJob::handle` and `failed()` decrement the concurrency counter. `ConversionJob::failed()` does the same. Counter also has a 60-min TTL fallback in case release is missed — the demo self-heals.
+
+### The SHARED-TOKEN-DEDUPE property — LOAD-BEARING for cost
+
+`ConversionDedupeStore::registerOrGetExisting` keys on `sha1(token + normalized_url)`. Two DIFFERENT visitors sharing the same embedded demo token who POST the same URL hit THE SAME dedupe entry — Visitor B gets Visitor A's `conversion_id`. **One conversion, one $3-6 bill, everyone sees the same result.** This is what bounds hosted-demo cost to `(allowlist size × ~$3 × 1/day)` instead of `(visitors × ~$3 × 1/day)`. Proven by `CostGuardTest::shared_token_dedupe_across_visitors_returns_same_conversion_id` — this test is the guardrail; if it ever regresses, the demo is no longer cost-safe. Do not weaken.
+
+For allowlisted URLs, the dedupe TTL extends to 24 hours (predictable-cost sites can share a conversion for a full day). Non-allowlisted URLs keep the 10-min default when the allowlist is unset (dev/local).
+
+### Failure surfaces (what visitors see)
+
+- `400` — URL not on allowlist. Frontend shows "This demo only converts a curated set..."
+- `409` — another conversion running. Frontend shows "Another conversion is running right now. Please try again in a moment." Retry button.
+- `429` — daily budget exhausted. Frontend shows "Daily demo budget reached. The demo resumes tomorrow."
+- `401` — invalid `X-Demo-Token`. Not visible from the landing (token is embedded), but a direct API caller would see it.
+- `503` — `DEMO_TOKEN` env unset. Deliberate refusal — prevents accidental prod exposure with no gate.
+
+### The landing page
+
+`app/Http/Controllers/Demo/LandingController.php` + `resources/views/landing.blade.php` — single Blade view. URL input pre-populated with `tbirdhoops.org` (the club, most-fully-rendered lead; leagues like cjfl show more placeholder blocks). Allowlist rendered as clickable chips. Convert button → vanilla-JS `fetch()` POST → transition to "watching" view → 2s polling of `/api/conversions/{id}/status` → stage label + N-of-M during block-fill + elapsed timer + per-stage tick-marks → redirect to `/preview/conv-<id>` on Complete/Partial → cleanly-shown `failure_reason` on Failed. No new React entry; reuses the existing preview bundle for the result page. Token + allowlist embedded server-side via `@json`.
+
+### Tests (the gate before public exposure)
+
+`CostGuardTest` — 11 tests / 42 assertions. Each closes one door:
+
+- `guard_rejects_url_not_on_allowlist_with_400` — the primary gate.
+- `guard_accepts_url_on_allowlist` — listed URL passes.
+- `guard_normalizes_allowlist_urls_case_insensitive_and_trailing_slash_tolerant` — matcher is tolerant of common URL variations.
+- `guard_blocks_when_daily_budget_would_exceed_returns_429` — the hard cap.
+- `guard_blocks_second_fresh_dispatch_while_one_is_in_flight_returns_409` — concurrency lock holds.
+- `guard_release_on_concurrency_reject_does_not_leave_stale_dedupe_entry` — a 409 rejection rolls back the dedupe registration so retries work cleanly.
+- `allowlisted_dedupe_ttl_is_24h_not_10min` — time-traveled 11 min forward, dedupe still hits.
+- **`shared_token_dedupe_across_visitors_returns_same_conversion_id`** — the load-bearing property.
+- `dedupe_hit_bypasses_concurrency_check` — visitor B during A's in-flight for the SAME URL gets A's id, not a 409.
+- `dispatch_commits_daily_spend_counter` — 400 cents per fresh dispatch; dedupe hits skip the increment.
+- `no_allowlist_configured_all_urls_accepted` — backwards-compat for dev/local when `DEMO_URL_ALLOWLIST` is unset.
+
+`ConversionEndpointTest` also gained a `Cache::flush()` in setUp + `concurrent_limit=100` to prevent cross-test concurrency-counter leaks under `Bus::fake` (no worker to release the lock).
+
+### Deploy — see `DEPLOY.md`
+
+Standalone Forge box, isolated from TeamLinkt prod. Three load-bearing items called out in DEPLOY.md that MUST NOT be forgotten:
+1. Redis `maxmemory-policy=noeviction` (the eviction door the async chaos suite closed; not default on managed Redis).
+2. Nginx basic-auth on `/horizon` (the UI leaks queue internals; `HorizonServiceProvider::gate()` alone isn't enough on a public box).
+3. `npm run build` in the deploy script (`@vite()` blade directives 500 without a built bundle).
+
+DEPLOY.md has a 9-step post-deploy smoke test that MUST pass before sharing the URL.
+
 ## Known gaps / next slices
 
 - **Offline fixture-replay produces a different page set than live PLAN.** The body-aware `SePlatformContentDetector` (and any other body-dependent classification) can't run offline — the Firecrawl fixtures we have for offline tests carry nav structure but NOT bodies. So offline replay keeps pages live PLAN would park: tbirdhoops's offline planner emits 5 depth-0 nav items (Home, About Us, TBird News, Parents, **Unsubscribe**), but the live capture parks Unsubscribe (its body is pure SE-platform copy), so the committed BlockFillResult fixture only carries 7 pages and no `page-8659687`. **This is inherent to offline replay, not a bug.** Implication for tests: offline-replay tests MUST assert INVARIANTS (every Resolved nav keys into page_map; every nav whose page is missing from the map surfaces as Unresolved + a draft-landing ConversionFailure), NOT EXACT page sets (these specific N pages, status=Completed, this specific label is Unresolved). A fixture regen could shift the parked set without the lander being wrong; tests pinned to artifacts would false-positive. Second occurrence of the offline/online gap (first: 2e platform-page zero — tbirdhoops offline produces 0 platform pages while live PLAN might LLM-classify some pages into PlatformDynamic).

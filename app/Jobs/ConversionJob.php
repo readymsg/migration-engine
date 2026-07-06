@@ -118,6 +118,12 @@ final class ConversionJob implements ShouldQueue
             $this->conversion_id,
             $this->classifyFailure($exception),
         );
+        // Release concurrency budget even on catastrophic failure —
+        // otherwise the demo hits its concurrency cap and rejects the
+        // NEXT visitor. Same posture as FinalizeConversionJob's
+        // release: cost-guard state can't leak.
+        app(\App\Services\Conversion\ConversionCostGuard::class)
+            ->releaseConcurrency();
     }
 
     private function classifyFailure(Throwable $exception): string

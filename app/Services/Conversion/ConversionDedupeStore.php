@@ -21,7 +21,9 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 // suppresses accidental doubles, not deliberate re-tries.
 final class ConversionDedupeStore
 {
-    private const TTL_SECONDS = 600; // 10 min
+    public const DEFAULT_TTL_SECONDS = 600; // 10 min for arbitrary URLs
+
+    public const ALLOWLIST_TTL_SECONDS = 86_400; // 24h for allowlisted (known-safe) URLs
 
     private const KEY_PREFIX = 'conversion:dedupe:';
 
@@ -35,9 +37,26 @@ final class ConversionDedupeStore
      * (dedupe hit — POST responds 200 with the existing id). Otherwise
      * writes and returns the caller-provided id (dedupe miss — 202
      * with a fresh id).
+     *
+     * Callers pass a per-call TTL — the controller uses
+     * ALLOWLIST_TTL_SECONDS (24h) for URLs on the demo allowlist
+     * (safe: predictable cost sites can share their conversion for a
+     * full day) and DEFAULT_TTL_SECONDS (10 min) otherwise.
+     *
+     * SHARED-TOKEN-DEDUPE PROPERTY: the key is sha1(token + url), so
+     * TWO DIFFERENT VISITORS sharing the same public demo token who
+     * POST the same URL will hit THE SAME dedupe entry. Visitor B
+     * gets Visitor A's conversion_id — one conversion, one $3-6 bill,
+     * everyone sees the same result. This is what bounds the hosted-
+     * demo cost to (allowlist size × ~$3 × 1/day) instead of
+     * (visitors × ~$3 × 1/day).
      */
-    public function registerOrGetExisting(string $token, string $url, string $freshConversionId): string
-    {
+    public function registerOrGetExisting(
+        string $token,
+        string $url,
+        string $freshConversionId,
+        int $ttlSeconds = self::DEFAULT_TTL_SECONDS,
+    ): string {
         $key = $this->key($token, $url);
         /** @var mixed $existing */
         $existing = $this->cache->get($key);
@@ -45,7 +64,7 @@ final class ConversionDedupeStore
             return $existing;
         }
 
-        $this->cache->put($key, $freshConversionId, self::TTL_SECONDS);
+        $this->cache->put($key, $freshConversionId, $ttlSeconds);
 
         return $freshConversionId;
     }

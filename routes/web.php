@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Demo\LandingController;
 use App\Http\Controllers\Demo\PreviewController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Hosted-demo landing page: paste an allowlisted SportsEngine URL, click
+// Convert, watch it go, land on the preview. See LandingController for
+// the token + allowlist embedding model.
+Route::get('/', [LandingController::class, 'show'])->name('landing');
 
 // THROWAWAY (still): Demo/Preview namespace. Serves the React+Puck
 // bundle. Handles BOTH shapes:

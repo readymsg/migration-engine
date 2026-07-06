@@ -161,6 +161,13 @@ final class FinalizeConversionJob implements ShouldQueue
             'failures' => $conversion->failures->count(),
             'draft_id' => $conversion->draft_id,
         ]);
+
+        // Release the concurrency budget so the next visitor's
+        // conversion can start. Daily spend counter is NOT decremented
+        // — spent is spent. Idempotent (safe if handle() runs twice
+        // via retry).
+        app(\App\Services\Conversion\ConversionCostGuard::class)
+            ->releaseConcurrency();
     }
 
     public function failed(Throwable $exception): void
@@ -174,5 +181,8 @@ final class FinalizeConversionJob implements ShouldQueue
             $this->conversion_id,
             'finalize (post-block-fill) threw: '.$message,
         );
+        // Same release posture as ConversionJob::failed — no leaks.
+        app(\App\Services\Conversion\ConversionCostGuard::class)
+            ->releaseConcurrency();
     }
 }

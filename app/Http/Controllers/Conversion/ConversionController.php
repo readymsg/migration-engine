@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Conversion;
 use App\Data\ConversionPipelineStage;
 use App\Http\Controllers\Controller;
 use App\Jobs\ConversionJob;
+use App\Services\Conversion\ConversionCostGuard;
 use App\Services\Conversion\ConversionDedupeStore;
 use App\Services\Conversion\ConversionResultStore;
 use App\Services\Conversion\ConversionStatusStore;
@@ -34,6 +35,7 @@ final class ConversionController extends Controller
         private readonly ConversionStatusStore $statusStore,
         private readonly ConversionResultStore $resultStore,
         private readonly BlockFillResultStore $blockFillResultStore,
+        private readonly ConversionCostGuard $costGuard,
     ) {}
 
     public function trigger(Request $request): JsonResponse
@@ -46,15 +48,42 @@ final class ConversionController extends Controller
 
         $token = (string) $request->header('X-Demo-Token', '');
 
+        // Pre-dedupe cost guards: allowlist + daily budget. Fires
+        // BEFORE dedupe so a rejected URL never touches the dedupe
+        // cache (avoids polluting keys with junk URLs).
+        $pre = $this->costGuard->checkPreDedupe($url);
+        if (! $pre['allowed']) {
+            return response()->json(['error' => $pre['error']], $pre['status']);
+        }
+
+        // Dedupe. TTL extended to 24h for allowlisted URLs (predictable
+        // cost — safe to share the same conversion result for a full
+        // day). Non-allowlisted URLs use the tighter 10-min default.
         $freshId = 'conv-'.Str::random(16);
-        $conversionId = $this->dedupeStore->registerOrGetExisting($token, $url, $freshId);
+        $dedupeTtl = $this->costGuard->isAllowlisted($url)
+            ? ConversionDedupeStore::ALLOWLIST_TTL_SECONDS
+            : ConversionDedupeStore::DEFAULT_TTL_SECONDS;
+        $conversionId = $this->dedupeStore->registerOrGetExisting($token, $url, $freshId, $dedupeTtl);
 
         $isNew = $conversionId === $freshId;
 
         if ($isNew) {
-            // First trigger for this (token, url) — begin status + queue
-            // the job. Order matters: status begin() BEFORE the job
-            // dispatch so a very-fast worker can't beat us to advance().
+            // Fresh dispatch — check concurrency LAST (dedupe hits
+            // above skipped this because they don't consume
+            // concurrency; a fresh dispatch does).
+            $concurrency = $this->costGuard->checkConcurrency();
+            if (! $concurrency['allowed']) {
+                // Roll back the dedupe registration so the next call
+                // doesn't return this un-dispatched conversion_id as a
+                // "hit."
+                $this->dedupeStore->forget($token, $url);
+
+                return response()->json(['error' => $concurrency['error']], $concurrency['status']);
+            }
+
+            // Guards pass — commit spend + concurrency counters,
+            // begin status, dispatch.
+            $this->costGuard->commitDispatch();
             $this->statusStore->begin($conversionId, $url);
             ConversionJob::dispatch($conversionId, $url);
         }
