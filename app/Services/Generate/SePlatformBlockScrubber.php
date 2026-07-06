@@ -113,7 +113,16 @@ final class SePlatformBlockScrubber
     // Multi-unit countdown pattern. Must see all three of Days/Hours/
     // Minutes in sequence with numeric prefixes — precise enough to not
     // false-positive on natural copy. Case-insensitive.
-    private const STALE_COUNTDOWN_PATTERN = '/\b\d+\s+Days?\s+\d+\s+Hours?\s+\d+\s+Minutes?/i';
+    //
+    // Each number tolerates OPTIONAL markdown emphasis wrappers (`*` or
+    // `**`) around it. Firecrawl converts SE's live-countdown widget
+    // `<strong>N</strong>` to `**N**` in the captured body, and the
+    // block-fill agent (per its faithfulness rule) copies that
+    // verbatim into Card.body. Without the `\*{0,2}` tolerance the
+    // regex misses the decorated form and the countdown Card survives
+    // to render as `**55** Days ...` literally. See
+    // decorated_countdown_with_markdown_bold_wrappers_is_scrubbed test.
+    private const STALE_COUNTDOWN_PATTERN = '/\*{0,2}\d+\*{0,2}\s+Days?\s+\*{0,2}\d+\*{0,2}\s+Hours?\s+\*{0,2}\d+\*{0,2}\s+Minutes?/i';
 
     public function run(AssemblyResult $assembly): AssemblyResult
     {

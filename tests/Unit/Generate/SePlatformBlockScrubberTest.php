@@ -256,6 +256,158 @@ final class SePlatformBlockScrubberTest extends TestCase
     }
 
     #[Test]
+    public function decorated_countdown_with_markdown_bold_wrappers_is_scrubbed(): void
+    {
+        // THE regression this test guards. Firecrawl captures SE's live
+        // countdown widget as `<strong>N</strong> Days …` which
+        // renders in markdown as `**N** Days …`. The block-fill agent
+        // (per its faithfulness rule) copies this verbatim into
+        // Card.body. The scrubber's Layer 3 countdown regex must catch
+        // BOTH the zero-state form (fixture: `0 Days 0 Hours …`) AND
+        // the decorated form (live: `**55** Days **10** Hours **54**
+        // Minutes **46** Seconds`). The decorated form is the one that
+        // slipped through hosted conv-yopWOw1rtVZRjf2R and rendered
+        // `**55**` literally in the preview.
+        //
+        // If this test fails, the scrubber's STALE_COUNTDOWN_PATTERN
+        // doesn't tolerate optional emphasis wrappers around the
+        // numbers — the exact bug this expansion closes.
+        $columnsOfCountdowns = [
+            'type' => 'Columns',
+            'props' => [
+                'columns' => [
+                    [
+                        'children' => [[
+                            'type' => 'Card',
+                            'props' => [
+                                'title' => 'Flight Tryouts',
+                                'body' => '**55** Days **10** Hours **54** Minutes **46** Seconds',
+                            ],
+                        ]],
+                    ],
+                    [
+                        'children' => [[
+                            'type' => 'Card',
+                            'props' => [
+                                'title' => 'Thunderbird Assessments',
+                                'body' => '**12** Days **03** Hours **21** Minutes **09** Seconds',
+                            ],
+                        ]],
+                    ],
+                    [
+                        'children' => [[
+                            'type' => 'Card',
+                            'props' => [
+                                'title' => 'Winter Basketball starts again in',
+                                'body' => '**121** Days **04** Hours **17** Minutes **55** Seconds',
+                            ],
+                        ]],
+                    ],
+                ],
+            ],
+        ];
+
+        // A legit Card ALONGSIDE the countdown block — must survive
+        // unchanged. Anything not matching the countdown pattern is
+        // out-of-scope for the scrubber.
+        $legitCard = [
+            'type' => 'Card',
+            'props' => [
+                'title' => 'Read the latest news',
+                'body' => 'Weekly recaps and player interviews from the Thunderbirds beat.',
+            ],
+        ];
+
+        $puck = new PuckOutput(
+            page_slug: 'page-home',
+            content: [$columnsOfCountdowns, $legitCard],
+            root: ['title' => 'Home'],
+            zones: [],
+        );
+        $assembly = new AssemblyResult(
+            pages: new DataCollection(PuckOutput::class, [$puck]),
+            failures: new DataCollection(AssemblyFailure::class, []),
+            block_issues_by_slug: [],
+            status: AssemblyStatus::Complete,
+            style_brief: new GlobalStyleBrief(
+                brand_voice: '',
+                palette: [],
+                layout_conventions: [],
+                nav: new DataCollection(NavItem::class, []),
+            ),
+        );
+
+        $scrubbed = $this->scrubber()->run($assembly);
+
+        $page = $this->pageForSlug($scrubbed, 'page-home');
+        $this->assertNotNull($page);
+
+        // 1. The whole Columns block dropped (all 3 nested Cards
+        //    matched the countdown pattern → every column emptied →
+        //    Columns dropped). Verified by the existing nested-Card
+        //    logic in scrubColumnsBlock.
+        $this->assertCount(
+            1,
+            $page->content,
+            'decorated-countdown Columns must be dropped, leaving only the legit Card'
+        );
+        $this->assertSame('Card', $page->content[0]['type']);
+        $this->assertSame($legitCard, $page->content[0], 'legit Card must be byte-for-byte unchanged');
+
+        // 2. scrub_issues records the drop with the StaleCountdown kind
+        //    and mentions all three countdown titles by name.
+        $issues = $scrubbed->scrub_issues_by_slug['page-home'] ?? [];
+        $this->assertCount(1, $issues);
+        /** @var ScrubIssue $issue */
+        $issue = $issues[0];
+        $this->assertSame(0, $issue->block_index);
+        $this->assertSame('Columns', $issue->component_type);
+        $this->assertSame(ScrubKind::StaleCountdown, $issue->kind);
+        $this->assertStringContainsString('Flight Tryouts', $issue->dropped_content_summary);
+        $this->assertStringContainsString('Thunderbird Assessments', $issue->dropped_content_summary);
+        $this->assertStringContainsString('Winter Basketball', $issue->dropped_content_summary);
+    }
+
+    #[Test]
+    public function decorated_countdown_top_level_card_is_scrubbed(): void
+    {
+        // Same shape but a top-level Card (not nested under Columns).
+        // Layer 3 applies at BOTH nesting depths; this test proves the
+        // top-level path handles decorated countdowns too.
+        $countdownCard = [
+            'type' => 'Card',
+            'props' => [
+                'title' => 'Registration closes in',
+                'body' => '**7** Days **14** Hours **23** Minutes **05** Seconds',
+            ],
+        ];
+        $puck = new PuckOutput(
+            page_slug: 'page-home',
+            content: [$countdownCard],
+            root: ['title' => 'Home'],
+            zones: [],
+        );
+        $assembly = new AssemblyResult(
+            pages: new DataCollection(PuckOutput::class, [$puck]),
+            failures: new DataCollection(AssemblyFailure::class, []),
+            block_issues_by_slug: [],
+            status: AssemblyStatus::Complete,
+            style_brief: new GlobalStyleBrief(
+                brand_voice: '',
+                palette: [],
+                layout_conventions: [],
+                nav: new DataCollection(NavItem::class, []),
+            ),
+        );
+
+        $scrubbed = $this->scrubber()->run($assembly);
+        $page = $this->pageForSlug($scrubbed, 'page-home');
+        $this->assertNotNull($page);
+        $this->assertSame([], $page->content, 'decorated-countdown Card must drop');
+        $this->assertCount(1, $scrubbed->scrub_issues_by_slug['page-home'] ?? []);
+    }
+
+    #[Test]
     public function empty_assembly_result_scrubber_produces_empty_scrub_issues(): void
     {
         // Sanity: scrubber must not throw on an assembly with zero
