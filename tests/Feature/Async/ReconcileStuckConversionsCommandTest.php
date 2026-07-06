@@ -15,10 +15,12 @@ use App\Data\IrPassFailure;
 use App\Data\IrPassResult;
 use App\Data\IrPassStatus;
 use App\Data\NavItem;
+use App\Jobs\FinalizeConversionJob;
 use App\Services\Generate\CacheBlockFillResultStore;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
@@ -42,6 +44,16 @@ use Tests\TestCase;
 final class ReconcileStuckConversionsCommandTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Sweeper now dispatches FinalizeConversionJob after reconcile.
+        // These tests exercise reconcile behavior in isolation; Bus::fake
+        // intercepts the Finalize dispatch (which would need a full
+        // ConversionContext to run).
+        Bus::fake([FinalizeConversionJob::class]);
+    }
 
     private function makeStore(): CacheBlockFillResultStore
     {

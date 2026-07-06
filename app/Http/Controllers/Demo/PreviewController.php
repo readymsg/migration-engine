@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Demo;
 
 use App\Http\Controllers\Controller;
+use App\Services\Conversion\ConversionResultStore;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -24,8 +25,28 @@ use JsonException;
 // Multi-slug support is out of scope until more fixtures land.
 final class PreviewController extends Controller
 {
+    public function __construct(
+        private readonly ConversionResultStore $resultStore,
+    ) {}
+
     public function show(string $slug): View|Response
     {
+        // conv-<random> slug format = live conversion. Otherwise falls
+        // through to the static-fixture path (kept alive for the
+        // tbirdhoops demo).
+        if (str_starts_with($slug, 'conv-')) {
+            $result = $this->resultStore->get($slug);
+            if ($result === null) {
+                return response(
+                    "Conversion '{$slug}' is not ready or doesn't exist. Poll /api/conversions/{$slug}/status.",
+                    404,
+                    ['Content-Type' => 'text/plain; charset=utf-8'],
+                );
+            }
+
+            return view('preview', ['slug' => $slug]);
+        }
+
         $path = $this->fixturePath($slug);
         if (! is_file($path)) {
             return response(
@@ -40,6 +61,18 @@ final class PreviewController extends Controller
 
     public function site(string $slug): JsonResponse|Response
     {
+        // Live-conversion path — read the ConversionResult from cache.
+        // Same shape the static-fixture path serves, so the React bundle
+        // consumes both without branching.
+        if (str_starts_with($slug, 'conv-')) {
+            $result = $this->resultStore->get($slug);
+            if ($result === null) {
+                return response("Conversion '{$slug}' is not ready yet.", 404);
+            }
+
+            return response()->json($result->toArray());
+        }
+
         $path = $this->fixturePath($slug);
         if (! is_file($path)) {
             return response(

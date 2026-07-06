@@ -128,6 +128,14 @@ final class BlockFill
         // + reconciled result inline so downstream stages see a valid
         // BlockFillResult without waiting for a batch that will never
         // exist.
+        //
+        // ALSO dispatch ReconcileBlockFillJob — under the step-6 chain,
+        // ReconcileBlockFillJob is what forwards to FinalizeConversionJob.
+        // If we short-circuit block-fill without dispatching it, the
+        // whole downstream pipeline (Assemble/Scrub/Platform/DraftLand)
+        // never runs and the conversion hangs at stage=block_fill forever.
+        // ReconcileBlockFillJob's reconcile call is idempotent (returns
+        // the just-written result) so the dispatch is safe/cheap.
         if ($irPass->status === IrPassStatus::Failed) {
             $this->resultStore->putReconcileState(
                 $conversionId,
@@ -142,6 +150,7 @@ final class BlockFill
                 $conversionId,
                 $this->failedFromIrPass($irPass),
             );
+            ReconcileBlockFillJob::dispatch($conversionId);
 
             return;
         }
@@ -170,6 +179,7 @@ final class BlockFill
                 ),
             );
             $this->resultStore->putReconciledResult($conversionId, $emptyResult);
+            ReconcileBlockFillJob::dispatch($conversionId);
 
             return;
         }
@@ -258,11 +268,14 @@ final class BlockFill
             ),
         );
 
-        // If every IR page hit preflight failure, no jobs to run. Reconcile
-        // inline (nothing else will trigger it) so the conversion is
-        // immediately readable.
+        // If every IR page hit preflight failure, no jobs to run.
+        // Reconcile inline + dispatch ReconcileBlockFillJob so the step-6
+        // chain forwards to Finalize (reconcile itself is idempotent so
+        // the dispatched job's reconcile call is a no-op that just
+        // forwards to Finalize).
         if ($jobs === []) {
             $this->reconcile($conversionId);
+            ReconcileBlockFillJob::dispatch($conversionId);
 
             return;
         }

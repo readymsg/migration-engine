@@ -57,4 +57,11 @@ return [
         'fixture_replay' => env('BLOCKFILL_FIXTURE_REPLAY') === '1',
     ],
 
+    // Trigger-endpoint demo config. `demo_token` is the shared secret
+    // callers must send as `X-Demo-Token`. Unset → trigger endpoint
+    // returns 503 (prevents accidental prod exposure).
+    'conversion' => [
+        'demo_token' => env('DEMO_TOKEN'),
+    ],
+
 ];

@@ -50,5 +50,12 @@ final class ReconcileBlockFillJob implements ShouldQueue
     public function handle(BlockFill $blockFill): void
     {
         $blockFill->reconcile($this->conversion_id);
+
+        // Chain forward to Finalize. FinalizeConversionJob is
+        // idempotent (early-return when ConversionResult already
+        // exists) so the sweeper's Finalize-kick recovery + this
+        // dispatch can both fire safely for the same conversion —
+        // whichever runs first wins.
+        FinalizeConversionJob::dispatch($this->conversion_id);
     }
 }

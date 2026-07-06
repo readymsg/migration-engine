@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Jobs\FinalizeConversionJob;
+use App\Services\Conversion\ConversionResultStore;
 use App\Services\Generate\BlockFill;
 use App\Services\Generate\BlockFillResultStore;
 use Illuminate\Console\Command;
@@ -12,8 +14,8 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 // The reconciliation-correctness backstop. Runs every minute (see
-// Console\Kernel schedule). Two duties, both proving the async slice's
-// silent-loss claims:
+// Console\Kernel schedule). Three duties, closing every async
+// silent-hang door in the conversion pipeline:
 //
 //   (a) FINISHED BATCH, CALLBACK NEVER FIRED — the batch's finally()
 //       callback (which dispatches ReconcileBlockFillJob) can fail to
@@ -32,11 +34,25 @@ use Throwable;
 //       STUCK_THRESHOLD_MINUTES and reconciles them (surfacing the
 //       lost jobs as silently-absent BlockFillFailures).
 //
-// Both duties call BlockFill::reconcile($conversionId) which is
-// idempotent by design (returns the existing reconciled-result if
-// present, without re-writing). The scheduled sweeper's tick can safely
-// overlap with a slower-firing batch callback — whichever completes
-// reconcile first wins, and the other is a no-op.
+//   (c) RECONCILE SUCCEEDED, FINALIZE NEVER FIRED — the CONVERSION-
+//       LEVEL analog of (a). ReconcileBlockFillJob wrote a
+//       BlockFillResult, but its subsequent FinalizeConversionJob
+//       dispatch failed (or the Finalize job itself OOM'd). At the
+//       block-fill level everything's fine; at the conversion level,
+//       the /status endpoint would report "block_fill" forever
+//       (silent hang from the demo's perspective). Sweeper dispatches
+//       Finalize (idempotent) so the conversion completes.
+//
+// Duties (a) and (b) call BlockFill::reconcile which is idempotent by
+// design. Duty (c) dispatches FinalizeConversionJob which is also
+// idempotent (returns early if ConversionResult exists). The scheduled
+// sweeper's tick can safely overlap with a slower-firing batch
+// callback — whichever completes first wins, others are no-ops.
+//
+// After ANY reconcile in this sweep run, ALSO dispatch Finalize
+// (belt-and-braces: reconcile fired, so Finalize should run too;
+// dispatching it defensively closes the second-half hang door
+// without waiting another minute for the next sweep tick).
 final class ReconcileStuckConversionsCommand extends Command
 {
     protected $signature = 'engine:reconcile-stuck-conversions';
@@ -75,9 +91,13 @@ final class ReconcileStuckConversionsCommand extends Command
     // uses this threshold.
     private const STUCK_THRESHOLD_MINUTES = 45;
 
-    public function handle(BlockFill $blockFill, BlockFillResultStore $store): int
-    {
+    public function handle(
+        BlockFill $blockFill,
+        BlockFillResultStore $store,
+        ConversionResultStore $resultStore,
+    ): int {
         $reconciled = 0;
+        $finalizeDispatched = 0;
         $noOp = 0;
         $failed = 0;
 
@@ -96,18 +116,32 @@ final class ReconcileStuckConversionsCommand extends Command
             }
 
             if ($store->getReconciledResult($conversionId) !== null) {
+                // Reconcile already ran, but MIGHT still be stuck at
+                // Finalize — fall through to duty (c) check below.
                 $noOp++;
+            } else {
+                try {
+                    $blockFill->reconcile($conversionId);
+                    $reconciled++;
+                    $this->line("finished-batch reconciled: {$conversionId}");
+                } catch (Throwable $e) {
+                    $failed++;
+                    $this->error("reconcile failed for {$conversionId}: {$e->getMessage()}");
 
-                continue;
+                    continue;
+                }
             }
 
-            try {
-                $blockFill->reconcile($conversionId);
-                $reconciled++;
-                $this->line("finished-batch reconciled: {$conversionId}");
-            } catch (Throwable $e) {
-                $failed++;
-                $this->error("reconcile failed for {$conversionId}: {$e->getMessage()}");
+            // Duty (c) inline: if Finalize hasn't produced a
+            // ConversionResult yet, dispatch it. Idempotent — Finalize
+            // returns early if ConversionResult already exists. Closes
+            // the mid-chain hang (reconcile succeeded, Finalize
+            // dispatch failed) even when reconcile has been done a
+            // while.
+            if ($resultStore->get($conversionId) === null) {
+                FinalizeConversionJob::dispatch($conversionId);
+                $finalizeDispatched++;
+                $this->line("finalize dispatched: {$conversionId}");
             }
         }
 
@@ -127,28 +161,35 @@ final class ReconcileStuckConversionsCommand extends Command
                 continue;
             }
 
-            if ($store->getReconciledResult($conversionId) !== null) {
-                $noOp++;
+            if ($store->getReconciledResult($conversionId) === null) {
+                try {
+                    $blockFill->reconcile($conversionId);
+                    $reconciled++;
+                    $this->warn("stuck-batch reconciled (past {$row->created_at}): {$conversionId}");
+                } catch (Throwable $e) {
+                    $failed++;
+                    $this->error("reconcile failed for stuck {$conversionId}: {$e->getMessage()}");
 
-                continue;
+                    continue;
+                }
+            } else {
+                $noOp++;
             }
 
-            try {
-                $blockFill->reconcile($conversionId);
-                $reconciled++;
-                $this->warn("stuck-batch reconciled (past {$row->created_at}): {$conversionId}");
-            } catch (Throwable $e) {
-                $failed++;
-                $this->error("reconcile failed for stuck {$conversionId}: {$e->getMessage()}");
+            if ($resultStore->get($conversionId) === null) {
+                FinalizeConversionJob::dispatch($conversionId);
+                $finalizeDispatched++;
+                $this->warn("stuck-batch finalize dispatched: {$conversionId}");
             }
         }
 
-        if ($reconciled === 0 && $noOp === 0 && $failed === 0) {
+        if ($reconciled === 0 && $finalizeDispatched === 0 && $noOp === 0 && $failed === 0) {
             $this->line('no batches to sweep');
         } else {
             $this->line(sprintf(
-                'swept: reconciled=%d  no-op=%d  failed=%d',
+                'swept: reconciled=%d  finalize_dispatched=%d  no-op=%d  failed=%d',
                 $reconciled,
+                $finalizeDispatched,
                 $noOp,
                 $failed,
             ));

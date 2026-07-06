@@ -119,6 +119,23 @@ class AppServiceProvider extends ServiceProvider
         // binding (StubProductClient today, real HTTP later) flows
         // through DI consistently.
         $this->app->singleton(DraftLanding::class);
+
+        // Step-6 conversion pipeline: per-conversion stores + dedupe
+        // for the trigger endpoint. All cache-backed via the app's
+        // default cache repository (Redis in prod, array in tests).
+        $this->app->singleton(
+            \App\Services\Conversion\ConversionContextStore::class,
+            \App\Services\Conversion\CacheConversionContextStore::class,
+        );
+        $this->app->singleton(
+            \App\Services\Conversion\ConversionStatusStore::class,
+            \App\Services\Conversion\CacheConversionStatusStore::class,
+        );
+        $this->app->singleton(
+            \App\Services\Conversion\ConversionResultStore::class,
+            \App\Services\Conversion\CacheConversionResultStore::class,
+        );
+        $this->app->singleton(\App\Services\Conversion\ConversionDedupeStore::class);
     }
 
     public function boot(): void

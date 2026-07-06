@@ -445,6 +445,71 @@ The `ProductClient` interface exposes exactly two methods — `getComponentSchem
 
 `DraftLandingTest` (8 unit cases): status truth-table, Failed-skips-createDraftSite (asserts 0 calls — the never-auto-publish-aborted-conversions invariant), defensive slug-collision, createDraftSite client error → Partial, external-nav handling. `DraftLandingFixtureReplayTest` runs the full pipeline end-to-end against the real tbirdhoops `BlockFillResult` fixture and asserts the lander's INVARIANTS (every Resolved nav keys into page_map; every Unresolved nav surfaces a draft-landing failure; createDraftSite is called iff status ≠ Failed; submitted page_map keys == built page_map keys) rather than the exact page set — so a future fixture regen can't false-positive the test.
 
+## Step 6 — trigger endpoint + ConversionJob chain (v1 demo cut)
+
+The demo-facing entry: paste a SportsEngine URL → click → watch it convert → land on the preview. Assembles the proven pieces (async block-fill, deterministic Assemble/Scrub/Platform/DraftLand) into a two-job chain fronted by three HTTP routes.
+
+### Chain shape — two jobs, four stores
+
+**`ConversionJob`** (pre-batch, `app/Jobs/ConversionJob.php`): runs INGEST + PLAN + IR-pass INLINE (all deterministic + total ~1-3 min wall clock), writes the `ConversionContext` (Manifest + SitePlan hand-off), then fires `BlockFill::dispatch` which schedules the per-page Bus::batch. Its role ends when the batch is on Redis. `$tries = 1` — a full-conversion re-run is a user action (they hit convert again), not a queue-level retry. `timeout = 1200` (20 min covers pessimistic pre-batch wall clock).
+
+**`FinalizeConversionJob`** (post-reconcile, `app/Jobs/FinalizeConversionJob.php`): dispatched by `ReconcileBlockFillJob::handle()` after `BlockFill::reconcile()` writes its result. Reads `ConversionContext` + reconciled `BlockFillResult`, runs Assemble → Scrub → PlatformRender → DraftLand INLINE (all ms-scale), writes the final `ConversionResult` to `ConversionResultStore`, updates status to Complete/Partial/Failed. **Idempotent**: if `ConversionResultStore.get(id)` already returns a result, no-ops. `$tries = 3` (deterministic + idempotent + losing it strands the conversion).
+
+**Graceful "not in a full pipeline" gate**: `FinalizeConversionJob::handle` checks if a `ConversionStatusSnapshot` exists first. If not, it returns silently — meaning `BlockFill::run`/`dispatch` was called outside a full ConversionJob (CaptureLive, chain-equals-inline test, direct BlockFill calls). Real bug case (snapshot exists but ConversionContext missing) still throws + failed()-hook writes a Failed status.
+
+**`ReconcileBlockFillJob`** modified: after `BlockFill::reconcile()`, dispatches `FinalizeConversionJob`. Idempotent — safe to dispatch multiple times.
+
+**Four cache-backed stores** (all in `app/Services/Conversion/`, TTL 24h):
+
+- `ConversionContextStore` — Manifest + SitePlan hand-off between ConversionJob and FinalizeConversionJob.
+- `ConversionStatusStore` — the polling contract. Advance/complete/fail write a `ConversionStatusSnapshot` at each stage boundary. Terminal-once (Complete/Partial/Failed is locked; subsequent advance/fail no-ops — sweeper re-drives can't mutate a terminated conversion). First-win on `fail()` so a downstream cascade doesn't overwrite the root cause.
+- `ConversionResultStore` — final `ConversionResult`. Doubles as the Finalize idempotency marker.
+- `ConversionDedupeStore` — (token, url) → conversion_id map with 10-min TTL. LOAD-BEARING for cost control: a nervous demo watcher hitting refresh must NOT trigger a second $2-6 Sonnet conversion.
+
+### HTTP routes — `/api/conversions/*` under demo-token gate + throttle
+
+```
+POST /api/conversions          Body: {url}    → 202 (fresh) OR 200 (dedupe hit); JSON: {conversion_id, status_url, result_url, preview_url, deduped}
+GET  /api/conversions/{id}/status              → snapshot + block_fill_progress (computed on read for stage=BlockFill)
+GET  /api/conversions/{id}                     → ConversionResult when Complete/Partial; 409 with stage when not-ready; 404 when unknown
+GET  /preview/{conversion_id}                  → additive to /preview/{slug}; React bundle reads live ConversionResult
+```
+
+- **`EnsureDemoToken` middleware** (`app/Http/Middleware/EnsureDemoToken.php`) — validates `X-Demo-Token` header against `env('DEMO_TOKEN')`. Missing env → 503 (refuses to accept anything, prevents accidental prod exposure with unset token). Missing/wrong header → 401.
+- **`throttle:5,60`** on POST — 5 conversions per IP per hour. Tight for cost control (~$2-6 per conversion).
+- **URL normalization for dedupe** — `strtolower(trim($url))`. So `HTTPS://EXAMPLE.COM/` and `https://example.com/` share a dedupe key.
+
+### Progress signal — block-fill N-of-M, computed on read
+
+`ConversionStatusStore` writes the base snapshot at stage boundaries. `block_fill_progress` is COMPUTED on `GET /api/conversions/{id}/status` when `stage=BlockFill`, by counting entries in the block-fill result store keyed against `BlockFillReconcileState.expected_slugs`. No new state to keep in sync — the block-fill machinery already tracks per-slug completion, we just present it. Frontend polls at ~2s.
+
+### No-silent-hang contract (LOAD-BEARING for the demo)
+
+Every job in the chain implements `failed()` to write `final_status=failed` with a `failure_reason` BEFORE the exception propagates up. Every silent-hang door has an explicit close:
+
+- **ConversionJob throws** (INGEST/PLAN/IR-pass throw) → `failed()` writes Failed status inline. `NoSilentHangTest::conversion_job_ingest_throws_status_flips_to_failed` / `conversion_job_plan_throws_status_flips_to_failed`.
+- **FinalizeConversionJob throws** (Assembler bug, DraftLanding client 5xx) → `failed()` writes Failed status. Sweeper's retry ($tries=3) provides recovery; final exhaustion → failed() fires. `NoSilentHangTest::finalize_conversion_job_throws_status_flips_to_failed`.
+- **ConversionJob dies before begin() was written** (defensive) → `failed()` writes a bare Failed snapshot so `/status` returns SOMETHING. `NoSilentHangTest::conversion_job_failed_hook_writes_status_even_without_prior_begin`.
+- **Reconcile succeeded, Finalize dispatch failed** (the mid-chain hang) → sweeper's duty (c) checks for `reconciled-result present + ConversionResult absent`, dispatches `FinalizeConversionJob` (idempotent). `NoSilentHangTest::sweeper_kicks_finalize_when_reconcile_succeeded_but_finalize_never_fired`.
+- **BlockFill short-circuit paths** (IR-Failed / no jobs / all preflight-failed) — each explicitly dispatches `ReconcileBlockFillJob::dispatch($conversionId)` so the chain forwards to Finalize even when no batch runs. Reconcile's idempotency guard makes the dispatch safe.
+
+Property test `NoSilentHangTest::status_snapshot_never_reports_non_terminal_stage_after_conversion_job_fails` is the umbrella invariant: NO matter how the job dies, the resulting status must be terminal. Never a spinner-forever demo failure.
+
+### Chain-as-jobs = chain-as-inline (correctness gate)
+
+`ChainEqualsInlineTest::chain_as_jobs_equals_chain_as_inline_for_tbirdhoops` proves the ConversionJob chain produces a BYTE-FOR-BYTE identical `ConversionResult` to the CaptureLive-style straight-line pipeline (modulo `conversion_id` + `draft_id`/`draft_url` which are per-run identifiers). Runs under phpunit sync queue so the full chain executes inline in the test process. $0 gate — no LLM, no network. Any drift = broken hand-off between ConversionJob and FinalizeConversionJob.
+
+### Deferred (production hardening, not demo)
+
+- Per-user auth / login flow (demo cut uses a shared `DEMO_TOKEN`).
+- Per-account rate limits (per-IP throttle only for now).
+- Real audit DB (cache-only 24h TTL is enough for the demo).
+- SSE / websocket push (polling at 2s is fine for a demo).
+- SCORE & LOG proper (BUILD.md step 5 — a separate slice; Finalize's `Log::info` is the placeholder).
+- `$tries=3` on `GeneratePageJob` (still deferred per the async-slice known gap).
+- Prompt caching for block-fill (still deferred).
+- Persistence beyond 24h cache TTL — a 24h-old conversion becomes ungettable; fine for a demo, review-later conversions require re-running.
+
 ## Known gaps / next slices
 
 - **Offline fixture-replay produces a different page set than live PLAN.** The body-aware `SePlatformContentDetector` (and any other body-dependent classification) can't run offline — the Firecrawl fixtures we have for offline tests carry nav structure but NOT bodies. So offline replay keeps pages live PLAN would park: tbirdhoops's offline planner emits 5 depth-0 nav items (Home, About Us, TBird News, Parents, **Unsubscribe**), but the live capture parks Unsubscribe (its body is pure SE-platform copy), so the committed BlockFillResult fixture only carries 7 pages and no `page-8659687`. **This is inherent to offline replay, not a bug.** Implication for tests: offline-replay tests MUST assert INVARIANTS (every Resolved nav keys into page_map; every nav whose page is missing from the map surfaces as Unresolved + a draft-landing ConversionFailure), NOT EXACT page sets (these specific N pages, status=Completed, this specific label is Unresolved). A fixture regen could shift the parked set without the lander being wrong; tests pinned to artifacts would false-positive. Second occurrence of the offline/online gap (first: 2e platform-page zero — tbirdhoops offline produces 0 platform pages while live PLAN might LLM-classify some pages into PlatformDynamic).

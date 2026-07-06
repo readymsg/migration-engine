@@ -16,12 +16,14 @@ use App\Data\IrPassFailure;
 use App\Data\IrPassResult;
 use App\Data\IrPassStatus;
 use App\Data\NavItem;
+use App\Jobs\FinalizeConversionJob;
 use App\Jobs\ReconcileBlockFillJob;
 use App\Services\Generate\BlockFill;
 use App\Services\Generate\CacheBlockFillContextStore;
 use App\Services\Generate\CacheBlockFillResultStore;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
 use Tests\TestCase;
@@ -49,6 +51,17 @@ use Tests\TestCase;
 final class ReconcileBlockFillJobTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // ReconcileBlockFillJob dispatches FinalizeConversionJob after
+        // reconcile. Under sync queue that fires inline and would need a
+        // full ConversionContext set up — beyond this test's scope.
+        // Bus::fake intercepts the dispatch so ReconcileBlockFillJob's
+        // reconcile behavior is exercised in isolation.
+        Bus::fake([FinalizeConversionJob::class]);
+    }
 
     private function makeStore(): CacheBlockFillResultStore
     {
