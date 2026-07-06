@@ -352,6 +352,67 @@ Slice 2e produces ONE thing: `PlatformRenderResult`. It does NOT merge with `Ass
 - **langdondiamonds** → 1 platform PuckOutput: Calendar (Calendar node_type → `PlatformCalendar`, `page_slug=page-7507237`). Cross-fixture confirmation that the calendar route isn't tenacity-specific.
 - **tbirdhoops offline replay → 0 platform pages** is correct for the offline rootNav fixture, which contains no name-matching or NewsNode/Calendar pages. Whether tbirdhoops surfaces platform pages under a live PLAN run (real Haiku) is **unverified offline** — the LLM might classify pages the FakeClassifier keeps. The renderer ITSELF is validated against real platform pages via tenacityvolleyball + langdondiamonds; the tbirdhoops zero is a renderer-correctness signal ("doesn't phantom-render"), NOT a claim about the production tbirdhoops site's platform-content shape.
 
+## GENERATE — SE-platform block scrubber (v1, post-assembly deterministic)
+
+`App\Services\Generate\SePlatformBlockScrubber::run(AssemblyResult): AssemblyResult` runs AFTER the assembler and BEFORE draft-landing, dropping SE-injected content blocks (competitor ads, stale live-widget captures) that the block-fill agent faithfully rendered from the source body. Deterministic — NO LLM. Consumes and produces `AssemblyResult`; populates a new `scrub_issues_by_slug` sidecar with a visible audit trail. Every scrub emits a `ScrubIssue`; silent scrubbing is FORBIDDEN.
+
+### Three PRECISION-FIRST detection layers
+
+**Layer 1 — SE-promo href scan** (`SE_PROMO_HREF_PATTERNS`):
+
+- `itunes.apple.com/*/app/sport-ngin/` (SE's iOS app store link)
+- `play.google.com/store/apps/details?id=com.sportngin.` (SE's Android app store link)
+- `sportsengine.com/solutions/` (SE marketing pages)
+
+Deliberately NARROWER than `SePlatformContentDetector::SE_PLATFORM_PATTERNS` (which is calibrated for page-level "overwhelmingly SE-tutorial" judgment). Excludes `help.sportsengine.com`, `mobile-help.sportsengine.com`, `my.sportngin.com/user/`, `intercom.help/SportsEngine/` — those hosts ARE org-linkable (langdondiamonds' Coaches page and tenacityvolleyball's coach-help page both link to `help.sportsengine.com` articles legitimately). App-store + solutions are the unambiguous set: no org links to them; SE's template injects them. Actions per block type:
+
+- `ButtonGroup.buttons[i].href` SE-promo → drop that button. If all buttons drop → drop the ButtonGroup.
+- `Card.href` SE-promo → drop the whole Card (the link IS its CTA).
+- `Hero.cta.href` SE-promo → clear the cta prop (Hero body kept — the promo CTA doesn't).
+
+**Layer 2 — EXACT-match label whitelist** (`SE_PROMO_LABEL_WHITELIST`):
+
+Closed set of full-string case-insensitive matches — NOT substring, NOT fuzzy. `strtolower(trim($label)) === $whitelist_entry`. Current entries: `"stay connected to your team with sportsengine"`, `"get the sportsengine app"`, `"sportsengine for apple users"`, `"sportsengine for android users"`, `"download the sportsengine app"`, `"sportsengine mobile app"`. A label that merely mentions SportsEngine ("we've been on SportsEngine since 2015") is LEFT ALONE — the href layer catches promo variants that matter; label scrubbing is only for the no-href label-only buttons ("Stay Connected..." with href="#"). **False-scrubbing real org content is silent-loss pointed at the wrong target — worse than missing a promo variant. Err TIGHT.** Adding a new entry is a decision to remove exactly that copy across every site the scrubber ever runs on.
+
+**Layer 3 — stale-countdown pattern** (`/\b\d+\s+Days?\s+\d+\s+Hours?\s+\d+\s+Minutes?/i`):
+
+SE's live JS widget scraped as static text after JS didn't run during Firecrawl fetch. Multi-unit format ("N Days N Hours N Minutes") is the signal — precise enough to not false-positive on natural copy. `Card` (top-level or nested inside `Columns.columns[i].children[j]`) whose `props.body` matches → drop the Card. If a Columns block's every nested Card matches → drop the Columns.
+
+### Faithful-rebuild tension resolution
+
+Scrubbing IS deliberate omission. Under the engine's usual posture that's a red flag. But this is the third leg of the SE-content-omission tripod:
+
+1. SE platform LINKS in nav → parked (`RootNavPlanner::isSePlatformLink`).
+2. SE platform CONTENT PAGES → parked (`SePlatformContentDetector`, phase 1.5 of classify).
+3. SE platform CONTENT BLOCKS → scrubbed here.
+
+All three surface the omission visibly in the ledger. Precedent consistent. SE-injected content isn't org content; the rebuilt TeamLinkt site must not carry it (competitor ad on a competitor-displacement rebuild is the highest-embarrassment demo item).
+
+### Visibility — the audit trail
+
+`ScrubIssue` per drop: `block_index`, `component_type`, `kind` (`SePromoHref | SePromoLabel | StaleCountdown`), `reason`, `dropped_content_summary` (short human-readable, e.g., "3 buttons: 2 app-store hrefs + 1 promo label"). The full dropped payload is NOT preserved — we don't need to reconstruct it, only to make it visible. SCORE & LOG surfaces the sidecar in the conversion log; a reviewer can see every scrub per page and undo a false positive.
+
+### Validated on the captured fixtures — both halves
+
+Two validation gates, both PASS (`tests/Unit/Generate/SePlatformBlockScrubberTest.php`, 6 tests / 66 assertions):
+
+**Gate 1 (removes the ad)** — `tests/Fixtures/blockfill/tbirdhoops.json` Home page:
+- Block #1 Columns (3 nested stale-countdown Cards: "Flight Tryouts", "Thunderbird Assessments", "Winter Basketball starts again in", each with body `0 Days 0 Hours 0 Minutes 0 Seconds`) → DROPPED as StaleCountdown.
+- Block #5 ButtonGroup (SE-promo: "Stay Connected...", "SportsEngine for Apple Users", "SportsEngine for Android Users") → DROPPED as SePromoHref (2 app-store buttons hit Layer 1 + 1 label-only button hit Layer 2 → entire group empties → dropped).
+- Every OTHER block on Home byte-for-byte identical.
+- Every OTHER page on tbirdhoops byte-for-byte identical (only Home has SE content).
+
+**Gate 2 (no false positives)** — the three real-org fixtures:
+- `cjfl.json` (31 pages of Canadian Junior Football League): **ZERO scrubs.**
+- `langdondiamonds.json` (18 pages) — CRITICAL: the Coaches page (`page-7507234`) block #9 Columns contains SEVEN `help.sportsengine.com` article links. Layer 1 must NOT touch these (they're org-authored, help.sportsengine.com is excluded from the scrubber's narrower pattern set). **ZERO scrubs, byte-for-byte identity across all pages.**
+- `tenacityvolleyball.json` (20 pages): **ZERO scrubs.** Cross-fixture confirmation.
+
+### Wiring position — post-assembly, pre-draft-landing
+
+Runs between `Assembler::run()` and `DraftLanding::run()`. Draft-landing's ConversionResult now carries `scrub_issues_by_slug` as a passthrough (default empty when the scrubber didn't run). Bind via DI as a singleton in `AppServiceProvider`.
+
+**Slice B (deferred)** — an IR-pass prompt addendum instructing the chunk-designer agent to skip SE-platform sections upstream. Reinforces this deterministic catch. Cost to validate: ~$3 (one live capture re-run). Not needed for demo readiness — Slice A alone closes the embarrassment gap. Add when convenient.
+
 ## GENERATE — draft-landing (v1, slice 2f — deterministic, the createDraftSite seam)
 
 `App\Services\Generate\DraftLanding::run(conversionId, SitePlan, AssemblyResult, PlatformRenderResult, Manifest): ConversionResult` is the per-conversion fold of everything downstream of PLAN/IR-pass/block-fill/assembler/platform-render, and the ONE place in the engine that calls `ProductClient::createDraftSite()`. Deterministic — NO LLM.
@@ -413,3 +474,4 @@ The `ProductClient` interface exposes exactly two methods — `getComponentSchem
 - A test per stage against a real fixture. Keep raw scrape + manifest for fixture replay without re-scraping.
 - Admin emails are PII — out of general logs; redact/scope retention.
 - Idempotency on the trigger (dedupe key per account). Clear `failed | partial` state, never a silent hang.
+- **Queue boundaries are process boundaries.** Anything that must be true on the worker — DI bindings, env vars, config, feature flags — MUST be set in the WORKER's environment (`php artisan horizon` / `queue:work` process), not just the dispatcher's. The container is per-process; a `$this->app->instance(Foo::class, ...)` call in the CLI binds it in the CLI's container, NOT in workers picking up jobs from Redis. The generalizable lesson from the async fixture-replay burn: the queue boundary silently swaps out the container, so anything the job depends on has to be resolvable from the WORKER's process on its own terms. Config-driven bindings via env vars work; ad-hoc `->instance()` calls do not.

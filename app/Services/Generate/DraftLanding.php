@@ -121,6 +121,11 @@ final class DraftLanding
             style_brief: $assembly->style_brief,
             draft_id: $draftId,
             draft_url: $draftUrl,
+            // Sidecar passthrough — deterministic SE-promo/countdown
+            // scrubber's audit trail. Empty when the scrubber didn't
+            // run (or ran and found nothing to scrub); populated when
+            // blocks were removed post-assembly. See ScrubIssue docblock.
+            scrub_issues_by_slug: $assembly->scrub_issues_by_slug,
         );
     }
 

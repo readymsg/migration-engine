@@ -97,6 +97,18 @@ final class EmitPreviewFixture extends Command
             $assembly->failures->count(),
         ));
 
+        // Deterministic SE-platform block scrub. Same wiring position
+        // as CaptureLive: Assembler → Scrubber → Platform → DraftLanding.
+        // Without this, the preview JSON would still show the tbirdhoops
+        // Home SE-promo ButtonGroup + 3 stale-countdown Cards — the ad
+        // this scrubber exists to remove.
+        $assembly = (new \App\Services\Generate\SePlatformBlockScrubber)->run($assembly);
+        $this->line(sprintf(
+            '       scrub: pages_touched=%d  blocks_scrubbed=%d',
+            count($assembly->scrub_issues_by_slug),
+            array_sum(array_map('count', $assembly->scrub_issues_by_slug)),
+        ));
+
         $platform = (new PlatformBlockRenderer($schema))->run($plan, $manifest);
         $this->line(sprintf(
             '[5/5] Platform:  status=%s  pages=%d  failures=%d',

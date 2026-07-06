@@ -47,6 +47,7 @@ final class CaptureLive extends Command
         BlockFill $blockFill,
         Assembler $assembler,
         PlatformBlockRenderer $platformRenderer,
+        \App\Services\Generate\SePlatformBlockScrubber $scrubber,
     ): int {
         $url = (string) $this->argument('url');
         $slug = (string) ($this->option('slug') ?? $this->deriveSlug($url));
@@ -158,6 +159,27 @@ final class CaptureLive extends Command
                 $assembly->pages->count(),
                 $assembly->failures->count(),
                 count($assembly->block_issues_by_slug),
+            ));
+
+            // Deterministic SE-platform block scrub — drops SE-promo
+            // buttons/cards + stale live-widget countdowns block-fill
+            // faithfully rendered from the scraped body. Sidecar
+            // scrub_issues_by_slug is threaded through DraftLanding into
+            // ConversionResult so the audit trail lands in the preview
+            // fixture. See CLAUDE.md "GENERATE — SE-platform block
+            // scrubber". Step-6's trigger-endpoint chain inserts the
+            // scrubber at the same position: Assembler → Scrubber →
+            // Platform → DraftLanding.
+            $assembly = $scrubber->run($assembly);
+            $scrubbedPageCount = count($assembly->scrub_issues_by_slug);
+            $scrubbedBlockCount = array_sum(array_map(
+                'count',
+                $assembly->scrub_issues_by_slug,
+            ));
+            $this->line(sprintf(
+                '       scrub.pages_touched=%d  blocks_scrubbed=%d',
+                $scrubbedPageCount,
+                $scrubbedBlockCount,
             ));
 
             $platform = $platformRenderer->run($plan, $manifest);

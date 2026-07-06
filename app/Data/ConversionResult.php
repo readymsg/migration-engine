@@ -47,6 +47,7 @@ final class ConversionResult extends Data
      * @param  DataCollection<int, ResolvedNavItem>  $nav  reconciled from SitePlan.nav; each entry's page_slug is the PageSlug::of() form that keys into page_map (or marked UnmatchedExternal / Unresolved)
      * @param  DataCollection<int, ConversionFailure>  $failures  unioned across upstream stages + any draft-landing-level failures
      * @param  array<string, array<int, AssemblyBlockIssue>>  $block_issues_by_slug  passthrough of AssemblyResult.block_issues_by_slug — per-block partial signals for SCORE & LOG
+     * @param  array<string, array<int, ScrubIssue>>  $scrub_issues_by_slug  passthrough of AssemblyResult.scrub_issues_by_slug — SE-promo blocks and stale countdowns removed by the deterministic post-assembly scrubber. Visible in the conversion log so a reviewer can inspect exactly what was scrubbed.
      */
     public function __construct(
         public string $conversion_id,
@@ -62,5 +63,6 @@ final class ConversionResult extends Data
         public GlobalStyleBrief $style_brief,
         public ?string $draft_id = null,
         public ?string $draft_url = null,
+        public array $scrub_issues_by_slug = [],
     ) {}
 }

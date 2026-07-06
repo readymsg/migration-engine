@@ -44,6 +44,7 @@ final class AssemblyResult extends Data
      * @param  DataCollection<int, PuckOutput>  $pages
      * @param  DataCollection<int, AssemblyFailure>  $failures
      * @param  array<string, array<int, AssemblyBlockIssue>>  $block_issues_by_slug  page_slug → ordered issues recorded on that page
+     * @param  array<string, array<int, ScrubIssue>>  $scrub_issues_by_slug  page_slug → ordered scrub events (SE-promo blocks / stale countdowns removed). Populated by SePlatformBlockScrubber; default empty when the scrubber hasn't run.
      */
     public function __construct(
         #[DataCollectionOf(PuckOutput::class)]
@@ -53,5 +54,6 @@ final class AssemblyResult extends Data
         public array $block_issues_by_slug,
         public AssemblyStatus $status,
         public GlobalStyleBrief $style_brief,
+        public array $scrub_issues_by_slug = [],
     ) {}
 }

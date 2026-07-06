@@ -107,6 +107,12 @@ class AppServiceProvider extends ServiceProvider
         // draft-landing orchestrator gets one instance via DI.
         $this->app->singleton(PlatformBlockRenderer::class);
 
+        // Post-assembly SE-platform-block scrubber. Deterministic, no
+        // schema dependency (the assembler is where schema-awareness
+        // lives). Consumes/produces AssemblyResult with a visible
+        // scrub_issues_by_slug audit trail.
+        $this->app->singleton(\App\Services\Generate\SePlatformBlockScrubber::class);
+
         // GENERATE stage 3 slice 2f — draft-landing orchestrator. Folds
         // the two PuckOutput streams + reconciles nav + calls
         // ProductClient::createDraftSite. Singleton so the ProductClient
