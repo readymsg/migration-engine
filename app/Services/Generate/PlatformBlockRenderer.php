@@ -165,7 +165,7 @@ final class PlatformBlockRenderer
     }
 
     /**
-     * @return array<string, InventoryPage>  keyed by the planner's targetOf() string
+     * @return array<string, InventoryPage> keyed by the planner's targetOf() string
      */
     private function indexKeptPagesByTarget(SitePlan $plan): array
     {

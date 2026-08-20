@@ -4,14 +4,25 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Async;
 
+use App\Data\AssetRef;
+use App\Data\Brand;
 use App\Data\ContentRef;
+use App\Data\DecisionEntry;
+use App\Data\DecisionLedger;
+use App\Data\FilledBlock;
+use App\Data\FilledPage;
 use App\Data\GlobalStyleBrief;
+use App\Data\InventoryPage;
 use App\Data\Ir;
 use App\Data\IrBlock;
+use App\Data\IrPassFailure;
 use App\Data\IrPassResult;
 use App\Data\IrPassStatus;
+use App\Data\Manifest;
 use App\Data\NavItem;
-use App\Jobs\GeneratePageJob;
+use App\Data\NavNode;
+use App\Data\SitePlan;
+use App\Data\SiteStructure;
 use App\Jobs\ReconcileBlockFillJob;
 use App\Services\Generate\BlockFill;
 use App\Services\Generate\BlockFillAgent;
@@ -108,7 +119,7 @@ final class AsyncBlockFillBaselineTest extends TestCase
                 title: "Page {$i}",
             );
 
-            $inventoryPages[] = new \App\Data\InventoryPage(
+            $inventoryPages[] = new InventoryPage(
                 label: "Page {$i}",
                 url: $url,
                 kind: 'page',
@@ -140,29 +151,29 @@ final class AsyncBlockFillBaselineTest extends TestCase
                 nav: new DataCollection(NavItem::class, []),
             ),
             pages: new DataCollection(Ir::class, $pages),
-            failures: new DataCollection(\App\Data\IrPassFailure::class, []),
+            failures: new DataCollection(IrPassFailure::class, []),
             status: IrPassStatus::Complete,
         );
 
-        $plan = new \App\Data\SitePlan(
+        $plan = new SitePlan(
             nav: new DataCollection(NavItem::class, []),
-            kept_pages: new DataCollection(\App\Data\InventoryPage::class, $inventoryPages),
-            ledger: new \App\Data\DecisionLedger(
-                entries: new DataCollection(\App\Data\DecisionEntry::class, []),
+            kept_pages: new DataCollection(InventoryPage::class, $inventoryPages),
+            ledger: new DecisionLedger(
+                entries: new DataCollection(DecisionEntry::class, []),
             ),
         );
 
-        $manifest = new \App\Data\Manifest(
+        $manifest = new Manifest(
             source_url: $sourceUrl,
             org_id: 'ngin-test',
-            structure: new \App\Data\SiteStructure(
-                nav: new DataCollection(\App\Data\NavNode::class, []),
+            structure: new SiteStructure(
+                nav: new DataCollection(NavNode::class, []),
                 pages_total: 0,
             ),
             provisioning: null,
-            brand: new \App\Data\Brand(logo_source: 'flag'),
+            brand: new Brand(logo_source: 'flag'),
             content_refs: new DataCollection(ContentRef::class, $refs),
-            asset_refs: new DataCollection(\App\Data\AssetRef::class, []),
+            asset_refs: new DataCollection(AssetRef::class, []),
             confidence: 1.0,
         );
 
@@ -252,11 +263,11 @@ final class AsyncBlockFillBaselineTest extends TestCase
 
         // Simulate one worker having written a FilledPage before the
         // first reconcile.
-        $store->putFilledPage('conv-baseline-3', new \App\Data\FilledPage(
+        $store->putFilledPage('conv-baseline-3', new FilledPage(
             page_slug: 'page-1',
             page_title: 'Page 1',
             nav_order: 0,
-            blocks: new DataCollection(\App\Data\FilledBlock::class, []),
+            blocks: new DataCollection(FilledBlock::class, []),
             self_assessment: 'stub',
             confidence: 1.0,
         ));
@@ -266,11 +277,11 @@ final class AsyncBlockFillBaselineTest extends TestCase
         // reconcile ran. If reconcile is truly idempotent, the second
         // reconcile call must NOT pick up the new write — it returns
         // the frozen first result.
-        $store->putFilledPage('conv-baseline-3', new \App\Data\FilledPage(
+        $store->putFilledPage('conv-baseline-3', new FilledPage(
             page_slug: 'page-2',
             page_title: 'Page 2',
             nav_order: 1,
-            blocks: new DataCollection(\App\Data\FilledBlock::class, []),
+            blocks: new DataCollection(FilledBlock::class, []),
             self_assessment: 'stub',
             confidence: 1.0,
         ));
@@ -300,7 +311,7 @@ final class AsyncBlockFillBaselineTest extends TestCase
         $blockFill = new BlockFill(new CacheBlockFillContextStore($cache), $store);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("no reconcile state exists");
+        $this->expectExceptionMessage('no reconcile state exists');
 
         $blockFill->reconcile('conv-never-dispatched');
     }

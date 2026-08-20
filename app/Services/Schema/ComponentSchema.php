@@ -27,7 +27,7 @@ use App\Data\ComponentDefinition;
 interface ComponentSchema
 {
     /**
-     * @return array<string, ComponentDefinition>  keyed by component type (e.g. "Hero")
+     * @return array<string, ComponentDefinition> keyed by component type (e.g. "Hero")
      */
     public function all(): array;
 

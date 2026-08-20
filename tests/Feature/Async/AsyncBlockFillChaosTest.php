@@ -4,19 +4,27 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Async;
 
+use App\Data\AssetRef;
 use App\Data\BlockFillFailure;
-use App\Data\BlockFillReconcileState;
-use App\Data\BlockFillResult;
 use App\Data\BlockFillStatus;
+use App\Data\Brand;
 use App\Data\ContentRef;
+use App\Data\DecisionEntry;
+use App\Data\DecisionLedger;
 use App\Data\FilledBlock;
 use App\Data\FilledPage;
 use App\Data\GlobalStyleBrief;
+use App\Data\InventoryPage;
 use App\Data\Ir;
 use App\Data\IrBlock;
+use App\Data\IrPassFailure;
 use App\Data\IrPassResult;
 use App\Data\IrPassStatus;
+use App\Data\Manifest;
 use App\Data\NavItem;
+use App\Data\NavNode;
+use App\Data\SitePlan;
+use App\Data\SiteStructure;
 use App\Services\Generate\BlockFill;
 use App\Services\Generate\BlockFillAgent;
 use App\Services\Generate\CacheBlockFillContextStore;
@@ -28,6 +36,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
+use Tests\Support\Generate\FakeBlockFillAgent;
 use Tests\TestCase;
 
 // Chaos LOGIC tests — proves the reconciliation surface catches each of
@@ -93,7 +102,7 @@ final class AsyncBlockFillChaosTest extends TestCase
     private function primeConversation(string $conversionId): CacheBlockFillResultStore
     {
         Bus::fake();
-        $this->app->instance(BlockFillAgent::class, new \Tests\Support\Generate\FakeBlockFillAgent);
+        $this->app->instance(BlockFillAgent::class, new FakeBlockFillAgent);
         [$irPass, $plan, $manifest] = $this->stubIr(3);
 
         $this->makeBlockFill()->dispatch($irPass, $plan, $manifest, $conversionId);
@@ -274,7 +283,7 @@ final class AsyncBlockFillChaosTest extends TestCase
         // Sweeper picks it up and reconciles to Partial with 3 successes,
         // 2 silently-absent failures.
         Bus::fake();
-        $this->app->instance(BlockFillAgent::class, new \Tests\Support\Generate\FakeBlockFillAgent);
+        $this->app->instance(BlockFillAgent::class, new FakeBlockFillAgent);
         [$irPass, $plan, $manifest] = $this->stubIr(5);
 
         $blockFill = $this->makeBlockFill();
@@ -321,7 +330,7 @@ final class AsyncBlockFillChaosTest extends TestCase
     }
 
     /**
-     * @return array{0: IrPassResult, 1: \App\Data\SitePlan, 2: \App\Data\Manifest}
+     * @return array{0: IrPassResult, 1: SitePlan, 2: Manifest}
      */
     private function stubIr(int $count): array
     {
@@ -350,7 +359,7 @@ final class AsyncBlockFillChaosTest extends TestCase
                 title: "Page {$i}",
             );
 
-            $inventoryPages[] = new \App\Data\InventoryPage(
+            $inventoryPages[] = new InventoryPage(
                 label: "Page {$i}",
                 url: $url,
                 kind: 'page',
@@ -376,29 +385,29 @@ final class AsyncBlockFillChaosTest extends TestCase
                 nav: new DataCollection(NavItem::class, []),
             ),
             pages: new DataCollection(Ir::class, $pages),
-            failures: new DataCollection(\App\Data\IrPassFailure::class, []),
+            failures: new DataCollection(IrPassFailure::class, []),
             status: IrPassStatus::Complete,
         );
 
-        $plan = new \App\Data\SitePlan(
+        $plan = new SitePlan(
             nav: new DataCollection(NavItem::class, []),
-            kept_pages: new DataCollection(\App\Data\InventoryPage::class, $inventoryPages),
-            ledger: new \App\Data\DecisionLedger(
-                entries: new DataCollection(\App\Data\DecisionEntry::class, []),
+            kept_pages: new DataCollection(InventoryPage::class, $inventoryPages),
+            ledger: new DecisionLedger(
+                entries: new DataCollection(DecisionEntry::class, []),
             ),
         );
 
-        $manifest = new \App\Data\Manifest(
+        $manifest = new Manifest(
             source_url: $sourceUrl,
             org_id: 'ngin-test',
-            structure: new \App\Data\SiteStructure(
-                nav: new DataCollection(\App\Data\NavNode::class, []),
+            structure: new SiteStructure(
+                nav: new DataCollection(NavNode::class, []),
                 pages_total: 0,
             ),
             provisioning: null,
-            brand: new \App\Data\Brand(logo_source: 'flag'),
+            brand: new Brand(logo_source: 'flag'),
             content_refs: new DataCollection(ContentRef::class, $refs),
-            asset_refs: new DataCollection(\App\Data\AssetRef::class, []),
+            asset_refs: new DataCollection(AssetRef::class, []),
             confidence: 1.0,
         );
 

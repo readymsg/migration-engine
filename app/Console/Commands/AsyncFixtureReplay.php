@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Data\AssetRef;
+use App\Data\BlockFillFailure;
 use App\Data\BlockFillResult;
 use App\Data\Brand;
 use App\Data\ContentRef;
 use App\Data\DecisionEntry;
 use App\Data\DecisionLedger;
 use App\Data\FilledPage;
-use App\Data\GlobalStyleBrief;
 use App\Data\InventoryPage;
 use App\Data\Ir;
 use App\Data\IrBlock;
@@ -177,14 +177,14 @@ final class AsyncFixtureReplay extends Command
         }
 
         if ($reconciled->pages->count() !== $fixtureResult->pages->count()) {
-            $this->error("       ✗ page count drift");
+            $this->error('       ✗ page count drift');
             $diffOk = false;
         }
 
         if ($reconciled->failures->count() !== $fixtureResult->failures->count()) {
-            $this->error("       ✗ failure count drift — showing reconciled failures:");
+            $this->error('       ✗ failure count drift — showing reconciled failures:');
             foreach ($reconciled->failures->items() as $f) {
-                /** @var \App\Data\BlockFillFailure $f */
+                /** @var BlockFillFailure $f */
                 $this->line("         [{$f->page_slug}] {$f->reason}");
             }
             $diffOk = false;
@@ -193,7 +193,7 @@ final class AsyncFixtureReplay extends Command
         $missing = array_values(array_diff($expectedSlugs, $actualSlugs));
         $extra = array_values(array_diff($actualSlugs, $expectedSlugs));
         if ($missing !== [] || $extra !== []) {
-            $this->error("       ✗ slug set drift");
+            $this->error('       ✗ slug set drift');
             if ($missing !== []) {
                 $this->line('         missing: '.implode(', ', $missing));
             }

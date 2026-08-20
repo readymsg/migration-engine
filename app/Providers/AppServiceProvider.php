@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Services\Conversion\CacheConversionContextStore;
+use App\Services\Conversion\CacheConversionResultStore;
+use App\Services\Conversion\CacheConversionStatusStore;
+use App\Services\Conversion\ConversionContextStore;
+use App\Services\Conversion\ConversionCostGuard;
+use App\Services\Conversion\ConversionDedupeStore;
+use App\Services\Conversion\ConversionResultStore;
+use App\Services\Conversion\ConversionStatusStore;
 use App\Services\Extract\AssetUploader;
 use App\Services\Extract\Extractor;
 use App\Services\Extract\FirecrawlClient;
@@ -28,10 +36,12 @@ use App\Services\Generate\CacheBlockFillContextStore;
 use App\Services\Generate\CacheBlockFillResultStore;
 use App\Services\Generate\ContentLoader;
 use App\Services\Generate\DraftLanding;
+use App\Services\Generate\FixtureReplayingBlockFillAgent;
 use App\Services\Generate\IrBriefDeriverAgent;
 use App\Services\Generate\IrChunkDesignerAgent;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\PlatformBlockRenderer;
+use App\Services\Generate\SePlatformBlockScrubber;
 use App\Services\Plan\AnthropicClassifierAgent;
 use App\Services\Plan\ClassifierAgent;
 use App\Services\Plan\Planner;
@@ -87,7 +97,7 @@ class AppServiceProvider extends ServiceProvider
         // docblock for the full flow. In production this env var is
         // unset; the real Anthropic agent is used.
         if (config('services.blockfill.fixture_replay') === true) {
-            $this->app->singleton(BlockFillAgent::class, \App\Services\Generate\FixtureReplayingBlockFillAgent::class);
+            $this->app->singleton(BlockFillAgent::class, FixtureReplayingBlockFillAgent::class);
         } else {
             $this->app->singleton(BlockFillAgent::class, AnthropicBlockFillAgent::class);
         }
@@ -111,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
         // schema dependency (the assembler is where schema-awareness
         // lives). Consumes/produces AssemblyResult with a visible
         // scrub_issues_by_slug audit trail.
-        $this->app->singleton(\App\Services\Generate\SePlatformBlockScrubber::class);
+        $this->app->singleton(SePlatformBlockScrubber::class);
 
         // GENERATE stage 3 slice 2f — draft-landing orchestrator. Folds
         // the two PuckOutput streams + reconciles nav + calls
@@ -124,19 +134,19 @@ class AppServiceProvider extends ServiceProvider
         // for the trigger endpoint. All cache-backed via the app's
         // default cache repository (Redis in prod, array in tests).
         $this->app->singleton(
-            \App\Services\Conversion\ConversionContextStore::class,
-            \App\Services\Conversion\CacheConversionContextStore::class,
+            ConversionContextStore::class,
+            CacheConversionContextStore::class,
         );
         $this->app->singleton(
-            \App\Services\Conversion\ConversionStatusStore::class,
-            \App\Services\Conversion\CacheConversionStatusStore::class,
+            ConversionStatusStore::class,
+            CacheConversionStatusStore::class,
         );
         $this->app->singleton(
-            \App\Services\Conversion\ConversionResultStore::class,
-            \App\Services\Conversion\CacheConversionResultStore::class,
+            ConversionResultStore::class,
+            CacheConversionResultStore::class,
         );
-        $this->app->singleton(\App\Services\Conversion\ConversionDedupeStore::class);
-        $this->app->singleton(\App\Services\Conversion\ConversionCostGuard::class);
+        $this->app->singleton(ConversionDedupeStore::class);
+        $this->app->singleton(ConversionCostGuard::class);
     }
 
     public function boot(): void

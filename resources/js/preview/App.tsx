@@ -5,6 +5,7 @@ import { ConversionResultJson, ResolvedNavItem } from './types';
 import Nav from './Nav';
 import StatusRibbon from './StatusRibbon';
 import BrandChrome from './BrandChrome';
+import { applyBrandPaletteTo } from './brand-palette.js';
 import '@measured/puck/puck.css';
 import './preview.css';
 
@@ -114,20 +115,13 @@ export default function App({ slug }: Props) {
     );
 }
 
-// Applies style_brief.palette as CSS custom properties on :root so
-// preview chrome can pick the org's colors. The palette is LLM-inferred
-// (not measured from the source CSS) — honest about provenance via the
-// BrandChrome's "LLM-inferred" label. If the palette is empty, the
-// defaults in preview.css stay in effect — we never invent colors.
+// Thin browser adapter — reads style_brief.palette off the loaded
+// ConversionResult and applies it to :root via the shared
+// brand-palette module (which is standalone-testable via Node).
 function applyBrandPalette(data: ConversionResultJson): void {
     const palette = data.style_brief.palette;
     if (!palette || Array.isArray(palette)) return;
-    const root = document.documentElement.style;
-    if (palette.primary) root.setProperty('--pv-brand-primary', palette.primary);
-    if (palette.secondary) root.setProperty('--pv-brand-secondary', palette.secondary);
-    if (palette.accent) root.setProperty('--pv-brand-accent', palette.accent);
-    if (palette.background) root.setProperty('--pv-brand-background', palette.background);
-    if (palette.text) root.setProperty('--pv-brand-text', palette.text);
+    applyBrandPaletteTo(document.documentElement.style, palette as Record<string, string>);
 }
 
 function initialSlug(data: ConversionResultJson): string | null {

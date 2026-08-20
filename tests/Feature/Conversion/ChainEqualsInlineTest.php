@@ -6,6 +6,7 @@ namespace Tests\Feature\Conversion;
 
 use App\Data\ConversionPipelineStage;
 use App\Data\ConversionStatus;
+use App\Data\Manifest;
 use App\Jobs\ConversionJob;
 use App\Services\Conversion\ConversionResultStore;
 use App\Services\Conversion\ConversionStatusStore;
@@ -17,7 +18,6 @@ use App\Services\Generate\DraftLanding;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\PlatformBlockRenderer;
 use App\Services\Generate\SePlatformBlockScrubber;
-use App\Data\Manifest;
 use App\Services\Plan\ClassifierAgent;
 use App\Services\Plan\Planner;
 use Illuminate\Foundation\Testing\RefreshDatabase;

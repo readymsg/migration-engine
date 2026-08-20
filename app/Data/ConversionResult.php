@@ -52,6 +52,7 @@ final class ConversionResult extends Data
     public function __construct(
         public string $conversion_id,
         public string $org_id,
+        public string $source_url,
         public array $page_map,
         #[DataCollectionOf(ResolvedNavItem::class)]
         public DataCollection $nav,

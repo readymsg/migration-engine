@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Conversion;
 
 use App\Jobs\ConversionJob;
-use App\Services\Conversion\ConversionStatusStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 // End-to-end tests for the trigger + status + result HTTP endpoints.
 // Covers:
@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\Test;
 //   - 404 on unknown conversion_id
 //   - 409 not-ready on GET /api/conversions/{id} before finalize
 //   - throttle enforced on POST
-final class ConversionEndpointTest extends \Tests\TestCase
+final class ConversionEndpointTest extends TestCase
 {
     use RefreshDatabase;
 

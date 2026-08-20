@@ -26,7 +26,7 @@ final class FakeIrBriefDeriverAgent implements IrBriefDeriverAgent
     /** @var (Closure(IrBriefDeriverInput): GlobalStyleBrief)|null */
     private ?Closure $responder = null;
 
-    /** @var Throwable|null  if set, the NEXT call throws this exception (one-shot) */
+    /** @var Throwable|null if set, the NEXT call throws this exception (one-shot) */
     private ?Throwable $throws = null;
 
     /**

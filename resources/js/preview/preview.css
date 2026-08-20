@@ -22,12 +22,22 @@
     --pv-ok-border: #86efac;
 
     /* Brand palette — populated by App.applyBrandPalette() from
-       ConversionResult.style_brief.palette when present. If the IR pass
-       produced no palette these stay unset and the preview defaults
-       above are used. We do NOT invent colors. */
+       ConversionResult.style_brief.palette when present. If the IR
+       pass produced no palette these stay unset and the preview
+       defaults above are used. We do NOT invent colors.
+       Contrast policy: `--pv-brand-*-on` is the text color to use ON
+       TOP of the corresponding brand color, computed at runtime to
+       meet WCAG 4.5:1. If neither white nor the brand text color
+       meets threshold, `applyBrandPalette` leaves the brand var
+       unset — the CSS fallbacks below then keep the neutral default.
+       Better an unbranded, readable surface than an unreadable one. */
     --pv-brand-primary: var(--pv-accent);
+    --pv-brand-primary-on: white;
     --pv-brand-secondary: var(--pv-fg);
+    --pv-brand-secondary-on: white;
     --pv-brand-accent: var(--pv-accent);
+    --pv-brand-accent-on: white;
+    --pv-brand-primary-soft: #f6f7f8;
 }
 
 body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: var(--pv-fg); background: #f6f7f8; }
@@ -48,13 +58,13 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 .preview-ribbon__list li { margin: 2px 0; }
 .preview-ribbon__list code { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
 
-.preview-nav { background: var(--pv-bg); border: 1px solid var(--pv-border); border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; }
+.preview-nav { background: var(--pv-brand-primary-soft, var(--pv-bg)); border: 1px solid var(--pv-border); border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; }
 .preview-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
 .preview-nav__item { padding: 6px 10px; border-radius: 6px; }
 .preview-nav__item a { color: var(--pv-fg); text-decoration: none; font-weight: 500; }
-.preview-nav__item:hover { background: #f3f4f6; }
+.preview-nav__item:hover { background: rgba(0,0,0,0.04); }
 .preview-nav__item--active { background: var(--pv-brand-primary); }
-.preview-nav__item--active a { color: white; }
+.preview-nav__item--active a { color: var(--pv-brand-primary-on); }
 .preview-nav__item--unresolved { border: 1px solid var(--pv-fail-border); background: var(--pv-fail-bg); color: var(--pv-fail-fg); cursor: help; }
 .preview-nav__item--external { border: 1px dashed var(--pv-border); color: var(--pv-muted); cursor: help; }
 .preview-nav__flag { display: inline-block; margin-left: 6px; font-weight: 700; }
@@ -67,15 +77,25 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 .preview-block { padding: 16px 24px; }
 
 .preview-hero { position: relative; min-height: 280px; padding: 64px 32px; color: white; }
-.preview-hero__overlay { background: rgba(0,0,0,0.45); display: inline-block; padding: 16px 24px; border-radius: 4px; max-width: 720px; }
+/* Hero overlay tints toward the brand primary. Uses color-mix so the
+   underlying background image stays visible; falls back to black at
+   45% when brand var is unset. Text color pinned to white here because
+   both black-at-45% and any brand-primary-with-45%-black-mix are
+   guaranteed to keep white text at 4.5:1. */
+.preview-hero__overlay { background: color-mix(in srgb, var(--pv-brand-primary, black) 55%, black 45%); display: inline-block; padding: 16px 24px; border-radius: 4px; max-width: 720px; }
 .preview-hero__heading { margin: 0 0 8px; font-size: 28px; }
 .preview-hero__subheading { margin: 0 0 12px; }
-.preview-hero__cta { display: inline-block; background: white; color: var(--pv-fg); padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: 600; }
+.preview-hero__cta { display: inline-block; background: white; color: var(--pv-brand-primary, var(--pv-fg)); padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: 600; }
 
 .preview-heading { margin: 16px 24px; }
-.preview-heading--h1 { font-size: 32px; font-weight: 700; }
-.preview-heading--h2 { font-size: 26px; font-weight: 700; }
-.preview-heading--h3 { font-size: 22px; font-weight: 600; }
+/* Content headings tint toward the brand primary when a palette is
+   applied. --pv-brand-primary is used against the page background —
+   this is a "text on light background" case and applyBrandPalette
+   only sets the brand var when the color meets contrast on WHITE.
+   Falls back to --pv-fg for readable neutral. */
+.preview-heading--h1 { font-size: 32px; font-weight: 700; color: var(--pv-brand-primary, var(--pv-fg)); }
+.preview-heading--h2 { font-size: 26px; font-weight: 700; color: var(--pv-brand-primary, var(--pv-fg)); }
+.preview-heading--h3 { font-size: 22px; font-weight: 600; color: var(--pv-brand-primary, var(--pv-fg)); }
 .preview-heading--h4 { font-size: 18px; font-weight: 600; }
 .preview-heading--h5 { font-size: 16px; font-weight: 600; }
 .preview-heading--h6 { font-size: 14px; font-weight: 600; }
@@ -115,7 +135,9 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 .preview-image--missing { color: var(--pv-muted); font-style: italic; }
 
 .preview-columns { display: flex; gap: 16px; padding: 16px 24px; flex-wrap: wrap; }
-.preview-column { flex: 1 1 240px; border: 1px solid var(--pv-border); border-radius: 6px; padding: 12px; background: #fafafa; }
+/* Column tint uses the brand-primary-soft (~8% mix of primary with
+   white). Falls back to neutral grey when unset. */
+.preview-column { flex: 1 1 240px; border: 1px solid var(--pv-border); border-radius: 6px; padding: 12px; background: var(--pv-brand-primary-soft, #fafafa); }
 .preview-column--w-1-2 { flex-basis: calc(50% - 8px); }
 .preview-column--w-1-3 { flex-basis: calc(33.333% - 11px); }
 .preview-column--w-2-3 { flex-basis: calc(66.666% - 6px); }
@@ -123,10 +145,14 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 .preview-column--w-3-4 { flex-basis: calc(75% - 4px); }
 .preview-column .preview-block { padding: 8px; }
 
-.preview-card { border: 1px solid var(--pv-border); border-radius: 6px; overflow: hidden; background: white; margin: 8px 0; padding: 0; display: block; text-decoration: none; color: inherit; }
+/* Card gets a top-border accent stripe from --pv-brand-primary when
+   a palette is applied. Neutral 4px transparent when unset. Border
+   width is fixed so the layout doesn't shift between branded /
+   unbranded. */
+.preview-card { border: 1px solid var(--pv-border); border-top: 3px solid var(--pv-brand-primary, transparent); border-radius: 6px; overflow: hidden; background: white; margin: 8px 0; padding: 0; display: block; text-decoration: none; color: inherit; }
 .preview-card__image { width: 100%; max-height: 200px; object-fit: cover; display: block; }
 .preview-card__body { padding: 12px 16px; }
-.preview-card__title { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.preview-card__title { margin: 0 0 6px; font-size: 16px; font-weight: 600; color: var(--pv-brand-primary, var(--pv-fg)); }
 .preview-card__text { margin: 0; color: var(--pv-muted); font-size: 14px; }
 .preview-card--linked:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
@@ -136,7 +162,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
    falls back to --pv-accent when no brand palette is applied. This is
    how the org's LLM-inferred palette shows up in the preview without
    us inventing colors. */
-.preview-button--primary { background: var(--pv-brand-primary); color: white; }
+.preview-button--primary { background: var(--pv-brand-primary); color: var(--pv-brand-primary-on, white); }
 .preview-button--secondary { background: white; color: var(--pv-brand-primary); border-color: var(--pv-brand-primary); }
 .preview-button--ghost { color: var(--pv-brand-primary); background: transparent; }
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Generate;
 
+use App\Data\ContentRef;
 use App\Data\DecisionAction;
 use App\Data\DecisionEntry;
 use App\Data\DecisionLedger;
-use App\Data\GlobalStyleBrief;
 use App\Data\InventoryPage;
 use App\Data\Ir;
 use App\Data\IrBlock;
@@ -771,7 +771,7 @@ final class IrPassTest extends TestCase
         $navItems = [];
         /** @var array<int, DecisionEntry> $entries */
         $entries = [];
-        /** @var array<int, \App\Data\ContentRef> $contentRefs */
+        /** @var array<int, ContentRef> $contentRefs */
         $contentRefs = [];
 
         for ($i = 0; $i < $count; $i++) {
@@ -811,7 +811,7 @@ final class IrPassTest extends TestCase
                 html: '',
             );
             Storage::disk(self::DISK)->put($scrapeKey, json_encode($scrape->toArray()));
-            $contentRefs[] = new \App\Data\ContentRef(
+            $contentRefs[] = new ContentRef(
                 url: $url,
                 scrape_ref: $scrapeKey,
                 title: $page->label,
@@ -825,7 +825,7 @@ final class IrPassTest extends TestCase
             structure: $realManifest->structure,
             provisioning: $realManifest->provisioning,
             brand: $realManifest->brand,
-            content_refs: new DataCollection(\App\Data\ContentRef::class, $contentRefs),
+            content_refs: new DataCollection(ContentRef::class, $contentRefs),
             asset_refs: $realManifest->asset_refs,
             confidence: $realManifest->confidence,
             flags: $realManifest->flags,

@@ -183,7 +183,7 @@ final class SePlatformBlockScrubber
 
     /**
      * @param  array<string, mixed>  $block
-     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>}  first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
+     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>} first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
      */
     private function scrubBlock(array $block, int $index): array
     {
@@ -203,7 +203,7 @@ final class SePlatformBlockScrubber
     /**
      * @param  array<string, mixed>  $block
      * @param  array<string, mixed>  $props
-     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>}  first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
+     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>} first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
      */
     private function scrubButtonGroup(array $block, int $index, array $props): array
     {
@@ -315,7 +315,7 @@ final class SePlatformBlockScrubber
     /**
      * @param  array<string, mixed>  $block
      * @param  array<string, mixed>  $props
-     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>}  first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
+     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>} first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
      */
     private function scrubCardBlock(array $block, int $index, array $props): array
     {
@@ -382,7 +382,7 @@ final class SePlatformBlockScrubber
     /**
      * @param  array<string, mixed>  $block
      * @param  array<string, mixed>  $props
-     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>}  first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
+     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>} first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
      */
     private function scrubColumnsBlock(array $block, int $index, array $props): array
     {
@@ -486,7 +486,7 @@ final class SePlatformBlockScrubber
     /**
      * @param  array<string, mixed>  $block
      * @param  array<string, mixed>  $props
-     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>}  first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
+     * @return array{0: null|array<string, mixed>, 1: array<int, ScrubIssue>} first element null = drop the block; otherwise possibly-modified block. Issues always accompany drops.
      */
     private function scrubHeroBlock(array $block, int $index, array $props): array
     {

@@ -187,7 +187,7 @@ final class ConversionCostGuard
     }
 
     /**
-     * @return ?array<int, string>  null = no allowlist configured, all URLs allowed. Otherwise the normalized allowlisted URLs.
+     * @return ?array<int, string> null = no allowlist configured, all URLs allowed. Otherwise the normalized allowlisted URLs.
      */
     private function allowlist(): ?array
     {

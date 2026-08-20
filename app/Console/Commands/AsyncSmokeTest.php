@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Data\AssetRef;
+use App\Data\BlockFillFailure;
 use App\Data\Brand;
 use App\Data\ContentRef;
 use App\Data\DecisionEntry;
 use App\Data\DecisionLedger;
+use App\Data\FilledPage;
 use App\Data\GlobalStyleBrief;
 use App\Data\InventoryPage;
 use App\Data\Ir;
@@ -24,6 +26,7 @@ use App\Data\SiteStructure;
 use App\Services\Generate\BlockFill;
 use App\Services\Generate\BlockFillAgent;
 use App\Services\Generate\BlockFillResultStore;
+use App\Services\Generate\ContentLoader;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -72,8 +75,8 @@ final class AsyncSmokeTest extends Command
         // fake disk isn't shared with any live storage.
         Storage::fake(self::DISK);
         $this->getLaravel()->instance(
-            \App\Services\Generate\ContentLoader::class,
-            new \App\Services\Generate\ContentLoader(disk: self::DISK),
+            ContentLoader::class,
+            new ContentLoader(disk: self::DISK),
         );
         $this->getLaravel()->instance(BlockFillAgent::class, new FakeBlockFillAgent);
 
@@ -139,8 +142,8 @@ final class AsyncSmokeTest extends Command
         sort($expectedSlugs);
 
         $accountedSlugs = array_merge(
-            array_map(static fn (\App\Data\FilledPage $p): string => $p->page_slug, $reconciled->pages->items()),
-            array_map(static fn (\App\Data\BlockFillFailure $f): string => $f->page_slug, $reconciled->failures->items()),
+            array_map(static fn (FilledPage $p): string => $p->page_slug, $reconciled->pages->items()),
+            array_map(static fn (BlockFillFailure $f): string => $f->page_slug, $reconciled->failures->items()),
         );
         sort($accountedSlugs);
         $accountedSlugs = array_values(array_unique($accountedSlugs));

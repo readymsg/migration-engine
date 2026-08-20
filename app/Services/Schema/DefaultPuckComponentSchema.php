@@ -89,6 +89,28 @@ final class DefaultPuckComponentSchema implements ComponentSchema
                     'href' => new FieldDefinition(type: 'text'),
                 ],
             ),
+            // Native gallery block. Populated deterministically by
+            // GalleryFiller (post-assembly). Not currently produced by
+            // block-fill directly — the block-fill agent approximates
+            // galleries as Columns-of-Images because it doesn't know
+            // this shape. GalleryFiller upgrades those approximations
+            // in-place using the source markdown as the authority on
+            // how many images belong.
+            'Gallery' => new ComponentDefinition(
+                type: 'Gallery',
+                fields: [
+                    'title' => new FieldDefinition(type: 'text'),
+                    'items' => new FieldDefinition(
+                        type: 'array',
+                        required: true,
+                        object_fields: [
+                            'src' => new FieldDefinition(type: 'image', required: true),
+                            'alt' => new FieldDefinition(type: 'text'),
+                            'caption' => new FieldDefinition(type: 'text'),
+                        ],
+                    ),
+                ],
+            ),
             'ButtonGroup' => new ComponentDefinition(
                 type: 'ButtonGroup',
                 fields: [

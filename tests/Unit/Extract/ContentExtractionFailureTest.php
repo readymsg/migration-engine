@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Extract;
 
+use App\Data\AssetRef;
 use App\Data\ContentExtractionFailure;
 use App\Data\Manifest;
 use App\Data\NavNode;
 use App\Services\Extract\AssetUploader;
-use App\Data\AssetRef;
 use App\Services\Extract\BrandExtractor;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\ScrapedPage;

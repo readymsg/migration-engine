@@ -13,7 +13,7 @@ interface RootNavFetcher
     /**
      * Fetch one node of the rootNav tree by its numeric page_node_id.
      *
-     * @return array<string, mixed>  raw JSON (keys: name, id, url, node_type, has_child, siblings, children, parent, …)
+     * @return array<string, mixed> raw JSON (keys: name, id, url, node_type, has_child, siblings, children, parent, …)
      */
     public function fetchNode(string $orgUrl, int $pageNodeId): array;
 }

@@ -58,7 +58,7 @@ final class SeCdnRehoster
     }
 
     /**
-     * @return array<int, string>  unique SE-CDN URLs across markdown + html + images
+     * @return array<int, string> unique SE-CDN URLs across markdown + html + images
      */
     private function collectSeCdnUrls(ScrapedPage $scrape): array
     {

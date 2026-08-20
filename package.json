@@ -5,7 +5,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test:frontend-xss": "node tests/frontend/markdown-xss-safety.test.mjs"
+        "test:frontend-xss": "node tests/frontend/markdown-xss-safety.test.mjs",
+        "test:frontend-palette": "node tests/frontend/brand-palette.test.mjs"
     },
     "dependencies": {
         "@measured/puck": "0.19.3",

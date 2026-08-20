@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Generate;
 
+use App\Data\AssetRef;
 use App\Data\Brand;
+use App\Data\ComponentDefinition;
 use App\Data\ContentRef;
 use App\Data\DecisionAction;
 use App\Data\DecisionEntry;
@@ -23,6 +25,8 @@ use App\Data\SiteStructure;
 use App\Services\Generate\PlatformBlockRenderer;
 use App\Services\Schema\ComponentSchema;
 use App\Services\Schema\DefaultPuckComponentSchema;
+use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
 use Tests\TestCase;
@@ -53,7 +57,7 @@ final class PlatformBlockRendererTest extends TestCase
             provisioning: null,
             brand: new Brand(logo_source: 'header'),
             content_refs: new DataCollection(ContentRef::class, []),
-            asset_refs: new DataCollection(\App\Data\AssetRef::class, []),
+            asset_refs: new DataCollection(AssetRef::class, []),
             confidence: 1.0,
         );
     }
@@ -97,7 +101,7 @@ final class PlatformBlockRendererTest extends TestCase
             return 'page_node:'.$page->page_node_id;
         }
 
-        return 'label:'.\Illuminate\Support\Str::slug($page->label);
+        return 'label:'.Str::slug($page->label);
     }
 
     /**
@@ -155,7 +159,7 @@ final class PlatformBlockRendererTest extends TestCase
      * and the single {org_id} prop. Catches enum/schema drift AND any
      * change to the v1 prop contract.
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('platformTypeProvider')]
+    #[DataProvider('platformTypeProvider')]
     #[Test]
     public function renders_each_platform_block_type(PlatformBlockType $type, string $expectedPuckType): void
     {
@@ -271,7 +275,7 @@ final class PlatformBlockRendererTest extends TestCase
                 return $this->base->all();
             }
 
-            public function get(string $componentType): ?\App\Data\ComponentDefinition
+            public function get(string $componentType): ?ComponentDefinition
             {
                 return $this->base->get($componentType);
             }
@@ -397,7 +401,7 @@ final class PlatformBlockRendererTest extends TestCase
                 return $this->base->all();
             }
 
-            public function get(string $componentType): ?\App\Data\ComponentDefinition
+            public function get(string $componentType): ?ComponentDefinition
             {
                 return $this->base->get($componentType);
             }

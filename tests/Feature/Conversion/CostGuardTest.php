@@ -9,7 +9,9 @@ use App\Services\Conversion\ConversionCostGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Date;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 // THE LOAD-BEARING GATE for public exposure of the trigger endpoint.
 // Without these guards proven green, a shared demo URL is a $3-per-
@@ -30,7 +32,7 @@ use PHPUnit\Framework\Attributes\Test;
 //
 // This suite gates the deploy: nothing goes public until these are
 // green. Same discipline as the chaos suite for the async slice.
-final class CostGuardTest extends \Tests\TestCase
+final class CostGuardTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -182,7 +184,7 @@ final class CostGuardTest extends \Tests\TestCase
         // move the clock 11 minutes forward (past the 10-min default
         // TTL but well under 24h) — the second POST should still
         // dedupe.
-        \Illuminate\Support\Facades\Date::setTestNow(now()->addMinutes(11));
+        Date::setTestNow(now()->addMinutes(11));
 
         $second = $this->postJson('/api/conversions', [
             'url' => self::CJFL,

@@ -108,6 +108,7 @@ final class DraftLanding
         return new ConversionResult(
             conversion_id: $conversionId,
             org_id: $manifest->org_id,
+            source_url: $manifest->source_url,
             page_map: $pageMap,
             nav: new DataCollection(ResolvedNavItem::class, $resolvedNav),
             failures: new DataCollection(ConversionFailure::class, $failures),

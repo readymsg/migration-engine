@@ -19,7 +19,6 @@ use App\Data\NavItem;
 use App\Jobs\FinalizeConversionJob;
 use App\Jobs\ReconcileBlockFillJob;
 use App\Services\Generate\BlockFill;
-use App\Services\Generate\CacheBlockFillContextStore;
 use App\Services\Generate\CacheBlockFillResultStore;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -253,7 +252,7 @@ final class ReconcileBlockFillJobTest extends TestCase
     }
 
     #[Test]
-    public function missing_reconcile_state_DOES_throw_chain_halts_legitimately(): void
+    public function missing_reconcile_state_doe_s_throw_chain_halts_legitimately(): void
     {
         // The one case where the chain SHOULD halt: reconcile state is
         // missing entirely. This means either dispatch() was never

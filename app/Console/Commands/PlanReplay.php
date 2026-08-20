@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Data\DecisionAction;
 use App\Data\DecisionEntry;
 use App\Data\InventoryPage;
+use App\Data\IrPassFailure;
 use App\Services\Extract\BrandExtractor;
 use App\Services\Extract\HttpHtmlFetcher;
 use App\Services\Extract\HttpRootNavFetcher;
@@ -15,10 +16,14 @@ use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SeCdnRehoster;
 use App\Services\Extract\SportNginExtractor;
 use App\Services\Generate\ContentLoader;
+use App\Services\Generate\IrPass;
+use App\Services\Generate\PageSlug;
 use App\Services\Plan\RootNavPlanner;
 use App\Services\Plan\SePlatformContentDetector;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use Tests\Support\Generate\FakeIrBriefDeriverAgent;
+use Tests\Support\Generate\FakeIrChunkDesignerAgent;
 use Tests\Support\Plan\FakeClassifierAgent;
 use Throwable;
 
@@ -249,9 +254,9 @@ final class PlanReplay extends Command
         // --- IR pass with FAKE agents — verifies chunking + reconciliation deterministically ---
         $this->newLine();
         $this->info('=== IR pass (FAKE agents — chunking + reconciliation check) ===');
-        $briefAgent = new \Tests\Support\Generate\FakeIrBriefDeriverAgent;
-        $designerAgent = new \Tests\Support\Generate\FakeIrChunkDesignerAgent;
-        $irPass = new \App\Services\Generate\IrPass(
+        $briefAgent = new FakeIrBriefDeriverAgent;
+        $designerAgent = new FakeIrChunkDesignerAgent;
+        $irPass = new IrPass(
             $briefAgent,
             $designerAgent,
             new ContentLoader(disk: 'local'),
@@ -291,7 +296,7 @@ final class PlanReplay extends Command
         foreach ($plan->kept_pages->items() as $p) {
             /** @var InventoryPage $p */
             if ($p->kind === 'page' && ($ledgerByTarget[$this->targetOf($p)] ?? null)?->action === DecisionAction::Keep) {
-                $expectedSlugs[] = \App\Services\Generate\PageSlug::of($p);
+                $expectedSlugs[] = PageSlug::of($p);
             }
         }
         sort($expectedSlugs);
@@ -301,9 +306,9 @@ final class PlanReplay extends Command
             $actualSlugs[] = $ir->page_slug;
         }
         foreach ($irResult->failures->items() as $f) {
-            /** @var \App\Data\IrPassFailure $f */
+            /** @var IrPassFailure $f */
             // Skip the sentinel — it's not a real page slug.
-            if ($f->page_slug === \App\Services\Generate\IrPass::BRIEF_FAILURE_SLUG) {
+            if ($f->page_slug === IrPass::BRIEF_FAILURE_SLUG) {
                 continue;
             }
             $actualSlugs[] = $f->page_slug;

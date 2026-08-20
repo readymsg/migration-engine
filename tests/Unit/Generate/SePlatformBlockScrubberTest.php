@@ -72,7 +72,7 @@ final class SePlatformBlockScrubberTest extends TestCase
     }
 
     #[Test]
-    public function tbirdhoops_home_drops_ONLY_the_two_known_se_blocks_everything_else_unchanged(): void
+    public function tbirdhoops_home_drops_onl_y_the_two_known_se_blocks_everything_else_unchanged(): void
     {
         // Baseline assemble the tbirdhoops fixture — Home page has 20
         // blocks including the SE-promo ButtonGroup (#5) and a Columns

@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Data\ConversionContext;
 use App\Data\ConversionPipelineStage;
 use App\Services\Conversion\ConversionContextStore;
+use App\Services\Conversion\ConversionCostGuard;
 use App\Services\Conversion\ConversionStatusStore;
 use App\Services\Extract\Extractor;
 use App\Services\Generate\BlockFill;
@@ -122,7 +123,7 @@ final class ConversionJob implements ShouldQueue
         // otherwise the demo hits its concurrency cap and rejects the
         // NEXT visitor. Same posture as FinalizeConversionJob's
         // release: cost-guard state can't leak.
-        app(\App\Services\Conversion\ConversionCostGuard::class)
+        app(ConversionCostGuard::class)
             ->releaseConcurrency();
     }
 

@@ -6,6 +6,7 @@ namespace Tests\Unit\Generate;
 
 use App\Data\DecisionAction;
 use App\Data\DecisionEntry;
+use App\Data\InventoryPage;
 use App\Data\PlatformBlockType;
 use App\Data\PlatformRenderStatus;
 use App\Data\PuckOutput;
@@ -141,7 +142,7 @@ final class PlatformBlockRendererFixtureReplayTest extends TestCase
         // The 3 TEAMS children survive in kept_pages as ordinary content
         // pages (kind=page, action=Keep).
         $keptLabels = array_map(
-            static fn (\App\Data\InventoryPage $p): string => $p->label,
+            static fn (InventoryPage $p): string => $p->label,
             $plan->kept_pages->items(),
         );
         $this->assertContains('11s & 12s', $keptLabels);

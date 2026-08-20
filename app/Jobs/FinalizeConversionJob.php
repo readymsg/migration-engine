@@ -7,11 +7,17 @@ namespace App\Jobs;
 use App\Data\ConversionPipelineStage;
 use App\Data\ConversionStatus;
 use App\Services\Conversion\ConversionContextStore;
+use App\Services\Conversion\ConversionCostGuard;
 use App\Services\Conversion\ConversionResultStore;
 use App\Services\Conversion\ConversionStatusStore;
+use App\Services\Coverage\PageMarkdownLoader;
 use App\Services\Generate\Assembler;
+use App\Services\Generate\AssetUrlRewriter;
 use App\Services\Generate\BlockFillResultStore;
+use App\Services\Generate\ContentLoader;
 use App\Services\Generate\DraftLanding;
+use App\Services\Generate\GalleryFiller;
+use App\Services\Generate\HeroImageResolver;
 use App\Services\Generate\PlatformBlockRenderer;
 use App\Services\Generate\SePlatformBlockScrubber;
 use Illuminate\Bus\Queueable;
@@ -69,6 +75,11 @@ final class FinalizeConversionJob implements ShouldQueue
         BlockFillResultStore $blockFillResultStore,
         Assembler $assembler,
         SePlatformBlockScrubber $scrubber,
+        GalleryFiller $galleryFiller,
+        HeroImageResolver $heroResolver,
+        AssetUrlRewriter $assetRewriter,
+        PageMarkdownLoader $mdLoader,
+        ContentLoader $contentLoader,
         PlatformBlockRenderer $platformRenderer,
         DraftLanding $draftLanding,
     ): void {
@@ -123,6 +134,25 @@ final class FinalizeConversionJob implements ShouldQueue
         // (no LLM, no network).
         $assembly = $assembler->run($blockFillResult);
         $assembly = $scrubber->run($assembly);
+        // Deterministic gallery back-fill against the real scrapes on
+        // disk (via Manifest.content_refs + ContentLoader). Repairs
+        // block-fill's silent gallery truncation; missing gallery
+        // targets become visible ScrubKind::GalleryFillFailure entries.
+        // No-op when content_refs is empty (offline paths).
+        $slugToMd = $mdLoader->fromManifest($context->manifest, $context->plan, $contentLoader);
+        $assembly = $galleryFiller->run($assembly, $slugToMd);
+        // Deliberate hero-image resolver. MUST run before
+        // AssetUrlRewriter so it can inspect the original cdn*.
+        // sportngin.com URL paths for banner-shape hints (rewriter
+        // replaces those with S3 keys).
+        $assembly = $heroResolver->run($assembly, $slugToMd);
+        // Deterministic SE-CDN URL rewrite — swap every live cdn*
+        // .sportngin.com URL in the assembled Puck for its rehosted S3
+        // key using Manifest.asset_refs as the URL→S3 map. Any URL
+        // without a matching AssetRef stays live AND is recorded as a
+        // visible ScrubKind::AssetRehostMissing so the rebuilt-site
+        // "zero live SE dependency" invariant is never silently broken.
+        $assembly = $assetRewriter->run($assembly, $context->manifest);
         $platform = $platformRenderer->run($context->plan, $context->manifest);
 
         $conversion = $draftLanding->run(
@@ -166,7 +196,7 @@ final class FinalizeConversionJob implements ShouldQueue
         // conversion can start. Daily spend counter is NOT decremented
         // — spent is spent. Idempotent (safe if handle() runs twice
         // via retry).
-        app(\App\Services\Conversion\ConversionCostGuard::class)
+        app(ConversionCostGuard::class)
             ->releaseConcurrency();
     }
 
@@ -182,7 +212,7 @@ final class FinalizeConversionJob implements ShouldQueue
             'finalize (post-block-fill) threw: '.$message,
         );
         // Same release posture as ConversionJob::failed — no leaks.
-        app(\App\Services\Conversion\ConversionCostGuard::class)
+        app(ConversionCostGuard::class)
             ->releaseConcurrency();
     }
 }

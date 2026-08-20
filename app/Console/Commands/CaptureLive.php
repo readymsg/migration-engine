@@ -12,6 +12,7 @@ use App\Services\Generate\BlockFill;
 use App\Services\Generate\DraftLanding;
 use App\Services\Generate\IrPass;
 use App\Services\Generate\PlatformBlockRenderer;
+use App\Services\Generate\SePlatformBlockScrubber;
 use App\Services\Plan\Planner;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -47,7 +48,7 @@ final class CaptureLive extends Command
         BlockFill $blockFill,
         Assembler $assembler,
         PlatformBlockRenderer $platformRenderer,
-        \App\Services\Generate\SePlatformBlockScrubber $scrubber,
+        SePlatformBlockScrubber $scrubber,
     ): int {
         $url = (string) $this->argument('url');
         $slug = (string) ($this->option('slug') ?? $this->deriveSlug($url));

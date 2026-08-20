@@ -4,22 +4,35 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Conversion;
 
+use App\Data\BlockFillFailure;
+use App\Data\BlockFillResult;
+use App\Data\BlockFillStatus;
 use App\Data\ConversionPipelineStage;
+use App\Data\FilledPage;
+use App\Data\GlobalStyleBrief;
+use App\Data\Manifest;
+use App\Data\NavItem;
+use App\Data\SitePlan;
 use App\Jobs\ConversionJob;
 use App\Jobs\FinalizeConversionJob;
-use App\Services\Conversion\ConversionResultStore;
 use App\Services\Conversion\ConversionStatusStore;
 use App\Services\Extract\Extractor;
 use App\Services\Generate\BlockFillAgent;
+use App\Services\Generate\CacheBlockFillResultStore;
 use App\Services\Plan\ClassifierAgent;
+use App\Services\Plan\Planner;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
+use Spatie\LaravelData\DataCollection;
 use Tests\Support\Generate\FakeBlockFillAgent;
 use Tests\Support\Plan\FakeClassifierAgent;
 use Tests\Support\Plan\RealManifests;
+use Tests\TestCase;
 
 // LOAD-BEARING for the demo. A live demo's worst failure is a spinner
 // stuck forever at "stage: ingest" while someone watches. Every job in
@@ -34,7 +47,7 @@ use Tests\Support\Plan\RealManifests;
 // throwable escapes, the status snapshot ends up in a terminal
 // stage (Failed) with a failure_reason. NEVER a non-terminal stage
 // that never advances.
-final class NoSilentHangTest extends \Tests\TestCase
+final class NoSilentHangTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -55,7 +68,7 @@ final class NoSilentHangTest extends \Tests\TestCase
         // failure_reason — NEVER stuck at ingest.
         $this->app->instance(Extractor::class, new class implements Extractor
         {
-            public function extract(string $url): \App\Data\Manifest
+            public function extract(string $url): Manifest
             {
                 throw new RuntimeException('boom: could not resolve SE site_id from URL');
             }
@@ -96,19 +109,19 @@ final class NoSilentHangTest extends \Tests\TestCase
         $manifest = RealManifests::tbirdhoops();
         $this->app->instance(Extractor::class, new class($manifest) implements Extractor
         {
-            public function __construct(private readonly \App\Data\Manifest $manifest) {}
+            public function __construct(private readonly Manifest $manifest) {}
 
-            public function extract(string $url): \App\Data\Manifest
+            public function extract(string $url): Manifest
             {
                 return $this->manifest;
             }
         });
 
         $this->app->instance(
-            \App\Services\Plan\Planner::class,
-            new class implements \App\Services\Plan\Planner
+            Planner::class,
+            new class implements Planner
             {
-                public function plan(\App\Data\Manifest $manifest): \App\Data\SitePlan
+                public function plan(Manifest $manifest): SitePlan
                 {
                     throw new RuntimeException('boom: PLAN Haiku 503');
                 }
@@ -209,7 +222,7 @@ final class NoSilentHangTest extends \Tests\TestCase
         // result already exists. Sweeper's duty (a) sees no reconcile
         // work but STILL dispatches Finalize because ConversionResult
         // is missing.
-        \Illuminate\Support\Facades\DB::table('job_batches')->insert([
+        DB::table('job_batches')->insert([
             'id' => 'batch-'.$conversionId,
             'name' => 'block-fill:'.$conversionId,
             'total_jobs' => 3,
@@ -224,21 +237,21 @@ final class NoSilentHangTest extends \Tests\TestCase
 
         // Prime the BlockFillReconciledResult (so sweeper sees "already
         // reconciled") but leave ConversionResult empty.
-        $store = new \App\Services\Generate\CacheBlockFillResultStore(
-            app(\Illuminate\Contracts\Cache\Repository::class),
+        $store = new CacheBlockFillResultStore(
+            app(Repository::class),
         );
         $store->putReconciledResult(
             $conversionId,
-            new \App\Data\BlockFillResult(
-                style_brief: new \App\Data\GlobalStyleBrief(
+            new BlockFillResult(
+                style_brief: new GlobalStyleBrief(
                     brand_voice: '',
                     palette: [],
                     layout_conventions: [],
-                    nav: new \Spatie\LaravelData\DataCollection(\App\Data\NavItem::class, []),
+                    nav: new DataCollection(NavItem::class, []),
                 ),
-                pages: new \Spatie\LaravelData\DataCollection(\App\Data\FilledPage::class, []),
-                failures: new \Spatie\LaravelData\DataCollection(\App\Data\BlockFillFailure::class, []),
-                status: \App\Data\BlockFillStatus::Complete,
+                pages: new DataCollection(FilledPage::class, []),
+                failures: new DataCollection(BlockFillFailure::class, []),
+                status: BlockFillStatus::Complete,
             ),
         );
 
@@ -261,7 +274,7 @@ final class NoSilentHangTest extends \Tests\TestCase
         // property.
         $this->app->instance(Extractor::class, new class implements Extractor
         {
-            public function extract(string $url): \App\Data\Manifest
+            public function extract(string $url): Manifest
             {
                 throw new RuntimeException('kaboom');
             }
