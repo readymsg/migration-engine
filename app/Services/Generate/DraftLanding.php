@@ -120,6 +120,11 @@ final class DraftLanding
             // structural-confidence signals + preview chrome.
             brand: $manifest->brand,
             style_brief: $assembly->style_brief,
+            // Manifest.asset_refs passthrough — needed by the throwaway
+            // preview asset resolver to invert AssetUrlRewriter's
+            // source_url → s3_key map. NOT carried into the landed
+            // draft (createDraftSite only receives page_map).
+            asset_refs: $manifest->asset_refs,
             draft_id: $draftId,
             draft_url: $draftUrl,
             // Sidecar passthrough — deterministic SE-promo/countdown

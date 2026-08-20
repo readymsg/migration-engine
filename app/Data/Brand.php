@@ -17,6 +17,13 @@ final class Brand extends Data
         // TODO: enum once the extractor lands.
         public string $logo_source,
         public ?string $logo_asset_ref = null,
+        // Original CDN URL of the logo, preserved alongside the
+        // rehosted s3_key so downstream consumers (specifically the
+        // throwaway preview asset resolver) can fall back to fetching
+        // the source when the local rehost isn't on disk. Same shape
+        // as AssetRef.source_url — nullable, informational, never
+        // used by the landed draft.
+        public ?string $logo_source_url = null,
         public array $palette = [],
         public ?string $voice_hint = null,
     ) {}

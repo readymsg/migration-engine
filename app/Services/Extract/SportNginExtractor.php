@@ -85,7 +85,12 @@ final class SportNginExtractor implements Extractor
             $assetRefs[] = new AssetRef(
                 s3_key: $brand->logo_asset_ref,
                 mime_type: 'image/*',
-                source_url: null,
+                // Preserve the original CDN URL when we have it so
+                // the preview asset resolver's s3_key → source_url
+                // map covers the brand logo too. BrandExtractor
+                // populates logo_source_url when the header /
+                // og_image / favicon rung matches.
+                source_url: $brand->logo_source_url,
             );
         }
 

@@ -44,6 +44,7 @@ export interface PuckPage {
 export interface BrandData {
     logo_source: string;
     logo_asset_ref: string | null;
+    logo_source_url: string | null;
     palette: Record<string, string> | never[];
     voice_hint: string | null;
 }
@@ -55,9 +56,19 @@ export interface StyleBrief {
     nav: Array<{ label: string; page_slug: string; order: number }>;
 }
 
+export interface AssetRefJson {
+    s3_key: string;
+    mime_type: string;
+    source_url: string | null;
+    bytes: number | null;
+    width: number | null;
+    height: number | null;
+}
+
 export interface ConversionResultJson {
     conversion_id: string;
     org_id: string;
+    source_url: string;
     page_map: Record<string, PuckPage>;
     nav: ResolvedNavItem[];
     failures: ConversionFailure[];
@@ -68,6 +79,9 @@ export interface ConversionResultJson {
     status: ConversionStatus;
     brand: BrandData;
     style_brief: StyleBrief;
+    // Manifest.asset_refs passthrough — used by the preview asset
+    // resolver to invert AssetUrlRewriter's s3_key → source_url map.
+    asset_refs: AssetRefJson[];
     draft_id: string | null;
     draft_url: string | null;
 }

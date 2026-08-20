@@ -33,6 +33,12 @@ final class BrandExtractor
                 return new Brand(
                     logo_source: $source,
                     logo_asset_ref: $asset->s3_key,
+                    // Preserve the original CDN URL so the preview
+                    // asset resolver can fall back to fetching it
+                    // when the rehosted s3_key isn't reachable
+                    // (e.g. offline fixture path where the sha1-
+                    // named file doesn't exist on disk).
+                    logo_source_url: $url,
                     palette: [],     // TODO: extract from theme.css / inline <style> if we ever need it
                     voice_hint: null, // TODO: nothing on the homepage is a reliable voice signal
                 );

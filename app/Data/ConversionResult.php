@@ -49,6 +49,14 @@ final class ConversionResult extends Data
      * @param  array<string, array<int, AssemblyBlockIssue>>  $block_issues_by_slug  passthrough of AssemblyResult.block_issues_by_slug — per-block partial signals for SCORE & LOG
      * @param  array<string, array<int, ScrubIssue>>  $scrub_issues_by_slug  passthrough of AssemblyResult.scrub_issues_by_slug — SE-promo blocks and stale countdowns removed by the deterministic post-assembly scrubber. Visible in the conversion log so a reviewer can inspect exactly what was scrubbed.
      */
+    /**
+     * @param  array<string, array<string, mixed>>  $page_map  page_slug => Puck JSON
+     * @param  DataCollection<int, ResolvedNavItem>  $nav
+     * @param  DataCollection<int, ConversionFailure>  $failures
+     * @param  array<string, array<int, AssemblyBlockIssue>>  $block_issues_by_slug
+     * @param  DataCollection<int, AssetRef>  $asset_refs  passthrough of Manifest.asset_refs. Carries the source_url → s3_key map that AssetUrlRewriter used to swap URLs in page_map. Kept so the preview asset resolver can invert the map (s3_key → source_url) and fall back to fetching the CDN URL when the local S3-shaped file is missing. Same "preview chrome" posture as brand + style_brief — NOT carried into the landed draft.
+     * @param  array<string, array<int, ScrubIssue>>  $scrub_issues_by_slug
+     */
     public function __construct(
         public string $conversion_id,
         public string $org_id,
@@ -62,6 +70,8 @@ final class ConversionResult extends Data
         public ConversionStatus $status,
         public Brand $brand,
         public GlobalStyleBrief $style_brief,
+        #[DataCollectionOf(AssetRef::class)]
+        public DataCollection $asset_refs,
         public ?string $draft_id = null,
         public ?string $draft_url = null,
         public array $scrub_issues_by_slug = [],

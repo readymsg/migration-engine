@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Demo\LandingController;
+use App\Http\Controllers\Demo\PreviewAssetController;
 use App\Http\Controllers\Demo\PreviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,12 @@ Route::get('/', [LandingController::class, 'show'])->name('landing');
 // The React bundle consumes the same JSON shape from either path.
 Route::get('/preview/{slug}', [PreviewController::class, 'show'])->name('preview.show');
 Route::get('/api/preview/{slug}/site', [PreviewController::class, 'site'])->name('preview.site');
+
+// THROWAWAY: preview-only asset resolver. Serves s3://-shaped keys
+// out of query params (?p={s3-key}&f={optional-source-url}) — local
+// disk first, fallback to CDN with a visible X-Preview-Asset-Source
+// header. See PreviewAssetController for the provenance contract.
+Route::get('/preview-assets', [PreviewAssetController::class, 'show'])->name('preview.asset');
 
 // The `/api/conversions/*` trigger routes live in routes/api.php so
 // they bypass CSRF (JSON API, not browser-form). See routes/api.php.

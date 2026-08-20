@@ -3,9 +3,12 @@ import { Render } from '@measured/puck';
 import { puckConfig } from './puck-config';
 import { ConversionResultJson, ResolvedNavItem } from './types';
 import Nav from './Nav';
+import SiteHeader from './SiteHeader';
+import SiteFooter from './SiteFooter';
 import StatusRibbon from './StatusRibbon';
 import BrandChrome from './BrandChrome';
 import { applyBrandPaletteTo } from './brand-palette.js';
+import { seedAssetRefs } from './asset-resolver.js';
 import '@measured/puck/puck.css';
 import './preview.css';
 
@@ -37,6 +40,11 @@ export default function App({ slug }: Props) {
                 setLoad({ state: 'ready', data });
                 setActiveSlug(initialSlug(data));
                 applyBrandPalette(data);
+                // Seed the s3_key → source_url map for the preview
+                // asset resolver — must happen BEFORE any component
+                // renders (state update is batched with the setLoad
+                // above so React's next render sees the seed).
+                seedAssetRefs(data.asset_refs);
             })
             .catch((err: Error) => {
                 if (cancelled) return;
@@ -102,6 +110,13 @@ export default function App({ slug }: Props) {
                 orgId={data.org_id}
             />
             <Nav nav={sortedNav(data.nav)} activeSlug={activeSlug} onSelect={handleSelect} />
+            <SiteHeader
+                brand={data.brand}
+                orgId={data.org_id}
+                nav={sortedNav(data.nav)}
+                activeSlug={activeSlug}
+                onSelect={handleSelect}
+            />
             <main className="preview-page">
                 {page ? (
                     <Render config={puckConfig} data={page} />
@@ -111,6 +126,7 @@ export default function App({ slug }: Props) {
                     </div>
                 )}
             </main>
+            <SiteFooter orgId={data.org_id} />
         </div>
     );
 }

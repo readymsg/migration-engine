@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react';
+import { resolvePreviewAsset } from '../asset-resolver.js';
 
 interface HeroProps {
     heading?: string;
@@ -8,9 +9,10 @@ interface HeroProps {
 }
 
 export default function Hero({ heading, subheading, background_image, cta }: HeroProps) {
-    const style: CSSProperties = background_image
+    const resolvedBg = resolvePreviewAsset(background_image);
+    const style: CSSProperties = resolvedBg
         ? {
-              backgroundImage: `url("${background_image}")`,
+              backgroundImage: `url("${resolvedBg}")`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
           }

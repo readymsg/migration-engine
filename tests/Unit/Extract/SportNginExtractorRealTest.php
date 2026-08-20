@@ -127,6 +127,24 @@ final class SportNginExtractorRealTest extends TestCase
         $this->assertSame('header', $manifest->brand->logo_source);
         $this->assertNotNull($manifest->brand->logo_asset_ref);
         $this->assertStringStartsWith('s3://', $manifest->brand->logo_asset_ref);
+        // logo_source_url preserves the ORIGINAL CDN URL so the
+        // preview asset resolver can fall back to fetching it when
+        // the rehosted s3_key isn't on disk. AssetRef synthesized
+        // for the brand logo carries the same source_url so it's
+        // available via the ConversionResult.asset_refs sidecar too.
+        $this->assertNotNull($manifest->brand->logo_source_url);
+        $this->assertMatchesRegularExpression(
+            '#^https://cdn\d+\.sportngin\.com/attachments/banner_graphic/#',
+            $manifest->brand->logo_source_url,
+        );
+        $logoAssetRef = collect($manifest->asset_refs->items())
+            ->first(fn ($ref) => $ref->s3_key === $manifest->brand->logo_asset_ref);
+        $this->assertNotNull($logoAssetRef);
+        $this->assertSame(
+            $manifest->brand->logo_source_url,
+            $logoAssetRef->source_url,
+            'brand-logo AssetRef must preserve source_url so asset_refs lookup covers it too',
+        );
 
         // Scrape: we preloaded only Home; that's the only ContentRef.
         $this->assertCount(1, $manifest->content_refs);

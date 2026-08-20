@@ -108,6 +108,18 @@ const buttonGroupFields = {
     },
 } as const;
 
+const galleryFields = {
+    title: { type: 'text' },
+    items: {
+        type: 'array',
+        arrayFields: {
+            src: { type: 'text' },
+            alt: { type: 'text' },
+            caption: { type: 'text' },
+        },
+    },
+} as const;
+
 const platformFields = {
     org_id: { type: 'text' },
 } as const;
@@ -132,6 +144,7 @@ export const puckConfig: Config = {
         Columns: comp(columnsFields, 'Columns'),
         Card: comp(cardFields, 'Card'),
         ButtonGroup: comp(buttonGroupFields, 'ButtonGroup'),
+        Gallery: comp(galleryFields, 'Gallery'),
 
         PlatformSchedule: comp(platformFields, 'PlatformSchedule'),
         PlatformScores: comp(platformFields, 'PlatformScores'),

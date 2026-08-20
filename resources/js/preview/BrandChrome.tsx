@@ -1,4 +1,5 @@
 import { BrandData, StyleBrief } from './types';
+import { resolvePreviewAsset } from './asset-resolver.js';
 
 // PREVIEW CHROME — NOT page content, NOT a Puck block, NOT a claim the
 // landed draft is branded. Same posture as <StatusRibbon>: it describes
@@ -22,15 +23,18 @@ function paletteAsObject(p: Record<string, string> | never[]): Record<string, st
     return Array.isArray(p) ? {} : p;
 }
 
-// Brand.logo_asset_ref is an S3 KEY (s3://bucket/path/file.png), not an
-// http(s) URL. In the offline replay it's the FakeAssetUploader's fake
-// key (`s3://fake/...`); even in a real production conversion it'd be
-// the S3 key, not a publicly resolvable URL. Either way the browser
-// can't fetch it — the honest render is a placeholder + the org's name
-// + the key string for visibility.
-function isResolvableImageUrl(ref: string | null): boolean {
-    if (!ref) return false;
-    return /^https?:\/\//i.test(ref);
+// Brand.logo_asset_ref is an S3 KEY (s3://bucket/path/file.png). The
+// preview asset resolver (PreviewAssetController + asset-resolver.js)
+// turns this into a /preview-assets URL that either serves the
+// rehosted file OR falls back to fetching the original CDN URL (from
+// asset_refs source_url). So the logo ACTUALLY renders — no longer a
+// text placeholder. Falls back to the org-id placeholder when the
+// resolver can't produce a URL (no logo_asset_ref at all).
+function resolveLogoUrl(ref: string | null): string | undefined {
+    if (!ref) return undefined;
+    // resolvePreviewAsset passes non-s3:// URLs through unchanged and
+    // maps s3:// keys to /preview-assets?p=…&f=…
+    return resolvePreviewAsset(ref);
 }
 
 export default function BrandChrome({ brand, styleBrief, orgId }: Props) {
@@ -51,25 +55,30 @@ export default function BrandChrome({ brand, styleBrief, orgId }: Props) {
             <div className="preview-brand-chrome__grid">
                 <div className="preview-brand-chrome__cell preview-brand-chrome__cell--logo">
                     <div className="preview-brand-chrome__cell-title">Logo</div>
-                    {isResolvableImageUrl(brand.logo_asset_ref) ? (
-                        <img
-                            className="preview-brand-chrome__logo"
-                            src={brand.logo_asset_ref ?? ''}
-                            alt={`${orgId} logo`}
-                        />
-                    ) : (
-                        <div className="preview-brand-chrome__logo-fallback">
-                            <div className="preview-brand-chrome__logo-fallback-org">{orgId}</div>
-                            <div className="preview-brand-chrome__logo-fallback-note">
-                                logo extracted, not yet rehosted
+                    {(() => {
+                        const logoUrl = resolveLogoUrl(brand.logo_asset_ref);
+                        return logoUrl ? (
+                            <img
+                                className="preview-brand-chrome__logo"
+                                src={logoUrl}
+                                alt={`${orgId} logo`}
+                            />
+                        ) : (
+                            <div className="preview-brand-chrome__logo-fallback">
+                                <div className="preview-brand-chrome__logo-fallback-org">{orgId}</div>
+                                <div className="preview-brand-chrome__logo-fallback-note">
+                                    no logo extracted
+                                </div>
                             </div>
-                            <div className="preview-brand-chrome__logo-fallback-ref">
-                                {brand.logo_asset_ref ?? '(no logo_asset_ref)'}
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                     <div className="preview-brand-chrome__cell-foot">
                         source: <code>{brand.logo_source}</code>
+                        {brand.logo_asset_ref ? (
+                            <>
+                                {' '}· key: <code>{brand.logo_asset_ref}</code>
+                            </>
+                        ) : null}
                     </div>
                 </div>
 

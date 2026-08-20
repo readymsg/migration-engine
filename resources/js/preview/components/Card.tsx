@@ -1,4 +1,5 @@
 import Markdown from 'markdown-to-jsx';
+import { resolvePreviewAsset } from '../asset-resolver.js';
 
 interface CardProps {
     title?: string;
@@ -18,9 +19,10 @@ interface CardProps {
 // so markdown-to-jsx can emit its own paragraph elements without
 // nesting `<p>` inside `<p>` (invalid HTML).
 export default function Card({ title, body, image, href }: CardProps) {
+    const resolvedImage = resolvePreviewAsset(image);
     const inner = (
         <>
-            {image ? <img className="preview-card__image" src={image} alt="" /> : null}
+            {resolvedImage ? <img className="preview-card__image" src={resolvedImage} alt="" /> : null}
             <div className="preview-card__body">
                 {title ? <h3 className="preview-card__title">{title}</h3> : null}
                 {body ? (
