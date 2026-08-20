@@ -73,7 +73,7 @@ final class BrandExtractor
     }
 
     /**
-     * @return array<string, string>  0..5 palette tokens (primary/secondary/accent/background/text). Empty on any failure.
+     * @return array<string, string> 0..5 palette tokens (primary/secondary/accent/background/text). Empty on any failure.
      */
     private function measurePalette(string $logoUrl): array
     {

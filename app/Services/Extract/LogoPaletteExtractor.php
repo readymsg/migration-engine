@@ -76,7 +76,7 @@ final class LogoPaletteExtractor
 
     /**
      * @return array{primary?: string, secondary?: string, accent?: string, background?: string, text?: string}|null
-     *         null when GD fails to decode / no opaque pixels / all one color
+     *                                                                                                               null when GD fails to decode / no opaque pixels / all one color
      */
     public function extract(string $pngBytes): ?array
     {

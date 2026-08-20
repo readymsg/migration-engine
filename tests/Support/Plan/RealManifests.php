@@ -6,6 +6,7 @@ namespace Tests\Support\Plan;
 
 use App\Data\Manifest;
 use App\Services\Extract\BrandExtractor;
+use App\Services\Extract\LogoPaletteExtractor;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\ScrapedPage;
 use App\Services\Extract\SeCdnRehoster;
@@ -191,9 +192,9 @@ final class RealManifests
     }
 
     /**
-     * @param  \App\Services\Extract\LogoPaletteExtractor|null  $paletteExtractor  when non-null, BrandExtractor fetches the logo URL over HTTP and measures the palette from its bytes. Pass null (default) in tests to keep them hermetic; pass a real extractor from EmitPreviewFixture so the offline demo carries measured colors.
+     * @param  LogoPaletteExtractor|null  $paletteExtractor  when non-null, BrandExtractor fetches the logo URL over HTTP and measures the palette from its bytes. Pass null (default) in tests to keep them hermetic; pass a real extractor from EmitPreviewFixture so the offline demo carries measured colors.
      */
-    public static function tbirdhoops(?\App\Services\Extract\LogoPaletteExtractor $paletteExtractor = null): Manifest
+    public static function tbirdhoops(?LogoPaletteExtractor $paletteExtractor = null): Manifest
     {
         $html = new FixtureHtmlFetcher;
         $html->preloadFromFile(
