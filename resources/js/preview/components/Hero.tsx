@@ -10,13 +10,21 @@ interface HeroProps {
 
 export default function Hero({ heading, subheading, background_image, cta }: HeroProps) {
     const resolvedBg = resolvePreviewAsset(background_image);
+    // Fallback background uses the MEASURED brand primary when
+    // available (via --pv-brand-primary set by applyBrandPalette),
+    // else neutral near-black. This is what renders when
+    // HeroImageResolver nulls background_image after finding the
+    // source CDN URL 403s — see ScrubKind::HeroImageUnreachable.
+    // Asset rot on the source platform is a finding, not a hidden
+    // gap: the solid-color Hero shows through the club's actual
+    // brand color instead of a broken image icon.
     const style: CSSProperties = resolvedBg
         ? {
               backgroundImage: `url("${resolvedBg}")`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
           }
-        : { background: '#1a1a1a' };
+        : { background: 'var(--pv-brand-primary, #1a1a1a)' };
 
     return (
         <section className="preview-block preview-hero" style={style}>

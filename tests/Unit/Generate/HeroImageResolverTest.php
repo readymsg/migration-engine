@@ -12,6 +12,7 @@ use App\Data\NavItem;
 use App\Data\PuckOutput;
 use App\Data\ScrubKind;
 use App\Services\Generate\HeroImageResolver;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
 use Tests\TestCase;
@@ -31,6 +32,20 @@ use Tests\TestCase;
 //      the decision is never invisible, even in the "kept" case.
 final class HeroImageResolverTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Existing tests didn't need HTTP mocking because the resolver
+        // was network-free. The unreachable-probe slice added a HEAD
+        // hit; guard against stray requests hitting the network in
+        // tests so the suite stays hermetic. probeHead swallows
+        // exceptions and returns null, so the resolver leaves the
+        // pick alone in existing tests — same behavior as before
+        // this slice. Tests that need a specific HTTP outcome call
+        // Http::fake() themselves.
+        Http::preventStrayRequests();
+    }
+
     private function resolver(): HeroImageResolver
     {
         return new HeroImageResolver;
@@ -217,6 +232,101 @@ final class HeroImageResolverTest extends TestCase
         $updated = $out->pages->items()[0];
         $this->assertSame($first, $updated->content[0]['props']['background_image']);
         $this->assertStringContainsString('first source-markdown image', $out->scrub_issues_by_slug['home'][0]->reason);
+    }
+
+    #[Test]
+    public function head_probe_403_emits_hero_image_unreachable_and_nulls_background(): void
+    {
+        // The tbirdhoops-Home case: SE's CDN 403s the picked variant.
+        // Resolver must (a) record a HeroImageUnreachable ScrubIssue
+        // AND (b) null out background_image so Hero.tsx falls back
+        // to solid-color treatment (brand primary via preview.css).
+        Http::fake([
+            '*LTYB_site-banner*' => Http::response('', 403),
+            '*' => Http::response('', 200),
+        ]);
+        $url = 'https://cdn4.sportngin.com/attachments/photo/64f2/LTYB_site-banner_38_large.jpg';
+        $page = new PuckOutput(
+            page_slug: 'home',
+            content: [
+                ['type' => 'Hero', 'props' => ['heading' => 'W', 'background_image' => $url]],
+            ],
+            root: ['title' => 'Home'],
+        );
+        $out = $this->resolver()->run($this->assemblyWith($page), ['home' => "![]($url)"]);
+        $updated = $out->pages->items()[0];
+        $this->assertNull(
+            $updated->content[0]['props']['background_image'],
+            'background_image must be nulled so Hero.tsx falls back to solid-color',
+        );
+
+        $issues = $out->scrub_issues_by_slug['home'];
+        // Two entries: HeroImageChosen (pick) + HeroImageUnreachable
+        // (the finding).
+        $this->assertCount(2, $issues);
+        $kinds = array_map(fn ($i) => $i->kind, $issues);
+        $this->assertContains(ScrubKind::HeroImageUnreachable, $kinds);
+        $unreachable = null;
+        foreach ($issues as $i) {
+            if ($i->kind === ScrubKind::HeroImageUnreachable) {
+                $unreachable = $i;
+            }
+        }
+        $this->assertNotNull($unreachable);
+        $this->assertStringContainsString('no longer available from the source CDN', $unreachable->reason);
+        $this->assertStringContainsString('HTTP 403', $unreachable->reason);
+        $this->assertStringContainsString($url, $unreachable->dropped_content_summary);
+    }
+
+    #[Test]
+    public function head_probe_200_does_not_emit_unreachable_and_keeps_background(): void
+    {
+        // The happy case — the picked URL resolves cleanly. Should
+        // record ONLY the HeroImageChosen decision, not any
+        // Unreachable finding, and background_image stays populated.
+        Http::fake([
+            '*' => Http::response('', 200),
+        ]);
+        $url = 'https://cdn2.sportngin.com/attachments/banner_graphic/aa/siteHeader.png';
+        $page = new PuckOutput(
+            page_slug: 'home',
+            content: [
+                ['type' => 'Hero', 'props' => ['heading' => 'W', 'background_image' => $url]],
+            ],
+            root: ['title' => 'Home'],
+        );
+        $out = $this->resolver()->run($this->assemblyWith($page), ['home' => "![]($url)"]);
+        $updated = $out->pages->items()[0];
+        $this->assertSame($url, $updated->content[0]['props']['background_image']);
+
+        $issues = $out->scrub_issues_by_slug['home'];
+        $this->assertCount(1, $issues);
+        $this->assertSame(ScrubKind::HeroImageChosen, $issues[0]->kind);
+    }
+
+    #[Test]
+    public function head_probe_network_error_leaves_pick_alone(): void
+    {
+        // Transient network error MUST NOT mark a working asset
+        // unreachable. probeHead swallows exceptions → returns null
+        // → resolver keeps background_image as-is.
+        Http::fake(function () {
+            throw new \RuntimeException('simulated network blip');
+        });
+        $url = 'https://cdn2.sportngin.com/attachments/banner_graphic/aa/siteHeader.png';
+        $page = new PuckOutput(
+            page_slug: 'home',
+            content: [
+                ['type' => 'Hero', 'props' => ['heading' => 'W', 'background_image' => $url]],
+            ],
+            root: ['title' => 'Home'],
+        );
+        $out = $this->resolver()->run($this->assemblyWith($page), ['home' => "![]($url)"]);
+        $this->assertSame($url, $out->pages->items()[0]->content[0]['props']['background_image']);
+        // Only the HeroImageChosen entry — no Unreachable false-positive.
+        $issues = $out->scrub_issues_by_slug['home'];
+        $kinds = array_map(fn ($i) => $i->kind, $issues);
+        $this->assertNotContains(ScrubKind::HeroImageUnreachable, $kinds);
     }
 
     #[Test]

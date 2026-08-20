@@ -8,7 +8,9 @@ use App\Data\AssemblyResult;
 use App\Data\PuckOutput;
 use App\Data\ScrubIssue;
 use App\Data\ScrubKind;
+use Illuminate\Support\Facades\Http;
 use Spatie\LaravelData\DataCollection;
+use Throwable;
 
 // Deterministic post-assembly hero image resolver. Runs AFTER
 // GalleryFiller and BEFORE AssetUrlRewriter — the resolver needs the
@@ -136,6 +138,27 @@ final class HeroImageResolver
                     $currentUrl ?? '(none)',
                 ),
             );
+
+            // Probe the picked URL. If SE's CDN has deprovisioned the
+            // asset (403 / 404 / gone), null out background_image so
+            // Hero.tsx falls back to the solid-color treatment, and
+            // record a visible HeroImageUnreachable finding. Skips
+            // s3://-shaped and rehosted URLs (only probes live http(s)
+            // sources) and swallows probe errors (network blip
+            // shouldn't mark a working asset unreachable).
+            if ($this->looksLikeLiveHttp($picked)) {
+                $status = $this->probeHead($picked);
+                if ($status !== null && ($status < 200 || $status >= 300)) {
+                    $content[$blockIndex]['props']['background_image'] = null;
+                    $issues[] = new ScrubIssue(
+                        block_index: (int) $blockIndex,
+                        component_type: 'Hero',
+                        kind: ScrubKind::HeroImageUnreachable,
+                        reason: "hero background_image is no longer available from the source CDN (HTTP {$status}) — asset rot on the source platform; Hero falls back to solid-color treatment",
+                        dropped_content_summary: sprintf('url=%s http=%d', $picked, $status),
+                    );
+                }
+            }
         }
 
         return [
@@ -275,5 +298,31 @@ final class HeroImageResolver
     private function stringOrNull(mixed $v): ?string
     {
         return is_string($v) && $v !== '' ? $v : null;
+    }
+
+    // Probes only live http(s) URLs (skips s3://, /preview-assets/,
+    // and empty). This is deliberate — Manifest.asset_refs-derived
+    // s3_keys are already-rehosted and resolve locally at serve time;
+    // probing them would require going through the resolver route
+    // which is preview-only. The probe exists specifically to catch
+    // "source URL still points at a CDN asset that has 403'd".
+    private function looksLikeLiveHttp(string $url): bool
+    {
+        return preg_match('#^https?://#i', $url) === 1;
+    }
+
+    // HEAD probe with a short timeout. Swallows any exception so a
+    // transient network blip doesn't mark a live asset unreachable;
+    // returns null on error to signal "unable to determine — leave
+    // the pick alone". Non-null return is the HTTP status.
+    private function probeHead(string $url): ?int
+    {
+        try {
+            $response = Http::timeout(5)->head($url);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $response->status();
     }
 }

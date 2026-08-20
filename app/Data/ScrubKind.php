@@ -54,4 +54,13 @@ enum ScrubKind: string
     // block-fill's pick, no signal to override" cases — so the
     // choice is never invisible.
     case HeroImageChosen = 'hero_image_chosen';
+
+    // Hero background_image was picked but a HEAD probe against the
+    // source URL returned non-2xx (typically 403 or 404 from the
+    // SportsEngine CDN — the asset has been deprovisioned upstream).
+    // Recorded as a visible finding, not a gap to hide: asset rot on
+    // the source platform is an argument for migrating. Hero.tsx
+    // falls back to a solid-color tint (brand-primary if measured,
+    // else neutral) rather than a broken image.
+    case HeroImageUnreachable = 'hero_image_unreachable';
 }
