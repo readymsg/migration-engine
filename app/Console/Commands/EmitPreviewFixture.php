@@ -10,6 +10,7 @@ use App\Data\BlockFillResult;
 use App\Data\ConversionResult;
 use App\Data\Manifest;
 use App\Services\Coverage\PageMarkdownLoader;
+use App\Services\Extract\LogoPaletteExtractor;
 use App\Services\Generate\Assembler;
 use App\Services\Generate\AssetUrlRewriter;
 use App\Services\Generate\BlockCoercer;
@@ -71,7 +72,11 @@ final class EmitPreviewFixture extends Command
         $this->line('cost   : 0 (deterministic; no LLM, no network)');
         $this->newLine();
 
-        $manifest = RealManifests::tbirdhoops();
+        // Pass the LogoPaletteExtractor so BrandExtractor fetches the
+        // logo bytes and measures the actual palette. Costs one HTTP
+        // hit to the SE CDN per fixture regen. Offline tests keep the
+        // default null and skip the fetch.
+        $manifest = RealManifests::tbirdhoops(new LogoPaletteExtractor);
         $this->line(sprintf(
             '[1/5] Manifest: content_refs=%d  asset_refs=%d',
             $manifest->content_refs->count(),

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Extract;
 
 use App\Data\Brand;
+use Illuminate\Support\Facades\Http;
+use Throwable;
 
 // Brand fallback ladder per BUILD.md: header → og:image → favicon → flag.
 // Real SportsEngine signals (recon'd across 6 live sites):
@@ -14,8 +16,21 @@ use App\Data\Brand;
 //   favicon  := `attachments/favicon_graphic/...` or `<link rel="shortcut icon">`
 // The chosen logo is persisted to S3 via the uploader so Brand only ever
 // carries the s3 ref — never bytes, never a third-party URL.
+//
+// PALETTE MEASUREMENT: when the ladder finds a logo AND a LogoPaletteExtractor
+// is available (constructor arg), we do a second HTTP fetch of the same URL
+// to feed the extractor. This resolves the historical "TODO: extract from
+// theme.css / inline <style>" comment via the image path instead — a
+// deterministic quantised histogram of the actual logo pixels, which returns
+// the real club identity (e.g. tbirdhoops = red + black + white). Failure to
+// fetch or extract leaves `Brand.palette` empty (current behaviour) and the
+// preview falls through to the LLM-inferred palette.
 final class BrandExtractor
 {
+    public function __construct(
+        private readonly ?LogoPaletteExtractor $paletteExtractor = null,
+    ) {}
+
     public function extract(string $homepageHtml, string $orgId, AssetUploader $uploader): Brand
     {
         $candidates = [
@@ -39,7 +54,11 @@ final class BrandExtractor
                     // (e.g. offline fixture path where the sha1-
                     // named file doesn't exist on disk).
                     logo_source_url: $url,
-                    palette: [],     // TODO: extract from theme.css / inline <style> if we ever need it
+                    // Measured palette from the logo's actual pixels
+                    // (deterministic quantised histogram). Empty on
+                    // fetch/decode failure — caller falls through to
+                    // the LLM-inferred GlobalStyleBrief.palette.
+                    palette: $this->measurePalette($url),
                     voice_hint: null, // TODO: nothing on the homepage is a reliable voice signal
                 );
             }
@@ -51,6 +70,30 @@ final class BrandExtractor
             palette: [],
             voice_hint: null,
         );
+    }
+
+    /**
+     * @return array<string, string>  0..5 palette tokens (primary/secondary/accent/background/text). Empty on any failure.
+     */
+    private function measurePalette(string $logoUrl): array
+    {
+        if ($this->paletteExtractor === null) {
+            return [];
+        }
+        try {
+            $response = Http::timeout(10)->get($logoUrl);
+        } catch (Throwable) {
+            return [];
+        }
+        if (! $response->successful()) {
+            return [];
+        }
+        $bytes = (string) $response->body();
+        if ($bytes === '') {
+            return [];
+        }
+
+        return $this->paletteExtractor->extract($bytes) ?? [];
     }
 
     private function firstAttachment(string $html, string $kind): ?string

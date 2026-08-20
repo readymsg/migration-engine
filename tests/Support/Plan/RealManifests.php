@@ -190,7 +190,10 @@ final class RealManifests
         return $extractor->extract('https://www.tenacityvolleyball.com/');
     }
 
-    public static function tbirdhoops(): Manifest
+    /**
+     * @param  \App\Services\Extract\LogoPaletteExtractor|null  $paletteExtractor  when non-null, BrandExtractor fetches the logo URL over HTTP and measures the palette from its bytes. Pass null (default) in tests to keep them hermetic; pass a real extractor from EmitPreviewFixture so the offline demo carries measured colors.
+     */
+    public static function tbirdhoops(?\App\Services\Extract\LogoPaletteExtractor $paletteExtractor = null): Manifest
     {
         $html = new FixtureHtmlFetcher;
         $html->preloadFromFile(
@@ -210,7 +213,7 @@ final class RealManifests
             $nav,
             new FakeFirecrawlClient,
             $uploader,
-            new BrandExtractor,
+            new BrandExtractor($paletteExtractor),
             new SeCdnRehoster($uploader),
         );
 
