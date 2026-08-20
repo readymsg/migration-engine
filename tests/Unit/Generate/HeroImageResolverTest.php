@@ -104,6 +104,43 @@ final class HeroImageResolverTest extends TestCase
     }
 
     #[Test]
+    public function banner_graphic_path_wins_over_photo_path_with_site_banner_filename(): void
+    {
+        // Two-tier ranking: SE canonical banner asset path (tier 1)
+        // outranks inferred-shape needles (tier 2) even when the
+        // shape-matching candidate appears FIRST in the source. This
+        // is the rule change — previously first-match-wins made the
+        // tier-2 photo/ URL win because it appeared earlier.
+        $shapeMatchPhoto = 'https://cdn4.sportngin.com/attachments/photo/64f2/LTYB_site-banner_38_large.jpg';
+        $canonicalBanner = 'https://cdn2.sportngin.com/attachments/banner_graphic/4333/siteHeader.png';
+        // Block-fill picked the shape-matching photo (currently the
+        // tbirdhoops-Home reality).
+        $page = new PuckOutput(
+            page_slug: 'home',
+            content: [
+                ['type' => 'Hero', 'props' => ['heading' => 'W', 'background_image' => $shapeMatchPhoto]],
+            ],
+            root: ['title' => 'Home'],
+        );
+        // Source has BOTH images. Photo appears FIRST — before the
+        // reorder that would have won by first-match. Banner_graphic
+        // appears second.
+        $md = "![]($shapeMatchPhoto)\n\nBody...\n\n![]($canonicalBanner)\n";
+        $out = $this->resolver()->run($this->assemblyWith($page), ['home' => $md]);
+        $updated = $out->pages->items()[0];
+        $this->assertSame(
+            $canonicalBanner,
+            $updated->content[0]['props']['background_image'],
+            'banner_graphic/ tier-1 URL must win over a photo/ URL whose filename shape-matches (tier 2), even when photo/ appears first in candidates',
+        );
+
+        $issues = $out->scrub_issues_by_slug['home'];
+        $this->assertCount(1, $issues);
+        $this->assertStringContainsString('SE canonical banner asset path', $issues[0]->reason);
+        $this->assertStringContainsString('banner_graphic/', $issues[0]->reason);
+    }
+
+    #[Test]
     public function keeps_block_fill_pick_when_no_banner_signal_exists(): void
     {
         $firstImage = 'https://cdn1.sportngin.com/attachments/photo/aa/img_0001.jpg';
@@ -122,7 +159,7 @@ final class HeroImageResolverTest extends TestCase
 
         $issues = $out->scrub_issues_by_slug['home'];
         $this->assertCount(1, $issues);
-        $this->assertStringContainsString('no banner-shape signal', $issues[0]->reason);
+        $this->assertStringContainsString('no banner-path or banner-shape signal', $issues[0]->reason);
     }
 
     #[Test]

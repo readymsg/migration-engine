@@ -31,15 +31,29 @@ use Spatie\LaravelData\DataCollection;
 // so the decision — including "kept block-fill's pick" — is visible.
 final class HeroImageResolver
 {
-    /** @var array<int, string> case-insensitive substrings that mark a banner-shape URL */
+    // Ranking needles. TWO tiers now, checked in order. Tier 1 is the
+    // path where SportsEngine ACTUALLY stores site banner assets
+    // (banner_graphic / banner-graphic). Tier 2 is inferred-shape
+    // needles that catch filenames like LTYB_site-banner_large.jpg
+    // living under a generic /photo/ path — often a body-image the
+    // block-fill agent picked, sometimes the club's real banner, but
+    // NEVER the canonical SE banner asset. A tier-1 hit ALWAYS
+    // outranks a tier-2 hit even if tier-2 appears first in the
+    // candidate list, because SE's own path convention is more
+    // reliable than URL text matching.
+    /** @var array<int, string> tier-1: SE's canonical banner asset paths — always prefer */
+    private const BANNER_PATH_NEEDLES = [
+        'banner_graphic',
+        'banner-graphic',
+    ];
+
+    /** @var array<int, string> tier-2: inferred banner-shape signals in filename/path */
     private const BANNER_SHAPE_NEEDLES = [
         'site-banner',
         'site_banner',
         'siteheader',
         'site-header',
         'site_header',
-        'banner_graphic',
-        'banner-graphic',
         'homepage-banner',
         'hero-banner',
         '/banner/',
@@ -178,13 +192,17 @@ final class HeroImageResolver
 
     /**
      * Rank the candidates. In preference order:
-     *   1. First candidate whose path/filename matches a banner-shape
-     *      needle (deterministic, cheap, works offline).
-     *   2. (Future) widest-aspect image via AssetRef dimensions —
-     *      requires the Manifest hookup; not implemented in this
-     *      offline-safe pass. Documented in the reason string when
-     *      the resolver falls to tier 3 with dimension data absent.
-     *   3. Keep the current pick (block-fill's first-image choice)
+     *   1. First candidate on a SE canonical banner asset path
+     *      (`banner_graphic/` or `banner-graphic/`) — where
+     *      SportsEngine actually stores site banners.
+     *   2. Otherwise, first candidate whose path/filename matches an
+     *      inferred banner-shape needle (site-banner, siteheader,
+     *      hero-banner, /banner/, etc.). Weaker signal — often a
+     *      body-image the block-fill agent picked whose filename
+     *      happened to look banner-ish.
+     *   3. (Future) widest-aspect image via AssetRef dimensions —
+     *      not implemented in this offline-safe pass.
+     *   4. Keep the current pick (block-fill's first-image choice)
      *      OR the first source-markdown image if block-fill emitted
      *      nothing.
      *
@@ -193,33 +211,56 @@ final class HeroImageResolver
      */
     private function pickBest(array $candidates, ?string $currentUrl): array
     {
-        // Tier 1: banner-shape URL.
+        // Tier 1: SE canonical banner asset path.
         foreach ($candidates as $c) {
-            if ($this->looksLikeBanner($c)) {
+            if ($this->matchesBannerPath($c)) {
                 if ($c === $currentUrl) {
-                    return [$c, 'kept block-fill pick — URL matches banner-shape rule'];
+                    return [$c, 'kept block-fill pick — URL on SE canonical banner asset path (banner_graphic/)'];
                 }
 
-                return [$c, 'replaced block-fill first-image pick with banner-shape candidate'];
+                return [$c, 'replaced block-fill pick with candidate on SE canonical banner asset path (banner_graphic/)'];
             }
         }
 
-        // Tier 2: widest-aspect. Requires image dimensions; not
+        // Tier 2: inferred banner-shape needle (weaker signal).
+        foreach ($candidates as $c) {
+            if ($this->matchesBannerShape($c)) {
+                if ($c === $currentUrl) {
+                    return [$c, 'kept block-fill pick — URL matches inferred banner-shape rule'];
+                }
+
+                return [$c, 'replaced block-fill first-image pick with inferred-banner-shape candidate'];
+            }
+        }
+
+        // Tier 3: widest-aspect. Requires image dimensions; not
         // available on offline paths and this pass is Manifest-free
         // by design. Documented as a known drop-through.
 
-        // Tier 3: keep whatever we currently have (block-fill's first-
+        // Tier 4: keep whatever we currently have (block-fill's first-
         // image pick), or the first source-markdown image if block-
         // fill emitted none.
         $fallback = $currentUrl !== null && $currentUrl !== '' ? $currentUrl : $candidates[0];
         $reason = $currentUrl !== null && $currentUrl !== ''
-            ? 'kept block-fill first-image pick — no banner-shape signal in source'
+            ? 'kept block-fill first-image pick — no banner-path or banner-shape signal in source'
             : 'picked first source-markdown image — block-fill emitted no background_image';
 
         return [$fallback, $reason];
     }
 
-    private function looksLikeBanner(string $url): bool
+    private function matchesBannerPath(string $url): bool
+    {
+        $lower = mb_strtolower($url);
+        foreach (self::BANNER_PATH_NEEDLES as $needle) {
+            if (str_contains($lower, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function matchesBannerShape(string $url): bool
     {
         $lower = mb_strtolower($url);
         foreach (self::BANNER_SHAPE_NEEDLES as $needle) {
