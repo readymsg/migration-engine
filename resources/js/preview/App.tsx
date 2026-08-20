@@ -108,6 +108,7 @@ export default function App({ slug }: Props) {
                 brand={data.brand}
                 styleBrief={data.style_brief}
                 orgId={data.org_id}
+                activePalette={paletteWithProvenance(data)}
             />
             <Nav nav={sortedNav(data.nav)} activeSlug={activeSlug} onSelect={handleSelect} />
             <SiteHeader
@@ -131,13 +132,34 @@ export default function App({ slug }: Props) {
     );
 }
 
-// Thin browser adapter — reads style_brief.palette off the loaded
-// ConversionResult and applies it to :root via the shared
-// brand-palette module (which is standalone-testable via Node).
+// Precedence: measured Brand.palette (from LogoPaletteExtractor)
+// wins over the LLM-guessed GlobalStyleBrief.palette when non-empty.
+// The measured palette is deterministic and grounded in actual logo
+// pixels; the LLM palette is a fresh-per-run Opus guess.
+//
+// Returns the palette to apply and its provenance so BrandChrome can
+// label it honestly ("measured from logo" vs "LLM-inferred" vs
+// "neutral defaults"). Called both here (side-effect: apply CSS
+// vars) and read from BrandChrome (side-effect: none).
+export function paletteWithProvenance(data: ConversionResultJson): {
+    palette: Record<string, string> | null;
+    source: 'measured' | 'llm' | 'none';
+} {
+    const brandPalette = data.brand.palette;
+    if (brandPalette && !Array.isArray(brandPalette) && Object.keys(brandPalette).length > 0) {
+        return { palette: brandPalette, source: 'measured' };
+    }
+    const brief = data.style_brief.palette;
+    if (brief && !Array.isArray(brief) && Object.keys(brief).length > 0) {
+        return { palette: brief as Record<string, string>, source: 'llm' };
+    }
+    return { palette: null, source: 'none' };
+}
+
 function applyBrandPalette(data: ConversionResultJson): void {
-    const palette = data.style_brief.palette;
-    if (!palette || Array.isArray(palette)) return;
-    applyBrandPaletteTo(document.documentElement.style, palette as Record<string, string>);
+    const { palette } = paletteWithProvenance(data);
+    if (palette === null) return;
+    applyBrandPaletteTo(document.documentElement.style, palette);
 }
 
 function initialSlug(data: ConversionResultJson): string | null {

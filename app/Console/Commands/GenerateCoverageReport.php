@@ -93,6 +93,10 @@ final class GenerateCoverageReport extends Command
                 'org_id' => $result->org_id,
                 'source_url' => $result->source_url,
                 'status' => $result->status->value,
+                // Palette provenance sidecars. Measured palette wins
+                // precedence when non-empty; LLM shown for comparison.
+                'brand_palette' => $result->brand->palette,
+                'style_brief_palette' => $result->style_brief->palette,
             ],
         );
 

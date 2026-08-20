@@ -17,6 +17,13 @@ interface Props {
     brand: BrandData;
     styleBrief: StyleBrief;
     orgId: string;
+    // Same precedence rule as App.applyBrandPalette — measured wins
+    // over LLM. Passed in from App.tsx (single source of truth) so
+    // BrandChrome's swatches match what paints pixels.
+    activePalette: {
+        palette: Record<string, string> | null;
+        source: 'measured' | 'llm' | 'none';
+    };
 }
 
 function paletteAsObject(p: Record<string, string> | never[]): Record<string, string> {
@@ -37,11 +44,24 @@ function resolveLogoUrl(ref: string | null): string | undefined {
     return resolvePreviewAsset(ref);
 }
 
-export default function BrandChrome({ brand, styleBrief, orgId }: Props) {
-    const palette = paletteAsObject(styleBrief.palette);
-    const paletteEntries = Object.entries(palette);
-    const brandPalette = paletteAsObject(brand.palette);
-    const brandPaletteEntries = Object.entries(brandPalette);
+export default function BrandChrome({ brand, styleBrief, orgId, activePalette }: Props) {
+    const measuredPalette = paletteAsObject(brand.palette);
+    const llmPalette = paletteAsObject(styleBrief.palette);
+    const active = activePalette.palette ?? {};
+    const activeEntries = Object.entries(active);
+
+    // Provenance strings shown in the swatch header + a
+    // human-readable claim below.
+    const provenanceLabel = activePalette.source === 'measured'
+        ? 'measured from logo pixels'
+        : activePalette.source === 'llm'
+        ? 'LLM-inferred (no measured logo palette)'
+        : 'not applied — neutral defaults';
+    const claim = activePalette.source === 'measured'
+        ? "These are the club's actual colors, measured from their logo."
+        : activePalette.source === 'llm'
+        ? "These are LLM-guessed colors — the logo did not yield a measurable palette."
+        : "No palette applied — the preview is using neutral defaults.";
 
     return (
         <div className="preview-brand-chrome">
@@ -98,11 +118,11 @@ export default function BrandChrome({ brand, styleBrief, orgId }: Props) {
 
                 <div className="preview-brand-chrome__cell preview-brand-chrome__cell--palette">
                     <div className="preview-brand-chrome__cell-title">
-                        Palette {paletteEntries.length > 0 ? '(LLM-inferred)' : ''}
+                        Palette <span className="preview-brand-chrome__palette-provenance">({provenanceLabel})</span>
                     </div>
-                    {paletteEntries.length > 0 ? (
+                    {activeEntries.length > 0 ? (
                         <div className="preview-brand-chrome__swatches">
-                            {paletteEntries.map(([name, hex]) => (
+                            {activeEntries.map(([name, hex]) => (
                                 <div key={name} className="preview-brand-chrome__swatch">
                                     <div
                                         className="preview-brand-chrome__swatch-chip"
@@ -116,18 +136,28 @@ export default function BrandChrome({ brand, styleBrief, orgId }: Props) {
                         </div>
                     ) : (
                         <div className="preview-brand-chrome__empty">
-                            (style_brief.palette empty — IR pass produced no palette)
+                            (no palette — logo unavailable and IR pass produced no brief palette)
                         </div>
                     )}
-                    {brandPaletteEntries.length > 0 ? (
+                    <div className="preview-brand-chrome__palette-claim">
+                        <strong>{claim}</strong>
+                    </div>
+                    {/* Show the LOSER palette too so a reviewer can compare
+                        measured vs LLM side-by-side and confirm the extraction
+                        is doing something useful (measured red vs LLM blue on
+                        tbirdhoops). */}
+                    {activePalette.source === 'measured' && Object.keys(llmPalette).length > 0 ? (
                         <div className="preview-brand-chrome__cell-foot">
-                            extractor also reported: {brandPaletteEntries.map(([k, v]) => `${k}=${v}`).join(', ')}
+                            LLM guessed: {Object.entries(llmPalette).map(([k, v]) => `${k}=${v}`).join(', ')} — measured
+                            palette wins on precedence.
                         </div>
-                    ) : (
+                    ) : null}
+                    {activePalette.source === 'llm' && Object.keys(measuredPalette).length === 0 ? (
                         <div className="preview-brand-chrome__cell-foot">
-                            (BrandExtractor doesn't populate palette today — palette here is the IR-pass-inferred one)
+                            No measured palette (BrandExtractor produced an empty Brand.palette — logo unreachable or not
+                            provided). Falling back to the LLM-inferred palette from the IR brief.
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 <div className="preview-brand-chrome__cell preview-brand-chrome__cell--layouts">

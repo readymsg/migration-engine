@@ -47,7 +47,7 @@ final class CoverageReport
      * @param  array<string, string>  $pageMarkdown  page_slug → source markdown (empty string OK)
      * @param  array<string, array<int, ScrubIssue|array<string, mixed>>>  $scrubIssuesBySlug
      * @param  array<int, array{page_title: string, url?: string, disposition: string, reason: string}>  $extraPages
-     * @param  array{org_id?: string, source_url?: string, conversion_id?: string, status?: string}  $meta  source_url is used by ExclusionRules to detect same-site chrome duplicates
+     * @param  array{org_id?: string, source_url?: string, conversion_id?: string, status?: string, brand_palette?: array<string, string>, style_brief_palette?: array<string, string>}  $meta  source_url is used by ExclusionRules; brand_palette + style_brief_palette drive the palette-provenance line
      */
     public function render(
         array $pageMap,
@@ -144,6 +144,46 @@ final class CoverageReport
         }
         $out[] = '**Generated:** '.date('Y-m-d H:i:s T');
         $out[] = '';
+
+        // --- palette provenance ---------------------------------------
+        // Which palette is painting pixels in the preview: measured
+        // from logo (deterministic, grounded in actual bytes) or
+        // LLM-inferred (Opus guess, non-deterministic across runs).
+        // Same precedence rule as App.paletteWithProvenance in the
+        // preview bundle. Reported so a reviewer can point at the
+        // report and say "these are the club's actual colors".
+        $measured = is_array($meta['brand_palette'] ?? null) ? $meta['brand_palette'] : [];
+        $llm = is_array($meta['style_brief_palette'] ?? null) ? $meta['style_brief_palette'] : [];
+        if ($measured !== [] || $llm !== []) {
+            $out[] = '## Palette provenance';
+            $out[] = '';
+            if ($measured !== []) {
+                $out[] = '**Source: measured from logo pixels** (deterministic — LogoPaletteExtractor).';
+                $out[] = '';
+                $out[] = 'Active palette:';
+                foreach ($measured as $name => $hex) {
+                    $out[] = sprintf('- %s: `%s`', $name, $hex);
+                }
+                if ($llm !== []) {
+                    $out[] = '';
+                    $out[] = '_LLM also guessed:_ '.implode(', ', array_map(
+                        static fn ($k, $v) => "`{$k}={$v}`",
+                        array_keys($llm),
+                        array_values($llm),
+                    )).' — measured palette wins on precedence.';
+                }
+            } else {
+                $out[] = '**Source: LLM-inferred** (Opus guess — no measured logo palette available).';
+                $out[] = '';
+                $out[] = 'Active palette:';
+                foreach ($llm as $name => $hex) {
+                    $out[] = sprintf('- %s: `%s`', $name, $hex);
+                }
+                $out[] = '';
+                $out[] = '_BrandExtractor produced an empty Brand.palette — logo unreachable or not provided; falling back to the LLM-inferred palette from the IR brief._';
+            }
+            $out[] = '';
+        }
 
         // --- site summary — element-level coverage ---------------------
         $out[] = '## Site summary — content coverage (element-level)';
