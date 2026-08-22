@@ -503,19 +503,95 @@ final class PuckToContractMapper
             return $this->emitSponsors($flatContent, $srcUrl);
         }
 
-        // Default: Grid deferred → flatten. Record the loss so a
-        // reviewer sees the layout drop.
-        $mapped = $this->mapContent($flatContent, $ctx, $ledger, $srcUrl);
-        $diag = new Diagnostic(
-            severity: 'info',
-            code: 'columns_flattened',
-            message: 'Columns layout flattened to single-column stack (Grid block deferred beyond M1 palette).',
-            sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
-        );
+        // Slice 15c: emit a Grid block. Contract's Grid accepts
+        // 2/3/4 columns; we clamp the source count and drop
+        // whichever columns can't fit (rare — 5+ column source
+        // layouts are uncommon and clamping is more transparent
+        // than dropping the whole layout).
+        return $this->emitGrid($columns, $ctx, $ledger, $srcUrl);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sourceColumns
+     */
+    private function emitGrid(
+        array $sourceColumns,
+        AssetContext $ctx,
+        AssetLedger $ledger,
+        ?string $srcUrl,
+    ): MappedContent {
+        $sourceCount = count($sourceColumns);
+        // Contract Grid.columns enum is ["2","3","4"] STRINGS. Clamp
+        // and record how the source count mapped.
+        $emitCount = max(2, min(4, $sourceCount));
+        $props = [
+            'id' => $this->id('grid', $srcUrl ?? '', (string) $sourceCount),
+            'columns' => (string) $emitCount,
+        ];
+        $diagnostics = [];
+
+        // Redistribute source columns into the 2/3/4 slot count. If
+        // sourceCount fits (2, 3, or 4), 1-to-1. If sourceCount is 1
+        // (single-column Columns wrapping content), put all content
+        // in column1 + leave others empty. If sourceCount > 4, pack
+        // the extras into column4 with a diagnostic.
+        $slots = ['column1' => [], 'column2' => [], 'column3' => [], 'column4' => []];
+        foreach ($sourceColumns as $i => $col) {
+            if (! is_array($col)) {
+                continue;
+            }
+            $children = is_array($col['children'] ?? null) ? $col['children'] : [];
+            if ($children === []) {
+                continue;
+            }
+            $mapped = $this->mapContent($children, $ctx, $ledger, $srcUrl);
+            foreach ($mapped->diagnostics as $d) {
+                $diagnostics[] = $d;
+            }
+            $slotIndex = min($i, $emitCount - 1);
+            $slotName = 'column'.($slotIndex + 1);
+            foreach ($mapped->blocks as $b) {
+                $slots[$slotName][] = $b;
+            }
+        }
+        if ($sourceCount > 4) {
+            $diagnostics[] = new Diagnostic(
+                severity: 'info',
+                code: 'grid_columns_clamped',
+                message: sprintf(
+                    'Source had %d columns; Grid.columns caps at 4. Extras merged into column4.',
+                    $sourceCount,
+                ),
+                sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
+            );
+        }
+        // Only include slots that have content. Empty slots default
+        // to [] via the block's defaults, so omitting is sparse-props
+        // correct.
+        // Slot children stored as ARRAY form (block->toArray()) not
+        // Block objects, so downstream walkers (asset-token
+        // extractor, id-uniqueness recurse) can traverse them via
+        // array_walk_recursive without instanceof-Block gymnastics.
+        for ($k = 1; $k <= $emitCount; $k++) {
+            $slotName = 'column'.$k;
+            if ($slots[$slotName] !== []) {
+                $props[$slotName] = array_map(
+                    static fn (Block $b) => $b->toArray(),
+                    $slots[$slotName],
+                );
+            }
+        }
 
         return new MappedContent(
-            blocks: $mapped->blocks,
-            diagnostics: array_merge([$diag], $mapped->diagnostics),
+            blocks: [new Block(type: 'Grid', props: $props)],
+            diagnostics: array_merge([
+                new Diagnostic(
+                    severity: 'info',
+                    code: 'columns_mapped_to_grid',
+                    message: sprintf('Columns block mapped to Grid (%d source cols → %d Grid columns).', $sourceCount, $emitCount),
+                    sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
+                ),
+            ], $diagnostics),
         );
     }
 

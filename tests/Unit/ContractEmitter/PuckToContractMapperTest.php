@@ -562,11 +562,14 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertNotContains('TeamMembers', $types);
     }
 
-    // ─── Columns → flatten + diagnostic ─────────────────────────────────
+    // ─── Columns → Grid (Slice 15c replaces the flatten path) ───────────
 
     #[Test]
-    public function old_columns_flatten_to_top_level_stack_plus_diagnostic(): void
+    public function old_columns_maps_to_grid_with_slot_children_preserved(): void
     {
+        // Slice 15c replaced the columns_flattened path with Grid
+        // emission. Layout is now RESTORED — no more single-column
+        // stacks for non-people, non-sponsor Columns.
         $out = $this->mapper->mapContent(
             [['type' => 'Columns', 'props' => [
                 'columns' => [
@@ -582,12 +585,44 @@ final class PuckToContractMapperTest extends TestCase
             new AssetLedger,
         );
 
-        $this->assertCount(2, $out->blocks);
-        $this->assertSame('Text', $out->blocks[0]->type);
-        $this->assertSame('Text', $out->blocks[1]->type);
+        $this->assertCount(1, $out->blocks);
+        $grid = $out->blocks[0];
+        $this->assertSame('Grid', $grid->type);
+        // Source had 2 columns → Grid.columns="2".
+        $this->assertSame('2', $grid->props['columns']);
+        // Slot children preserved (Block objects, not flattened).
+        $this->assertArrayHasKey('column1', $grid->props);
+        $this->assertArrayHasKey('column2', $grid->props);
+        $this->assertCount(1, $grid->props['column1']);
+        $this->assertCount(1, $grid->props['column2']);
+        // Slot children stored as array form (not Block objects) so
+        // downstream walkers can traverse via array_walk_recursive.
+        $this->assertSame('Text', $grid->props['column1'][0]['type']);
         $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
-        $this->assertContains('columns_flattened', $codes);
+        $this->assertContains('columns_mapped_to_grid', $codes);
+        $this->assertNotContains('columns_flattened', $codes, 'columns_flattened is retired');
         $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function grid_clamps_source_columns_over_four_to_four_with_diagnostic(): void
+    {
+        // Contract Grid.columns caps at 4. Source with 6 columns
+        // should pack the extras into column4 with a diagnostic.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Columns', 'props' => [
+                'columns' => array_map(
+                    fn (int $i) => ['children' => [['type' => 'Text', 'props' => ['body' => "<p>Col {$i}</p>"]]]],
+                    range(1, 6),
+                ),
+            ]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('4', $out->blocks[0]->props['columns']);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('grid_columns_clamped', $codes);
     }
 
     // ─── unmappable types ───────────────────────────────────────────────

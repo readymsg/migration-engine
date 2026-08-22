@@ -323,6 +323,27 @@ html, body { margin: 0; padding: 0; }
     line-height: 1.4;
 }
 
+/* Grid — restored column layout (was previously flattened per
+   columns_flattened diagnostic). */
+.cp-grid {
+    max-width: 1120px;
+    margin: 24px auto;
+    padding: 0 24px;
+    display: grid;
+    gap: 24px;
+}
+.cp-grid__column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+.cp-grid__column > * {
+    max-width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
 /* Widget blocks — placed but empty at import time; data lives in
    TeamLinkt. Preview renders a labeled placeholder so a reviewer
    sees the widget shape without pretending it has real data. */

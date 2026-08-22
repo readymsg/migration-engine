@@ -135,6 +135,125 @@ final class ContractPayloadEmitter
     }
 
     /**
+     * Recurses into slot props (Grid.column1..4, Tabs.tab1..4,
+     * Section.content). A block inside a slot must also validate;
+     * this is where a Grid whose slot children include an
+     * unknown-type block would surface.
+     *
+     * @param  array<int, ValidationIssue>  $errors  by-reference
+     * @param  array<int, ValidationIssue>  $warnings  by-reference
+     */
+    private function validateBlockRecursively(
+        Block $block,
+        string $path,
+        array &$errors,
+        array &$warnings,
+    ): void {
+        foreach ($this->blockValidator->validateBlock($block, $path) as $issue) {
+            if ($issue->severity === 'error') {
+                $errors[] = $issue;
+            } else {
+                $warnings[] = $issue;
+            }
+        }
+        // Recurse into any prop whose value is a list of Block-
+        // shaped arrays (a slot). Contract's slot props: Grid.
+        // column1..4, Tabs.tab1..4, Section.content.
+        foreach ($block->props as $key => $value) {
+            if (! is_string($key) || ! is_array($value)) {
+                continue;
+            }
+            if (! $this->isBlockList($value)) {
+                continue;
+            }
+            foreach ($value as $i => $child) {
+                if (! is_array($child) || ! is_string($child['type'] ?? null)) {
+                    continue;
+                }
+                $childBlock = new Block(
+                    type: (string) $child['type'],
+                    props: is_array($child['props'] ?? null) ? $child['props'] : [],
+                );
+                $this->validateBlockRecursively(
+                    $childBlock,
+                    "{$path}.props.{$key}[{$i}]",
+                    $errors,
+                    $warnings,
+                );
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, true>  $seen  by-reference: accumulates seen ids
+     * @param  array<int, ValidationIssue>  $errors  by-reference
+     */
+    private function collectBlockIdsRecursively(
+        Block $block,
+        array &$seen,
+        array &$errors,
+        string $pageSlug,
+        string $path,
+    ): void {
+        $id = $block->props['id'] ?? null;
+        if (is_string($id) && $id !== '') {
+            if (isset($seen[$id])) {
+                $errors[] = new ValidationIssue(
+                    severity: 'error',
+                    code: 'duplicate_block_id',
+                    message: "Duplicate block id `{$id}` within page `{$pageSlug}`.",
+                    path: "{$path}.props.id",
+                );
+            }
+            $seen[$id] = true;
+        }
+        foreach ($block->props as $key => $value) {
+            if (! is_string($key) || ! is_array($value) || ! $this->isBlockList($value)) {
+                continue;
+            }
+            foreach ($value as $i => $child) {
+                if (! is_array($child) || ! is_string($child['type'] ?? null)) {
+                    continue;
+                }
+                $childBlock = new Block(
+                    type: (string) $child['type'],
+                    props: is_array($child['props'] ?? null) ? $child['props'] : [],
+                );
+                $this->collectBlockIdsRecursively(
+                    $childBlock,
+                    $seen,
+                    $errors,
+                    $pageSlug,
+                    "{$path}.props.{$key}[{$i}]",
+                );
+            }
+        }
+    }
+
+    /**
+     * @param  array<mixed>  $value
+     */
+    private function isBlockList(array $value): bool
+    {
+        if ($value === []) {
+            return false;
+        }
+        foreach ($value as $entry) {
+            if ($entry instanceof Block) {
+                return true;
+            }
+            if (! is_array($entry)) {
+                return false;
+            }
+            if (! is_string($entry['type'] ?? null)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * @return array{0: array<int, ValidationIssue>, 1: array<int, ValidationIssue>}
      */
     private function validateEnvelope(Envelope $envelope): array
@@ -143,48 +262,40 @@ final class ContractPayloadEmitter
         $warnings = [];
 
         // Contract Part VI self-check rules 1-6: per-block validation.
+        // Recurses into slot props (Grid.column<N>, Tabs.tab<N>,
+        // Section.content) so nested blocks are validated too.
         $pageIndex = 0;
         foreach ($envelope->pages as $page) {
             /** @var Page $page */
             $blockIndex = 0;
             foreach ($page->data->content as $block) {
-                foreach ($this->blockValidator->validateBlock(
+                $this->validateBlockRecursively(
                     $block,
                     "pages[{$pageIndex}].data.content[{$blockIndex}]",
-                ) as $issue) {
-                    if ($issue->severity === 'error') {
-                        $errors[] = $issue;
-                    } else {
-                        $warnings[] = $issue;
-                    }
-                }
-                // Per-page block-id uniqueness (Contract Part I rule 5).
+                    $errors,
+                    $warnings,
+                );
                 $blockIndex++;
             }
-            // ...checked below across all blocks on a page.
             $pageIndex++;
         }
 
-        // Rule 7: block id uniqueness within page.
+        // Rule 7: block id uniqueness within page. Walks slot
+        // children too (a nested block's id shares the per-page
+        // uniqueness space).
         $pageIndex = 0;
         foreach ($envelope->pages as $page) {
             /** @var Page $page */
             $seen = [];
             $bi = 0;
             foreach ($page->data->content as $block) {
-                /** @var Block $block */
-                $id = $block->props['id'] ?? null;
-                if (is_string($id) && $id !== '') {
-                    if (isset($seen[$id])) {
-                        $errors[] = new ValidationIssue(
-                            severity: 'error',
-                            code: 'duplicate_block_id',
-                            message: "Duplicate block id `{$id}` within page `{$page->slug}`.",
-                            path: "pages[{$pageIndex}].data.content[{$bi}].props.id",
-                        );
-                    }
-                    $seen[$id] = true;
-                }
+                $this->collectBlockIdsRecursively(
+                    $block,
+                    $seen,
+                    $errors,
+                    $page->slug,
+                    "pages[{$pageIndex}].data.content[{$bi}]",
+                );
                 $bi++;
             }
             $pageIndex++;
@@ -303,42 +414,46 @@ final class ContractPayloadEmitter
             $declaredRefs[$asset->ref] = false; // false = not yet referenced
         }
 
-        // Walk every string prop (recursive into arrays + objects)
-        // in every page's content array + the site settings, looking
-        // for tl-asset:<ref> tokens. Every one must have a declared
-        // ref; every declared ref should be referenced at least once.
-        $pi = 0;
-        foreach ($envelope->pages as $page) {
-            /** @var Page $page */
-            $bi = 0;
-            foreach ($page->data->content as $block) {
-                foreach ($this->extractTokens($block->props) as $tokenRef) {
-                    if (! isset($declaredRefs[$tokenRef])) {
-                        $issues[] = new ValidationIssue(
-                            severity: 'error',
-                            code: 'unreferenced_asset_token',
-                            message: "Block references `tl-asset:{$tokenRef}` but no assets[] entry declares it.",
-                            path: "pages[{$pi}].data.content[{$bi}].props",
-                        );
-                    } else {
-                        $declaredRefs[$tokenRef] = true;
-                    }
-                }
-                $bi++;
+        // Walk every string in every page's content + site settings
+        // looking for tl-asset:<ref> tokens. Use the serialised form
+        // (nested arrays only, no Block objects) so array_walk_recursive
+        // can reach tokens inside slot children (Grid.column<N>[]).
+        // Walking $block->props directly would miss those — Block
+        // instances inside slots are objects, and array_walk_recursive
+        // stops at objects.
+        $serialised = $envelope->toArray();
+        foreach (($serialised['pages'] ?? []) as $pi => $pageData) {
+            $content = $pageData['data']['content'] ?? [];
+            if (! is_array($content)) {
+                continue;
             }
-            $pi++;
+            foreach ($this->extractTokens($content) as $tokenRef) {
+                if (! isset($declaredRefs[$tokenRef])) {
+                    $issues[] = new ValidationIssue(
+                        severity: 'error',
+                        code: 'unreferenced_asset_token',
+                        message: "Block references `tl-asset:{$tokenRef}` but no assets[] entry declares it.",
+                        path: "pages[{$pi}].data.content",
+                    );
+                } else {
+                    $declaredRefs[$tokenRef] = true;
+                }
+            }
         }
         // Also scan site settings for tokens.
-        foreach ($this->extractTokens((array) $envelope->site->toArray()) as $tokenRef) {
-            if (! isset($declaredRefs[$tokenRef])) {
-                $issues[] = new ValidationIssue(
-                    severity: 'error',
-                    code: 'unreferenced_asset_token',
-                    message: "site references `tl-asset:{$tokenRef}` but no assets[] entry declares it.",
-                    path: 'site',
-                );
-            } else {
-                $declaredRefs[$tokenRef] = true;
+        $siteJson = $serialised['site'] ?? [];
+        if (is_array($siteJson)) {
+            foreach ($this->extractTokens($siteJson) as $tokenRef) {
+                if (! isset($declaredRefs[$tokenRef])) {
+                    $issues[] = new ValidationIssue(
+                        severity: 'error',
+                        code: 'unreferenced_asset_token',
+                        message: "site references `tl-asset:{$tokenRef}` but no assets[] entry declares it.",
+                        path: 'site',
+                    );
+                } else {
+                    $declaredRefs[$tokenRef] = true;
+                }
             }
         }
 
@@ -390,12 +505,8 @@ final class ContractPayloadEmitter
 
     /**
      * Post-mapper repair: rename any duplicate props.id within a
-     * page. Two identically-authored blocks (e.g. two "Description
-     * text." Text blocks) produce identical hash-based ids from the
-     * mapper's deterministic minter; the first one keeps the id and
-     * subsequent duplicates get a `-<counter>` suffix. This is a
-     * per-page pass — cross-page collisions are fine because ids are
-     * per-page unique.
+     * page. Walks slot children too so ids across Grid.column<N>
+     * share the per-page uniqueness space with top-level blocks.
      *
      * @param  array<int, Block>  $blocks
      * @return array<int, Block>
@@ -405,24 +516,55 @@ final class ContractPayloadEmitter
         $seen = [];
         $out = [];
         foreach ($blocks as $block) {
-            $id = $block->props['id'] ?? '';
-            $originalId = is_string($id) ? $id : '';
-            $candidate = $originalId;
-            $suffix = 2;
-            while ($candidate !== '' && isset($seen[$candidate])) {
-                $candidate = "{$originalId}-{$suffix}";
-                $suffix++;
-            }
-            $seen[$candidate] = true;
-            if ($candidate !== $originalId) {
-                $newProps = $block->props;
-                $newProps['id'] = $candidate;
-                $out[] = new Block(type: $block->type, props: $newProps);
-            } else {
-                $out[] = $block;
-            }
+            $out[] = $this->repairOne($block, $seen);
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<string, true>  $seen  by-reference
+     */
+    private function repairOne(Block $block, array &$seen): Block
+    {
+        $id = $block->props['id'] ?? '';
+        $originalId = is_string($id) ? $id : '';
+        $candidate = $originalId;
+        $suffix = 2;
+        while ($candidate !== '' && isset($seen[$candidate])) {
+            $candidate = "{$originalId}-{$suffix}";
+            $suffix++;
+        }
+        $seen[$candidate] = true;
+
+        $newProps = $block->props;
+        if ($candidate !== $originalId) {
+            $newProps['id'] = $candidate;
+        }
+        // Recurse into slot children. Slot children are stored as
+        // array form (mapper's Grid emit uses ->toArray()) and MUST
+        // stay as arrays through repair — re-wrapping into Block
+        // objects here breaks array_walk_recursive downstream at
+        // the token-extractor pass.
+        foreach ($newProps as $key => $value) {
+            if (! is_string($key) || ! is_array($value) || ! $this->isBlockList($value)) {
+                continue;
+            }
+            $repairedChildren = [];
+            foreach ($value as $child) {
+                if (! is_array($child) || ! is_string($child['type'] ?? null)) {
+                    continue;
+                }
+                $childBlock = new Block(
+                    type: (string) $child['type'],
+                    props: is_array($child['props'] ?? null) ? $child['props'] : [],
+                );
+                // Preserve ARRAY form after id-repair.
+                $repairedChildren[] = $this->repairOne($childBlock, $seen)->toArray();
+            }
+            $newProps[$key] = $repairedChildren;
+        }
+
+        return $newProps === $block->props ? $block : new Block(type: $block->type, props: $newProps);
     }
 }
