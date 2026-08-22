@@ -780,6 +780,123 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── faq fold ───────────────────────────────────────────────────────
+
+    #[Test]
+    public function langdon_for_parents_shape_folds_to_faq(): void
+    {
+        // langdon For Parents. Block-fill emits the FAQ section as one
+        // Text block: heading + N `**Question?**\n\nAnswer` pairs. The
+        // mapper folds to an FAQ block with items[].
+        $body = "## Frequently Asked Questions\n\n".
+                "**What dates and times do each Division play and where?**\n\n".
+                "- Blast Ball: Tuesday & Thursday from 6-6:45pm\n".
+                "- T-Ball: Tuesdays and Thursdays from 6-7pm\n\n".
+                "**What are the general dates for the Baseball Season?**\n\n".
+                "Regular Season: May - June (Play offs end of June)\n\n".
+                "**What Division would my child be based on Age?**\n\n".
+                "- Blast Ball - Age 3-4\n".
+                "- T-Ball - Age 5-6\n".
+                "- Coach Pitch - Ages 7-8\n\n".
+                "**What is the Cost per division?**\n\n".
+                'Blast Ball - $150.00. T-Ball - $150.00.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $items = $out->blocks[0]->props['items'];
+        $this->assertCount(4, $items);
+        $this->assertSame('What dates and times do each Division play and where?', $items[0]['title']);
+        $this->assertStringContainsString('Blast Ball', $items[0]['body']);
+        $this->assertSame('What is the Cost per division?', $items[3]['title']);
+
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_body_folded_to_faq', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function three_question_markers_alone_are_enough_without_heading(): void
+    {
+        // Body-level detection: no explicit "Frequently Asked Questions"
+        // heading, but 3+ bold-question markers still trigger.
+        $body = "**Do I need my own equipment?**\n\n".
+                "Yes, players supply their own bat, glove, and cleats.\n\n".
+                "**What age divisions do you offer?**\n\n".
+                "Ages 5 through 18, split into six divisions.\n\n".
+                "**Where can I register?**\n\n".
+                'Registration opens on the Registration TAB in early March.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $this->assertCount(3, $out->blocks[0]->props['items']);
+    }
+
+    #[Test]
+    public function two_question_markers_with_heading_is_enough(): void
+    {
+        // Lower threshold (2 items) when an explicit FAQ heading is present.
+        $body = "## FAQ\n\n".
+                "**When are practices?**\n\n".
+                "Tuesdays and Thursdays.\n\n".
+                "**Where are practices held?**\n\n".
+                'Iron Horse Fields.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $this->assertCount(2, $out->blocks[0]->props['items']);
+    }
+
+    // ─── faq NEGATIVE tests ─────────────────────────────────────────────
+
+    #[Test]
+    public function two_questions_without_heading_stays_as_text(): void
+    {
+        // Below the standalone threshold of 3, and no explicit FAQ
+        // heading — this is normal prose with two rhetorical questions.
+        $body = "**When are practices?**\n\n".
+                "Tuesdays and Thursdays.\n\n".
+                "**Where are practices held?**\n\n".
+                'Iron Horse Fields.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function inline_bold_with_question_marks_stays_as_text(): void
+    {
+        // `**Bold?**` mid-sentence is inline emphasis, not a question
+        // heading. Body-level match requires whole-line questions —
+        // this should stay as Text so prose doesn't false-fold.
+        $body = 'Some parents wonder **is this a question?** Yes, '.
+                'the answer is that some parents do wonder. **Others?** They do not.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
     // ─── stat_table fold ────────────────────────────────────────────────
 
     #[Test]

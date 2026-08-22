@@ -241,6 +241,26 @@ final class PuckToContractMapper
     {
         $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
 
+        // IR concept `faq`: block-fill emitted a Text block whose body
+        // contains ≥3 `**Question?**` bold-question markers, or is
+        // preceded by a "Frequently Asked Questions" heading with ≥2
+        // questions. Fold to an FAQ block. Answer bodies pass through
+        // the sanitiser since FAQ.items[].body is a richtext prop.
+        // Checked BEFORE stat_table because FAQ answers can contain
+        // bullet lists (see "What Division would my child be based on
+        // Age?" on langdon For Parents).
+        $faqFold = $this->tryFoldToFaq($rawBody);
+        if ($faqFold !== null) {
+            return new MappedContent(
+                blocks: [$faqFold],
+                diagnostics: [new Diagnostic(
+                    severity: 'info',
+                    code: 'text_body_folded_to_faq',
+                    message: 'Detected FAQ pattern (≥3 bold-question markers or "Frequently Asked Questions" heading + question shapes). Folded to an FAQ block.',
+                )],
+            );
+        }
+
         // IR concept `stat_table`: block-fill emitted a Text block whose
         // body is a markdown list of consistent-shape record rows (year —
         // name — team — position on cjfl award pages). Fold to a Table
@@ -1133,6 +1153,99 @@ final class PuckToContractMapper
         $hash = substr(sha1(implode('|', $parts)), 0, 6);
 
         return "{$prefix}-{$hash}";
+    }
+
+    // IR concept `faq` — fold detection.
+    //
+    // Detection gate (either A or B):
+    //   A. Body contains ≥ FAQ_MIN_ITEMS `**Question?**` bold-question
+    //      markers on their own lines, each followed by non-empty
+    //      answer prose (answer runs until the next question or end
+    //      of body).
+    //   B. Body contains a "Frequently Asked Questions" / "FAQ" heading
+    //      (level ≥ 2) AND ≥ 2 bold-question markers.
+    //
+    // Question line pattern: `^\s*\*\*[^*]+\?\s*\*\*\s*$` (a whole-line
+    // bold-wrapped text ending in `?`). This won't false-match
+    // inline `**Bold**` emphasis mid-paragraph (which lacks the `?`
+    // AND isn't on its own line).
+    //
+    // Answer body is RICHTEXT (FAQ.items[].body is one of the five
+    // richtext-permitted props per contract). Sanitised via the shared
+    // RichTextSanitizer so richtext-vocabulary rules apply.
+    //
+    // Adjacent patterns that MUST NOT fold:
+    //   - stat_table (bulleted record rows): no `**?**` questions.
+    //   - FeatureGrid (link-heading grid): no `?` in the headings.
+    //   - Prose with occasional bold emphasis: bold isn't line-only
+    //     and doesn't end with `?`.
+    private const FAQ_MIN_ITEMS_STANDALONE = 3;
+
+    private const FAQ_MIN_ITEMS_WITH_HEADING = 2;
+
+    private function tryFoldToFaq(string $rawBody): ?Block
+    {
+        // Split into lines; look for the boundary markers.
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false || $lines === []) {
+            return null;
+        }
+
+        $questionLineIdx = [];
+        $hasFaqHeading = false;
+        foreach ($lines as $i => $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            // Heading match — any level, mentioning "Frequently Asked
+            // Questions" or standalone "FAQ".
+            if (preg_match('/^#+\s+(frequently\s+asked\s+questions|faq)\s*$/i', $trimmed) === 1) {
+                $hasFaqHeading = true;
+
+                continue;
+            }
+            // Question line — whole line is a bold-wrapped question.
+            if (preg_match('/^\*\*[^*]+\?\s*\*\*\s*$/', $trimmed) === 1) {
+                $questionLineIdx[] = $i;
+            }
+        }
+
+        $threshold = $hasFaqHeading ? self::FAQ_MIN_ITEMS_WITH_HEADING : self::FAQ_MIN_ITEMS_STANDALONE;
+        if (count($questionLineIdx) < $threshold) {
+            return null;
+        }
+
+        // Assemble items: for each Q line, capture answer prose between
+        // this Q and the next Q (or end).
+        $items = [];
+        $count = count($questionLineIdx);
+        for ($k = 0; $k < $count; $k++) {
+            $start = $questionLineIdx[$k];
+            $end = $k + 1 < $count ? $questionLineIdx[$k + 1] : count($lines);
+            $qLine = trim($lines[$start]);
+            // Strip the surrounding ** and trailing ? for the title.
+            $title = trim(preg_replace('/^\*\*|\*\*$/', '', $qLine) ?? $qLine);
+            $answerLines = array_slice($lines, $start + 1, $end - $start - 1);
+            $answerRaw = trim(implode("\n", $answerLines));
+            $answerHtml = $this->sanitiser->sanitize($answerRaw);
+            if ($title === '') {
+                continue;
+            }
+            $items[] = [
+                'title' => $title,
+                'body' => $answerHtml,
+            ];
+        }
+
+        if (count($items) < $threshold) {
+            return null;
+        }
+
+        return new Block(type: 'FAQ', props: [
+            'id' => $this->id('faq', ...array_column($items, 'title')),
+            'items' => $items,
+        ]);
     }
 
     // IR concept `stat_table` — fold detection.

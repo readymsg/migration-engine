@@ -93,6 +93,30 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
               - 'list'                                         → Text (use a
                                                                   bulleted
                                                                   markdown body)
+              - 'faq' / 'faq_list' /                            → Text with a
+                'frequently_asked_questions'                       body containing
+                                                                  ≥3 whole-line
+                                                                  `**Question?**`
+                                                                  bold-question
+                                                                  markers, each
+                                                                  followed by a
+                                                                  blank line and
+                                                                  the answer prose
+                                                                  (which may
+                                                                  contain bullet
+                                                                  lists — answer
+                                                                  is richtext).
+                                                                  Optionally
+                                                                  precede with a
+                                                                  `## Frequently
+                                                                  Asked Questions`
+                                                                  heading. The
+                                                                  mapper folds
+                                                                  the whole
+                                                                  block to an FAQ
+                                                                  block — do NOT
+                                                                  try to emit FAQ
+                                                                  yourself.
               - 'stat_table' / 'record_list' /                 → Text with a
                 'award_history' / 'year_by_year'                  BULLETED markdown
                                                                   list body where
