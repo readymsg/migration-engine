@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Services\ContractEmitter\ContractPayloadEmitter;
-use App\Services\ContractEmitter\ContractSchema;
-use App\Services\ContractEmitter\ContractSchemaValidator;
 use App\Services\ContractEmitter\BlockDeltaAuditor;
 use App\Services\ContractEmitter\CacheContractEnvelopeStore;
 use App\Services\ContractEmitter\ContractEnvelopeStore;
+use App\Services\ContractEmitter\ContractPayloadEmitter;
+use App\Services\ContractEmitter\ContractSchema;
+use App\Services\ContractEmitter\ContractSchemaValidator;
 use App\Services\ContractEmitter\DiagnosticsCollector;
 use App\Services\ContractEmitter\OrgTypeGate;
 use App\Services\ContractEmitter\PageTreeBuilder;
@@ -25,12 +25,14 @@ use App\Services\Conversion\ConversionDedupeStore;
 use App\Services\Conversion\ConversionResultStore;
 use App\Services\Conversion\ConversionStatusStore;
 use App\Services\Extract\AssetUploader;
+use App\Services\Extract\BrandExtractor;
 use App\Services\Extract\Extractor;
 use App\Services\Extract\FirecrawlClient;
 use App\Services\Extract\HtmlFetcher;
 use App\Services\Extract\HttpFirecrawlClient;
 use App\Services\Extract\HttpHtmlFetcher;
 use App\Services\Extract\HttpRootNavFetcher;
+use App\Services\Extract\LogoPaletteExtractor;
 use App\Services\Extract\RootNavFetcher;
 use App\Services\Extract\S3AssetUploader;
 use App\Services\Extract\SportNginExtractor;
@@ -84,6 +86,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AssetUploader::class, function (Application $app): AssetUploader {
             return new S3AssetUploader(
                 disk: (string) config('services.scrapes.disk', 's3'),
+            );
+        });
+        // BrandExtractor's paletteExtractor param is nullable-with-null-default;
+        // Laravel's autowiring would otherwise pass null (default beats
+        // autowiring on ?Class = null params), leaving Brand.palette empty
+        // on every live conversion and silently falling back to the LLM's
+        // GlobalStyleBrief.palette guess. Bind explicitly so the measured
+        // palette runs on live INGEST too.
+        $this->app->singleton(BrandExtractor::class, function (Application $app): BrandExtractor {
+            return new BrandExtractor(
+                paletteExtractor: $app->make(LogoPaletteExtractor::class),
             );
         });
         $this->app->singleton(Extractor::class, SportNginExtractor::class);
