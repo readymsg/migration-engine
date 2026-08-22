@@ -780,6 +780,149 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── stat_table fold ────────────────────────────────────────────────
+
+    #[Test]
+    public function record_list_folds_to_table_larry_wruck_shape(): void
+    {
+        // cjfl Larry Wruck Defensive Player of the Year — 19 rows of
+        // "YYYY - Name - Team - Position" that block-fill emits as a
+        // Text block with a bulleted markdown body. The mapper's
+        // stat_table fold turns it into a Table so record content
+        // renders tabular, not as a wall of prose.
+        $body = "- 2025 - Jaylin Burnett - St. Clair Saints - DL\n".
+                "- 2024 - Stephen Smith - Regina Thunder - LB\n".
+                "- 2023 - Stephen Smith - Regina Thunder - LB\n".
+                "- 2022 - Konner Johnson - Saskatoon Hilltops - LB\n".
+                "- 2021 - Austin Daisy - Calgary Colts - LB\n".
+                '- 2019 - Jaydn Pingue - Saskatoon Hilltops - LB';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Table', $out->blocks[0]->type);
+        $rows = $out->blocks[0]->props['rows'];
+        $this->assertCount(6, $rows);
+        $this->assertCount(4, $rows[0]['cells']);
+        // Cell content is a Text block inside a slot array.
+        $firstCellContent = $rows[0]['cells'][0]['content'];
+        $this->assertSame('Text', $firstCellContent[0]['type']);
+        $this->assertSame('2025', $firstCellContent[0]['props']['body']);
+        $this->assertSame('Jaylin Burnett', $rows[0]['cells'][1]['content'][0]['props']['body']);
+        $this->assertFalse($out->blocks[0]->props['hasHeaderRow']);
+
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_list_folded_to_table', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function record_list_folds_with_em_dash_separator(): void
+    {
+        // cjfl Peter Dalla Riva uses em-dashes (Unicode U+2014). Both
+        // ` - ` and ` — ` must fold. Order matters — em-dash is checked
+        // first because a body may contain both (compound name with
+        // hyphen; em-dash between columns).
+        $body = "- 2025 — Matt Guenette — St. Clair Saints — QB\n".
+                "- 2024 — Elelyon Noa — Okanagan Sun — RB\n".
+                "- 2023 — Te Jessie — Westshore Rebels — QB\n".
+                "- 2022 — Te Jessie — Westshore Rebels — QB\n".
+                '- 2021 — Malcolm Miller — Kamloops Broncos — RB';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        $this->assertSame('Table', $out->blocks[0]->type);
+        $this->assertCount(5, $out->blocks[0]->props['rows']);
+        $this->assertCount(4, $out->blocks[0]->props['rows'][0]['cells']);
+        $this->assertValidates($out->blocks);
+    }
+
+    // ─── stat_table NEGATIVE tests (adjacent patterns must NOT fold) ────
+
+    #[Test]
+    public function short_bullet_list_below_min_rows_stays_as_text(): void
+    {
+        // Under 5 items — normal prose bullet list, not a record list.
+        $body = "- First item - detail\n".
+                "- Second item - detail\n".
+                '- Third item - detail';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function bullet_list_without_column_separator_stays_as_text(): void
+    {
+        // tbird Parents Portal "What We Ask of Our Families" shape —
+        // 6 numbered bold-heading items with no consistent separator.
+        // Must NOT fold to a Table (or the sanitiser would eat the
+        // Q-shaped prose bodies entirely).
+        $body = "1. **Attend the Parent Meeting** Get connected early!\n".
+                "2. **Be Prompt and Prepared** Please ensure your child arrives on time.\n".
+                "3. **Be a Positive Presence** Cheer with encouragement!\n".
+                "4. **Lend a Helping Hand** We count on our parent volunteers.\n".
+                "5. **Keep the Communication Flowing** Stay in touch with your coach.\n".
+                '6. **Support Growth and Sportsmanship** Celebrate effort, not just outcomes.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function prose_paragraph_stays_as_text(): void
+    {
+        // No list markers at all — pure prose, must stay Text.
+        $body = 'Located in West Chester and Liberty Township, Ohio, the Lakota Thunderbird Youth Basketball Organization is a premier basketball program in the Northern suburbs of Cincinnati. Since its establishment in 1987, the organization has grown significantly and remains a cornerstone of the local sports community.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function inconsistent_column_counts_stays_as_text(): void
+    {
+        // If items have different column counts, the pattern isn't
+        // tabular. Adjacent shape: mixed content notes with some
+        // dashes but not the same shape per row.
+        $body = "- 2025 - Jaylin Burnett - St. Clair Saints - DL\n".
+                "- 2024 - Stephen Smith\n". // only 2 cols
+                "- 2023 - Stephen Smith - Regina Thunder - LB\n".
+                "- 2022 - Konner Johnson - Saskatoon Hilltops - LB - MVP\n". // 5 cols
+                "- 2021 - Austin Daisy - Calgary Colts - LB\n".
+                '- 2019 - Jaydn Pingue - Saskatoon Hilltops - LB';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
     // ─── helpers ────────────────────────────────────────────────────────
 
     private function assetContext(): AssetContext

@@ -240,6 +240,27 @@ final class PuckToContractMapper
     private function mapText(array $props): MappedContent
     {
         $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
+
+        // IR concept `stat_table`: block-fill emitted a Text block whose
+        // body is a markdown list of consistent-shape record rows (year —
+        // name — team — position on cjfl award pages). Fold to a Table
+        // block so record content renders tabular instead of collapsing
+        // to a wall of prose. Detection is deliberately strict — see
+        // tryFoldToTable's docblock for the exact gate; adjacent
+        // patterns (FeatureGrid link-headings, FAQ Q/A, short bullet
+        // lists) don't match.
+        $tableFold = $this->tryFoldToTable($rawBody);
+        if ($tableFold !== null) {
+            return new MappedContent(
+                blocks: [$tableFold],
+                diagnostics: [new Diagnostic(
+                    severity: 'info',
+                    code: 'text_list_folded_to_table',
+                    message: 'Detected record-list pattern (bullet list, ≥5 items, consistent column separator). Folded to a Table block.',
+                )],
+            );
+        }
+
         $body = $this->sanitiser->sanitize($rawBody);
         if ($body === '') {
             // Silent-loss guard: source had a Text block. If pre-
@@ -1112,5 +1133,135 @@ final class PuckToContractMapper
         $hash = substr(sha1(implode('|', $parts)), 0, 6);
 
         return "{$prefix}-{$hash}";
+    }
+
+    // IR concept `stat_table` — fold detection.
+    //
+    // Detection gate (ALL must hold):
+    //   1. Body has ≥ MIN_ROWS list items (bulleted `- `/`* ` or
+    //      numbered `\d+. `) on their own lines.
+    //   2. All items split on the SAME separator into the SAME column
+    //      count C, C ≥ MIN_COLUMNS.
+    //   3. Separator preference: em-dash then hyphen then en-dash then
+    //      pipe, first one that satisfies (2) wins. Space-padded only;
+    //      a bare `-` inside prose ("St. Clair") must not match.
+    //   4. Column values are trimmed non-empty.
+    //
+    // Why strict: adjacent patterns must NOT fold. Regression signals:
+    //   - FeatureGrid link-heading grid (`### [Awards Page](url)`):
+    //     no list items, so gate (1) fails.
+    //   - FAQ Q/A (`**Question?**\n\nAnswer text.`): not list items.
+    //   - Prose bullet list ("What We Ask of Our Families"): items don't
+    //     split on a shared separator into multiple columns.
+    //   - Short bullet list (< MIN_ROWS): mundane bullet content.
+    //
+    // Positive fixture: cjfl Larry Wruck (19 rows × 4 cols on ` - `),
+    //                    cjfl Peter Dalla Riva (19 rows × 4 cols on ` — `).
+    private const STAT_TABLE_MIN_ROWS = 5;
+
+    private const STAT_TABLE_MIN_COLUMNS = 2;
+
+    private function tryFoldToTable(string $rawBody): ?Block
+    {
+        $items = $this->extractListItems($rawBody);
+        if (count($items) < self::STAT_TABLE_MIN_ROWS) {
+            return null;
+        }
+
+        // First separator that splits every item into the same ≥2 columns wins.
+        foreach ([' — ', ' - ', ' – ', ' | '] as $sep) {
+            $rows = $this->splitRowsOn($items, $sep);
+            if ($rows === null) {
+                continue;
+            }
+
+            return $this->buildTableBlock($rows);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<int, string> trimmed inner text of each list item; empty when the body isn't a list
+     */
+    private function extractListItems(string $body): array
+    {
+        $lines = preg_split('/\r?\n/', $body);
+        if ($lines === false) {
+            return [];
+        }
+        $items = [];
+        foreach ($lines as $line) {
+            $trimmed = ltrim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (preg_match('/^([-*]|\d+\.)\s+(.+)$/', $trimmed, $m) !== 1) {
+                // Any non-list, non-blank line disqualifies — a
+                // record-list block shouldn't have interstitial prose.
+                return [];
+            }
+            $items[] = trim($m[2]);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param  array<int, string>  $items
+     * @param  non-empty-string  $sep
+     * @return array<int, array<int, string>>|null N rows × C cells, or null if the separator doesn't split cleanly
+     */
+    private function splitRowsOn(array $items, string $sep): ?array
+    {
+        $rows = [];
+        $columnCount = null;
+        foreach ($items as $item) {
+            $cells = array_map('trim', explode($sep, $item));
+            $cells = array_values(array_filter($cells, static fn (string $c): bool => $c !== ''));
+            if (count($cells) < self::STAT_TABLE_MIN_COLUMNS) {
+                return null;
+            }
+            if ($columnCount === null) {
+                $columnCount = count($cells);
+            } elseif (count($cells) !== $columnCount) {
+                return null;
+            }
+            $rows[] = $cells;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<int, array<int, string>>  $rows
+     */
+    private function buildTableBlock(array $rows): Block
+    {
+        $rowsOut = [];
+        foreach ($rows as $r => $cells) {
+            $cellsOut = [];
+            foreach ($cells as $c => $cellText) {
+                $cellsOut[] = [
+                    'content' => [[
+                        'type' => 'Text',
+                        'props' => [
+                            'id' => $this->id('text', "table.{$r}.{$c}:{$cellText}"),
+                            'body' => $cellText,
+                            'as' => 'p',
+                        ],
+                    ]],
+                ];
+            }
+            $rowsOut[] = ['cells' => $cellsOut];
+        }
+
+        return new Block(type: 'Table', props: [
+            'id' => $this->id('table', ...array_merge(...$rows)),
+            'rows' => $rowsOut,
+            // Source didn't distinguish a header row; leave as data-only
+            // so a reviewer can promote the first row if they want one.
+            'hasHeaderRow' => false,
+        ]);
     }
 }

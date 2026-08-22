@@ -93,6 +93,25 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
               - 'list'                                         → Text (use a
                                                                   bulleted
                                                                   markdown body)
+              - 'stat_table' / 'record_list' /                 → Text with a
+                'award_history' / 'year_by_year'                  BULLETED markdown
+                                                                  list body where
+                                                                  EVERY item follows
+                                                                  the same shape:
+                                                                  `col1 - col2 - col3 …`
+                                                                  (space-hyphen-space
+                                                                  or space-em-dash-space
+                                                                  between columns).
+                                                                  The mapper detects
+                                                                  the record pattern
+                                                                  and folds to a Table
+                                                                  block — do NOT try to
+                                                                  emit Table yourself.
+                                                                  Requires ≥5 rows and
+                                                                  ≥2 columns per row.
+                                                                  Example: "- 2025 -
+                                                                  Jaylin Burnett - St.
+                                                                  Clair Saints - DL".
               - any unknown intent                             → pick the
                                                                   closest
                                                                   schema type
