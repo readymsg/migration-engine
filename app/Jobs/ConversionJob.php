@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Data\ConversionContext;
 use App\Data\ConversionPipelineStage;
+use App\Data\OrgType;
 use App\Services\Conversion\ConversionContextStore;
 use App\Services\Conversion\ConversionCostGuard;
 use App\Services\Conversion\ConversionStatusStore;
@@ -65,6 +66,7 @@ final class ConversionJob implements ShouldQueue
     public function __construct(
         public readonly string $conversion_id,
         public readonly string $url,
+        public readonly OrgType $orgType = OrgType::Club,
     ) {}
 
     public function handle(
@@ -98,6 +100,7 @@ final class ConversionJob implements ShouldQueue
                 url: $this->url,
                 manifest: $manifest,
                 plan: $plan,
+                orgType: $this->orgType,
             ),
         );
 

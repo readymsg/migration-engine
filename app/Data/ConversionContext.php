@@ -27,5 +27,11 @@ final class ConversionContext extends Data
         public string $url,
         public Manifest $manifest,
         public SitePlan $plan,
+        // Slice 16: orgType gates which contract blocks the emitter
+        // is allowed to place. Contract Part II "Org types" — a
+        // gated block for the wrong orgType is an ERROR, not a
+        // silent drop. The gate has been in place since Slice 15f
+        // but only fires when this input arrives.
+        public OrgType $orgType = OrgType::Club,
     ) {}
 }

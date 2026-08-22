@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Conversion;
 
 use App\Data\ConversionPipelineStage;
+use App\Data\OrgType;
 use App\Http\Controllers\Controller;
 use App\Jobs\ConversionJob;
 use App\Services\Conversion\ConversionCostGuard;
@@ -42,9 +43,15 @@ final class ConversionController extends Controller
     {
         $validated = $request->validate([
             'url' => ['required', 'string', 'url', 'max:2048'],
+            // Slice 16: orgType gates which contract blocks the
+            // emitter will place. Optional in the request; defaults
+            // to `club` for the tbirdhoops demo case. Enum values
+            // must exactly match the six the contract accepts.
+            'orgType' => ['sometimes', 'string', 'in:club,association,league,high_school,civic,multi_location'],
         ]);
         /** @var string $url */
         $url = $validated['url'];
+        $orgType = OrgType::tryFrom((string) ($validated['orgType'] ?? 'club')) ?? OrgType::Club;
 
         $token = (string) $request->header('X-Demo-Token', '');
 
@@ -85,7 +92,7 @@ final class ConversionController extends Controller
             // begin status, dispatch.
             $this->costGuard->commitDispatch();
             $this->statusStore->begin($conversionId, $url);
-            ConversionJob::dispatch($conversionId, $url);
+            ConversionJob::dispatch($conversionId, $url, $orgType);
         }
 
         return response()->json([

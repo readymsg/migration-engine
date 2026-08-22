@@ -203,6 +203,16 @@
                     </div>
                 @endif
 
+                <label for="orgTypeInput" style="margin-top:16px;">Org type</label>
+                <select id="orgTypeInput" name="orgType">
+                    <option value="club" selected>Club</option>
+                    <option value="association">Association</option>
+                    <option value="league">League</option>
+                    <option value="high_school">High school</option>
+                    <option value="civic">Civic organization</option>
+                    <option value="multi_location">Multi-location organization</option>
+                </select>
+
                 <button class="convert" id="convertBtn" type="button">Convert →</button>
             </div>
 
@@ -280,6 +290,7 @@
         async function trigger() {
             const url = urlInput.value.trim();
             if (!url) return;
+            const orgType = (document.getElementById('orgTypeInput')?.value) || 'club';
 
             convertBtn.disabled = true;
             failureView.classList.remove('is-visible');
@@ -293,7 +304,7 @@
                         'Accept': 'application/json',
                         'X-Demo-Token': config.demoToken,
                     },
-                    body: JSON.stringify({ url }),
+                    body: JSON.stringify({ url, orgType }),
                 });
             } catch (err) {
                 convertBtn.disabled = false;

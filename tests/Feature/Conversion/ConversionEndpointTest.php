@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Conversion;
 
+use App\Data\OrgType;
 use App\Jobs\ConversionJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -81,6 +82,43 @@ final class ConversionEndpointTest extends TestCase
         $this->assertFalse($response->json('deduped'));
 
         Bus::assertDispatched(ConversionJob::class);
+    }
+
+    #[Test]
+    public function post_defaults_org_type_to_club_when_omitted(): void
+    {
+        // Slice 16: orgType is optional in the request; defaults to
+        // club. The tbirdhoops demo case is a club so this default
+        // is the right one.
+        $this->postJson('/api/conversions', [
+            'url' => 'https://www.tbirdhoops.org/',
+        ], ['X-Demo-Token' => self::TOKEN])->assertStatus(202);
+
+        Bus::assertDispatched(ConversionJob::class, function (ConversionJob $job) {
+            return $job->orgType === OrgType::Club;
+        });
+    }
+
+    #[Test]
+    public function post_accepts_org_type_and_threads_through_to_conversion_job(): void
+    {
+        $this->postJson('/api/conversions', [
+            'url' => 'https://www.cjfl.org/',
+            'orgType' => 'league',
+        ], ['X-Demo-Token' => self::TOKEN])->assertStatus(202);
+
+        Bus::assertDispatched(ConversionJob::class, function (ConversionJob $job) {
+            return $job->orgType === OrgType::League;
+        });
+    }
+
+    #[Test]
+    public function post_rejects_invalid_org_type(): void
+    {
+        $this->postJson('/api/conversions', [
+            'url' => 'https://www.cjfl.org/',
+            'orgType' => 'not-a-real-org-type',
+        ], ['X-Demo-Token' => self::TOKEN])->assertStatus(422);
     }
 
     #[Test]
