@@ -487,19 +487,20 @@ final class PuckToContractMapper
             return new MappedContent(blocks: [], diagnostics: []);
         }
 
-        // Slice 13: people-directory detection. If this Columns's
-        // children are all Cards AND the Cards shape as a directory
-        // (any image set OR body contains "@" for email OR
-        // multi-line body), fold the whole block into a single
-        // TeamMembers block instead of unfolding every Card into
-        // Text+Image+Text+Button. Cleaner output; and TeamMembers
-        // has its own columns prop so the multi-column layout that
-        // Grid-deferred flattening would have destroyed is
-        // RESTORED — best of both worlds.
+        // Slice 13: people-directory detection.
         if ($this->looksLikePeopleDirectory($flatContent)) {
             $columnCount = count($columns);
 
             return $this->emitTeamMembers($flatContent, $columnCount, $ctx, $ledger, $srcUrl);
+        }
+
+        // Slice 15b: sponsor-deck detection. Placed AFTER the
+        // people-directory check so the two heuristics never both
+        // fire (the sponsor check requires majority-href, which the
+        // people check specifically rejects — but explicit order
+        // keeps the intent clear).
+        if ($this->looksLikeSponsorDeck($flatContent)) {
+            return $this->emitSponsors($flatContent, $srcUrl);
         }
 
         // Default: Grid deferred → flatten. Record the loss so a
@@ -572,6 +573,79 @@ final class PuckToContractMapper
         }
 
         return true;
+    }
+
+    /**
+     * Sponsor deck pattern (Contract Part III "Blocks to place but
+     * never populate — the TeamLinkt Widgets"): 3+ Cards, majority
+     * have image + href set. Distinguished from people-directory
+     * by the href-dominance signal that looksLikePeopleDirectory
+     * REJECTS. Scraped logos + hrefs are discarded — the contract's
+     * widgets are placed, never filled — but a diagnostic records
+     * what was in the source for the reviewer.
+     *
+     * @param  array<int, array<string, mixed>>  $children
+     */
+    private function looksLikeSponsorDeck(array $children): bool
+    {
+        if (count($children) < 3) {
+            return false;
+        }
+        $cardsWithImage = 0;
+        $cardsWithHref = 0;
+        foreach ($children as $child) {
+            if (! is_array($child) || ($child['type'] ?? null) !== 'Card') {
+                return false;
+            }
+            $props = is_array($child['props'] ?? null) ? $child['props'] : [];
+            if (is_string($props['image'] ?? null) && $props['image'] !== '') {
+                $cardsWithImage++;
+            }
+            if (is_string($props['href'] ?? null) && trim($props['href']) !== '') {
+                $cardsWithHref++;
+            }
+        }
+        $half = (int) ceil(count($children) / 2);
+
+        // Sponsor characteristic: majority have BOTH image (logo)
+        // and href (outbound link, even placeholder #).
+        return $cardsWithImage >= $half && $cardsWithHref >= $half;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $cards
+     */
+    private function emitSponsors(array $cards, ?string $srcUrl): MappedContent
+    {
+        // Contract Part III: Sponsors block is a widget — placed,
+        // never populated. Data (org's actual sponsors) lives in
+        // TeamLinkt. What we scraped is DISCARDED but recorded so
+        // the reviewer knows an existing sponsor row was detected.
+        $droppedSummary = [];
+        foreach ($cards as $card) {
+            $props = is_array($card['props'] ?? null) ? $card['props'] : [];
+            $title = is_string($props['title'] ?? null) ? $props['title'] : '';
+            $href = is_string($props['href'] ?? null) ? trim($props['href']) : '';
+            $droppedSummary[] = $title !== '' ? "{$title} ({$href})" : $href;
+        }
+
+        $block = new Block(type: 'Sponsors', props: [
+            'id' => $this->id('sponsors', $srcUrl ?? '', (string) count($cards)),
+        ]);
+
+        return new MappedContent(
+            blocks: [$block],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'sponsor_deck_placed_widget',
+                message: sprintf(
+                    'Detected sponsor deck (%d Cards with image + href). Placed a Sponsors widget; scraped logos/URLs discarded — widgets read live from TeamLinkt.',
+                    count($cards),
+                ),
+                sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
+                droppedContent: implode(' · ', array_slice($droppedSummary, 0, 10)),
+            )],
+        );
     }
 
     /**

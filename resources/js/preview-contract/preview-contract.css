@@ -323,6 +323,38 @@ html, body { margin: 0; padding: 0; }
     line-height: 1.4;
 }
 
+/* Widget blocks — placed but empty at import time; data lives in
+   TeamLinkt. Preview renders a labeled placeholder so a reviewer
+   sees the widget shape without pretending it has real data. */
+.cp-widget {
+    max-width: 1120px;
+    margin: 32px auto;
+    padding: 20px 24px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px dashed rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    text-align: center;
+}
+.cp-widget__label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cp-primary);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.cp-widget__heading {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cp-body-fg);
+    margin: 0 0 12px;
+}
+.cp-widget__placeholder {
+    font-size: 13px;
+    color: var(--cp-muted);
+    padding: 20px;
+}
+
 /* Unknown block-type placeholder — mostly renders as a visible gap
    so a reviewer notices the coverage hole. */
 .cp-unknown {

@@ -508,11 +508,13 @@ final class PuckToContractMapperTest extends TestCase
     }
 
     #[Test]
-    public function columns_of_sponsor_cards_do_no_t_fold_to_team_members(): void
+    public function columns_of_sponsor_cards_place_a_sponsors_widget(): void
     {
-        // Sponsor cards: title=business name, body=CTA, href set even
-        // when placeholder "#". Must NOT fold to TeamMembers — falls
-        // back to columns_flattened.
+        // Slice 15b: sponsor-deck detection. What Slice 13 correctly
+        // REJECTED as a people directory now becomes a Sponsors
+        // widget instead of flattening. Widgets are placed, never
+        // filled — scraped logos + URLs discarded; a diagnostic
+        // records what was in source.
         $refs = new DataCollection(AssetRef::class, [
             new AssetRef(s3_key: 's3://x/logo1.png', mime_type: 'image/png', source_url: 'https://cdn.example.com/logo1.png'),
             new AssetRef(s3_key: 's3://x/logo2.png', mime_type: 'image/png', source_url: 'https://cdn.example.com/logo2.png'),
@@ -529,12 +531,16 @@ final class PuckToContractMapperTest extends TestCase
             new AssetContext($refs),
             new AssetLedger,
         );
-        // NOT folded to TeamMembers.
-        $types = array_map(fn ($b) => $b->type, $out->blocks);
-        $this->assertNotContains('TeamMembers', $types, 'sponsor Cards must NOT be misidentified as a people directory');
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Sponsors', $out->blocks[0]->type);
+        // No leaked scraped-content props on the widget.
+        $this->assertArrayNotHasKey('items', $out->blocks[0]->props);
+        $this->assertArrayNotHasKey('logos', $out->blocks[0]->props);
         $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
-        // Fell back to flatten path.
-        $this->assertContains('columns_flattened', $codes);
+        $this->assertContains('sponsor_deck_placed_widget', $codes);
+        $this->assertNotContains('columns_flattened', $codes);
+        $this->assertNotContains('TeamMembers', array_map(fn ($b) => $b->type, $out->blocks));
+        $this->assertValidates($out->blocks);
     }
 
     #[Test]

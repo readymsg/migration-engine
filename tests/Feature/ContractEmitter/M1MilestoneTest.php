@@ -73,10 +73,14 @@ final class M1MilestoneTest extends TestCase
                 $emittedTypes[$block->type] = ($emittedTypes[$block->type] ?? 0) + 1;
             }
         }
-        // Palette widened by Slice 13: TeamMembers joined the M1
-        // palette (Board / Contacts people directories fold to a
-        // TeamMembers widget). Slice 15 broadens further.
-        $allowed = ['Text', 'Hero', 'Image', 'Gallery', 'Button', 'TeamMembers'];
+        // Palette expands per slice: 5 blocks at M1, +TeamMembers at
+        // Slice 13, +Sponsors/NewsList/Locations/Grid at Slice 15.
+        $allowed = [
+            'Text', 'Hero', 'Image', 'Gallery', 'Button',
+            'TeamMembers',
+            'Grid', 'Sponsors', 'NewsList', 'Locations',
+            'Standings', 'Scores', 'Schedule',
+        ];
         foreach (array_keys($emittedTypes) as $type) {
             $this->assertContains(
                 $type,
