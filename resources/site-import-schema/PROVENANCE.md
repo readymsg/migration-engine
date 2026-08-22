@@ -2,9 +2,10 @@
 
 **Status:** hand-encoded fallback. Awaiting `ai-website-builder-schema.json` from TeamLinkt engineering.
 
-`blocks.json` is a hand-encoding of the five blocks needed for the M1 thin-slice payload
-(`Text`, `Hero`, `Image`, `Gallery`, `Button`) plus the six blocks that must be REFUSED
-(`IntakeForm`, `NavMenu`, `SiteNotice`, `FooterColumns`, `FooterLogo`, `FooterSocial`).
+`blocks.json` is a hand-encoding of the six blocks needed through Slice 13
+(`Text`, `Hero`, `Image`, `Gallery`, `Button`, `TeamMembers`) plus the six blocks
+that must be REFUSED (`IntakeForm`, `NavMenu`, `SiteNotice`, `FooterColumns`,
+`FooterLogo`, `FooterSocial`).
 
 When engineering delivers `ai-website-builder-schema.json`, `ContractSchema::load()` should
 switch to reading it directly. This file becomes a diff target — anything below that
@@ -44,6 +45,10 @@ turned out wrong is a validator hole worth fixing before the swap.
 | `Gallery.lightbox` / `showCaptions` enum values `[true, false]` are BOOLEANS | Part III |
 | `Button.size` enum values `["1", "2", "3", "4"]` are STRINGS | Part III |
 | `Button.variant` enum: `"solid" | "soft" | "outline" | "ghost"` | Part III |
+| `TeamMembers.items[]` shape `{photo, name, role, email, bio}` all strings | Part III `TeamMembers` sub-table |
+| `TeamMembers.columns` enum `[2, 3, 4]` are NUMBERS not strings | Part III |
+| `TeamMembers.showImage` enum `[true, false]` are BOOLEANS | Part III |
+| `TeamMembers` defaults (heading="Meet the team", columns=3, showImage=true, etc.) | Part III complete-defaults blob |
 | every numeric prop's declared range (min/max) | Part III — but contract Part III also notes "Ranges are editor slider bounds, not validation — they are not enforced on save" so the validator should treat range violations as WARNINGS, not errors |
 | every prop's default value | Part III complete-defaults blob per block |
 

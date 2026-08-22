@@ -196,6 +196,70 @@
       "doNotAuthor": []
     },
 
+    "TeamMembers": {
+      "description": "Headshot + name + role + optional bio grid for boards, staff, and coaches.",
+      "category": "Content",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "columns": {"type": "enum", "enum": [2, 3, 4]},
+          "showImage": {"type": "enum", "enum": [true, false]},
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "keys": {
+                "photo": {"type": "string"},
+                "name": {"type": "string"},
+                "role": {"type": "string"},
+                "email": {"type": "string"},
+                "bio": {"type": "string"}
+              }
+            }
+          },
+          "memberNameColor": {"type": "string"},
+          "memberRoleColor": {"type": "string"},
+          "memberEmailColor": {"type": "string"},
+          "memberBioColor": {"type": "string"},
+          "preheading": {"type": "string"},
+          "heading": {"type": "string"},
+          "subheading": {"type": "string"},
+          "preheadingColor": {"type": "string"},
+          "headingColor": {"type": "string"},
+          "subheadingColor": {"type": "string"},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "preheading": "",
+        "heading": "Meet the team",
+        "subheading": "",
+        "preheadingColor": "#000000",
+        "headingColor": "#1c2024",
+        "subheadingColor": "#60646c",
+        "alignment": "center",
+        "background": "transparent",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48,
+        "columns": 3,
+        "showImage": true,
+        "memberNameColor": "var(--gray-12)",
+        "memberRoleColor": "var(--accent-11)",
+        "memberEmailColor": "var(--gray-11)",
+        "memberBioColor": "var(--gray-11)"
+      },
+      "doNotAuthor": []
+    },
+
     "Button": {
       "description": "Call-to-action link with label and URL.",
       "category": "Content",

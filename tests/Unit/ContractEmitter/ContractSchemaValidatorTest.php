@@ -96,6 +96,64 @@ final class ContractSchemaValidatorTest extends TestCase
     }
 
     #[Test]
+    public function team_members_block_with_valid_props_has_no_errors(): void
+    {
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'TeamMembers',
+            props: [
+                'id' => 'teammembers-abc123',
+                'heading' => 'Board of Directors',
+                'columns' => 3,
+                'showImage' => true,
+                'items' => [
+                    ['photo' => 'tl-asset:dana', 'name' => 'Dana Whitfield', 'role' => 'President', 'email' => '', 'bio' => 'Leads the board.'],
+                    ['photo' => 'tl-asset:sam', 'name' => 'Sam Okonkwo', 'role' => 'Treasurer', 'email' => '', 'bio' => ''],
+                ],
+            ],
+        ));
+        $this->assertSame(
+            [],
+            $this->errors($issues),
+            'valid TeamMembers block must not produce errors',
+        );
+    }
+
+    #[Test]
+    public function team_members_columns_number_vs_string_mismatch_is_error(): void
+    {
+        // Contract: TeamMembers.columns is enum [2, 3, 4] as NUMBERS.
+        // Same JSON-typed strict comparison as Gallery.columns.
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'TeamMembers',
+            props: [
+                'id' => 'teammembers-abc123',
+                'columns' => '3', // string — must fail
+            ],
+        ));
+        $codes = array_map(fn ($i) => $i->code, $this->errors($issues));
+        $this->assertContains('enum_value_invalid', $codes);
+    }
+
+    #[Test]
+    public function team_members_unknown_item_key_is_error(): void
+    {
+        // Per-item shape is {photo, name, role, email, bio}. An
+        // extra key on one item must fire with the per-index path.
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'TeamMembers',
+            props: [
+                'id' => 'teammembers-abc123',
+                'items' => [
+                    ['name' => 'Dana', 'twitter' => '@dana'], // unknown key
+                ],
+            ],
+        ));
+        $errors = $this->errors($issues);
+        $codes = array_map(fn ($i) => $i->code, $errors);
+        $this->assertContains('unknown_object_key', $codes);
+    }
+
+    #[Test]
     public function button_block_with_valid_props_has_no_errors(): void
     {
         $issues = $this->validator->validateBlock(new Block(
