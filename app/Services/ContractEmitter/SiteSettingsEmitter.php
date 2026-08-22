@@ -7,7 +7,9 @@ namespace App\Services\ContractEmitter;
 use App\Data\Brand;
 use App\Data\ConversionResult;
 use App\Data\GlobalStyleBrief;
+use App\Data\SiteImport\Diagnostic;
 use App\Data\SiteImport\SiteSettings;
+use LogicException;
 use Spatie\LaravelData\Optional;
 
 // Emits the contract's SiteSettings.siteName / primaryColor /
@@ -23,6 +25,13 @@ use Spatie\LaravelData\Optional;
 // tbirdhoops, was empirically wrong (#1F3A93 dark blue vs the
 // club's actual red #AE292E).
 //
+// LOUD FALLBACK: every slot (primary/neutral) emits ONE Diagnostic
+// per emit call naming its source (measured | llm_guess | missing)
+// and, on llm_guess, the reason the measured source was unavailable
+// (from Brand.palette_error). Silent falling from measured to LLM
+// on the highest-value fields in the contract is the silent-loss
+// surface this closes.
+//
 // FORBIDDEN KEYS (zones / templateId / theme / showTeamRosters):
 // enforced STRUCTURALLY by SiteSettings' DTO shape — those keys
 // don't exist as properties on the class, so we can't accidentally
@@ -34,17 +43,32 @@ use Spatie\LaravelData\Optional;
 // in the preview's debug chrome (see PROVENANCE.md).
 final class SiteSettingsEmitter
 {
-    public function emit(ConversionResult $result, AssetLedger $ledger): SiteSettings
+    public function emit(ConversionResult $result, AssetLedger $ledger): SiteSettingsEmitResult
     {
-        $palette = $this->activePalette($result->brand, $result->style_brief);
+        $diagnostics = [];
+        [$primary, $primarySource, $primaryReason] = $this->resolveSlot(
+            slot: 'primary',
+            brand: $result->brand,
+            brief: $result->style_brief,
+        );
+        [$neutral, $neutralSource, $neutralReason] = $this->resolveSlot(
+            slot: 'text',
+            brand: $result->brand,
+            brief: $result->style_brief,
+        );
 
-        return new SiteSettings(
+        $diagnostics[] = $this->paletteSlotDiagnostic('primary', $primary, $primarySource, $primaryReason);
+        $diagnostics[] = $this->paletteSlotDiagnostic('neutral', $neutral, $neutralSource, $neutralReason);
+
+        $settings = new SiteSettings(
             siteName: $this->siteName($result),
             logoUrl: $this->logoToken($result->brand, $ledger),
             favicon: new Optional, // BrandExtractor tracks favicon separately; wiring it up is a follow-up
-            primaryColor: $palette['primary'] ?? new Optional,
-            neutralColor: $palette['text'] ?? new Optional,
+            primaryColor: $primary ?? new Optional,
+            neutralColor: $neutral ?? new Optional,
         );
+
+        return new SiteSettingsEmitResult(settings: $settings, diagnostics: $diagnostics);
     }
 
     private function siteName(ConversionResult $result): string|Optional
@@ -71,30 +95,61 @@ final class SiteSettingsEmitter
     }
 
     /**
-     * @return array{primary?: string, text?: string}
+     * Returns [colorOrNull, source, reasonOrNull] where source is one
+     * of 'measured' | 'llm_guess' | 'missing' and reason names why the
+     * measured source was unavailable when source === 'llm_guess'.
+     *
+     * @return array{0: ?string, 1: 'measured'|'llm_guess'|'missing', 2: ?string}
      */
-    private function activePalette(Brand $brand, GlobalStyleBrief $brief): array
+    private function resolveSlot(string $slot, Brand $brand, GlobalStyleBrief $brief): array
     {
-        $out = [];
-        // Measured wins.
-        $palette = $brand->palette;
-        if (isset($palette['primary']) && is_string($palette['primary'])) {
-            $out['primary'] = $palette['primary'];
-        }
-        if (isset($palette['text']) && is_string($palette['text'])) {
-            $out['text'] = $palette['text'];
-        }
-        // Fall back to LLM only for slots the measured extractor
-        // didn't fill.
-        $llm = $brief->palette;
-        if (! isset($out['primary']) && isset($llm['primary']) && is_string($llm['primary'])) {
-            $out['primary'] = $llm['primary'];
-        }
-        if (! isset($out['text']) && isset($llm['text']) && is_string($llm['text'])) {
-            $out['text'] = $llm['text'];
+        $measured = $brand->palette[$slot] ?? null;
+        if (is_string($measured) && $measured !== '') {
+            return [$measured, 'measured', null];
         }
 
-        return $out;
+        $llm = $brief->palette[$slot] ?? null;
+        if (is_string($llm) && $llm !== '') {
+            // Fallback used. Name the reason if we have one — Brand's
+            // palette_error is populated by BrandExtractor whenever a
+            // measurement attempt failed. `null` here means no logo was
+            // available to measure at all (flag path).
+            $reason = $brand->palette_error ?? 'no_logo_measured';
+
+            return [$llm, 'llm_guess', $reason];
+        }
+
+        return [null, 'missing', null];
+    }
+
+    /**
+     * @param  'measured'|'llm_guess'|'missing'  $source
+     */
+    private function paletteSlotDiagnostic(string $slot, ?string $color, string $source, ?string $reason): Diagnostic
+    {
+        return match ($source) {
+            'measured' => new Diagnostic(
+                severity: 'info',
+                code: 'palette_'.$slot.'_from_measured',
+                message: "SiteSettings.{$slot}Color = {$color} — measured deterministically from the logo bytes (LogoPaletteExtractor).",
+            ),
+            'llm_guess' => new Diagnostic(
+                severity: 'warning',
+                code: 'palette_'.$slot.'_from_llm_guess',
+                message: sprintf(
+                    'SiteSettings.%sColor = %s — measured palette unavailable (%s); fell back to GlobalStyleBrief\'s LLM-inferred palette. Contract Part II calls this the highest-value field; reviewer should verify.',
+                    $slot,
+                    $color,
+                    $reason ?? 'unknown',
+                ),
+            ),
+            'missing' => new Diagnostic(
+                severity: 'warning',
+                code: 'palette_'.$slot.'_missing',
+                message: "SiteSettings.{$slot}Color left unset — neither measured palette nor LLM brief provided a value.",
+            ),
+            default => throw new LogicException("unreachable palette source: {$source}"),
+        };
     }
 
     private function logoToken(Brand $brand, AssetLedger $ledger): string|Optional

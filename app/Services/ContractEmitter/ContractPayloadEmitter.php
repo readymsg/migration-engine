@@ -64,8 +64,15 @@ final class ContractPayloadEmitter
         // envelope-output counts at the end of emission.
         $mapperAudit = new MapperAudit;
 
-        // Step 1: SiteSettings (may register logo token).
-        $site = $this->siteSettingsEmitter->emit($result, $ledger);
+        // Step 1: SiteSettings (may register logo token). Also
+        // emits per-slot palette-source diagnostics (measured vs
+        // llm_guess vs missing) so a silent fallback on the
+        // highest-value fields in the payload surfaces immediately.
+        $siteResult = $this->siteSettingsEmitter->emit($result, $ledger);
+        $site = $siteResult->settings;
+        foreach ($siteResult->diagnostics as $d) {
+            $extraDiagnostics[] = $d;
+        }
 
         // Step 2: Page tree shells.
         $tree = $this->pageTreeBuilder->build($result);

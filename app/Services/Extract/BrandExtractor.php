@@ -44,6 +44,7 @@ final class BrandExtractor
         foreach ($candidates as $source => $url) {
             if (is_string($url) && $url !== '') {
                 $asset = $uploader->putFromUrl($url, $orgId, 'logos');
+                [$palette, $paletteError] = $this->measurePalette($url);
 
                 return new Brand(
                     logo_source: $source,
@@ -56,10 +57,13 @@ final class BrandExtractor
                     logo_source_url: $url,
                     // Measured palette from the logo's actual pixels
                     // (deterministic quantised histogram). Empty on
-                    // fetch/decode failure — caller falls through to
-                    // the LLM-inferred GlobalStyleBrief.palette.
-                    palette: $this->measurePalette($url),
+                    // fetch/decode failure — SiteSettingsEmitter reads
+                    // palette_error to produce a LOUD fallback
+                    // diagnostic instead of silently falling through
+                    // to GlobalStyleBrief.palette.
+                    palette: $palette,
                     voice_hint: null, // TODO: nothing on the homepage is a reliable voice signal
+                    palette_error: $paletteError,
                 );
             }
         }
@@ -69,31 +73,43 @@ final class BrandExtractor
             logo_asset_ref: null,
             palette: [],
             voice_hint: null,
+            // No logo URL to measure — this is a legitimate absence,
+            // NOT a measurement failure. Leave palette_error null; the
+            // downstream diagnostic will surface as
+            // 'palette_primary_missing' (no source at all) rather than
+            // 'palette_primary_from_llm_guess' (measured failed).
         );
     }
 
     /**
-     * @return array<string, string> 0..5 palette tokens (primary/secondary/accent/background/text). Empty on any failure.
+     * Returns [palette, error]. `error` is null on success or when no
+     * palette extractor is configured to run.
+     *
+     * @return array{0: array<string, string>, 1: ?string}
      */
     private function measurePalette(string $logoUrl): array
     {
         if ($this->paletteExtractor === null) {
-            return [];
+            return [[], 'no_palette_extractor'];
         }
         try {
             $response = Http::timeout(10)->get($logoUrl);
-        } catch (Throwable) {
-            return [];
+        } catch (Throwable $e) {
+            return [[], 'logo_fetch_failed: '.$e->getMessage()];
         }
         if (! $response->successful()) {
-            return [];
+            return [[], 'logo_fetch_failed: HTTP '.$response->status()];
         }
         $bytes = (string) $response->body();
         if ($bytes === '') {
-            return [];
+            return [[], 'logo_body_empty'];
+        }
+        $palette = $this->paletteExtractor->extract($bytes) ?? [];
+        if ($palette === []) {
+            return [[], 'palette_extraction_empty'];
         }
 
-        return $this->paletteExtractor->extract($bytes) ?? [];
+        return [$palette, null];
     }
 
     private function firstAttachment(string $html, string $kind): ?string
