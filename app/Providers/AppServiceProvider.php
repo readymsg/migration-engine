@@ -8,6 +8,7 @@ use App\Services\ContractEmitter\ContractPayloadEmitter;
 use App\Services\ContractEmitter\ContractSchema;
 use App\Services\ContractEmitter\ContractSchemaValidator;
 use App\Services\ContractEmitter\DiagnosticsCollector;
+use App\Services\ContractEmitter\OrgTypeGate;
 use App\Services\ContractEmitter\PageTreeBuilder;
 use App\Services\ContractEmitter\PuckToContractMapper;
 use App\Services\ContractEmitter\RichTextSanitizer;
@@ -150,6 +151,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PageTreeBuilder::class);
         $this->app->singleton(SiteSettingsEmitter::class);
         $this->app->singleton(DiagnosticsCollector::class);
+        $this->app->singleton(OrgTypeGate::class);
         $this->app->singleton(ContractPayloadEmitter::class);
 
         // Step-6 conversion pipeline: per-conversion stores + dedupe

@@ -47,6 +47,7 @@ final class ContractPayloadEmitter
         private readonly SiteSettingsEmitter $siteSettingsEmitter,
         private readonly DiagnosticsCollector $diagnosticsCollector,
         private readonly ContractSchemaValidator $blockValidator,
+        private readonly OrgTypeGate $orgTypeGate,
     ) {}
 
     public function emit(
@@ -87,13 +88,29 @@ final class ContractPayloadEmitter
             foreach ($mapped->diagnostics as $d) {
                 $extraDiagnostics[] = $d;
             }
+            // Slice 15f: orgType gating enforcement. Blocks whose
+            // contract type is gated to a subset that excludes the
+            // caller's orgType are DROPPED with an error-severity
+            // diagnostic. Contract Part II is explicit that a gated
+            // block for the wrong orgType is an ERROR, not a silent
+            // drop — the block would not even appear in the org's
+            // palette on the receiving side.
+            [$gatedBlocks, $gatedDiagnostics] = $this->orgTypeGate->apply(
+                $mapped->blocks,
+                $orgType,
+                $sourceSlug ?? '(unknown)',
+            );
+            foreach ($gatedDiagnostics as $d) {
+                $extraDiagnostics[] = $d;
+            }
+
             // Repair id collisions within the page. The mapper's ids
             // are deterministic content-hashes, so two identically-
             // authored blocks ("Description text.") collide. Contract
             // Part II acknowledges ingest re-checks + repairs, but we
             // fix it here so our output is contract-clean by
             // construction rather than depending on TeamLinkt's repair.
-            $repairedBlocks = $this->repairBlockIds($mapped->blocks);
+            $repairedBlocks = $this->repairBlockIds($gatedBlocks);
             $filledPages[] = new Page(
                 id: $page->id,
                 slug: $page->slug,
