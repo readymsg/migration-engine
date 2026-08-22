@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "provenance": "hand-encoded from Site Import Contract v1 Part III markdown tables. Replaced by ai-website-builder-schema.json from engineering when that file arrives. Inferences documented in PROVENANCE.md.",
+  "blocks": {
+    "Text": {
+      "description": "Paragraph or heading — rich-text copy with a semantic tag, size, and alignment.",
+      "category": "Content",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": ["body"],
+      "props": {
+        "properties": {
+          "body": {"type": "richtext"},
+          "as": {"type": "enum", "enum": ["p", "h1", "h2", "h3"]},
+          "align": {"type": "enum", "enum": ["left", "center", "right"]},
+          "color": {"type": "string"},
+          "fontSize": {"type": "number", "minimum": 10, "maximum": 120},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "body": "Paragraph text.",
+        "as": "p",
+        "align": "left",
+        "color": "var(--gray-12)",
+        "fontSize": 16,
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48
+      },
+      "doNotAuthor": []
+    },
+
+    "Hero": {
+      "description": "Full-width banner with image, headline and CTA.",
+      "category": "Layout",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "layout": {"type": "enum", "enum": ["overlay", "split", "text", "image"]},
+          "imageUrl": {"type": "string"},
+          "height": {"type": "number", "minimum": 200, "maximum": 900},
+          "primaryButton": {
+            "type": "object",
+            "keys": {
+              "label": {"type": "string"},
+              "href": {"type": "string"}
+            }
+          },
+          "secondaryButton": {
+            "type": "object",
+            "keys": {
+              "label": {"type": "string"},
+              "href": {"type": "string"}
+            }
+          },
+          "contentAlignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "preheading": {"type": "string"},
+          "heading": {"type": "string"},
+          "subheading": {"type": "string"},
+          "preheadingColor": {"type": "string"},
+          "headingColor": {"type": "string"},
+          "subheadingColor": {"type": "string"},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "layout": "overlay",
+        "imageUrl": "/photos/football-banner.jpg",
+        "primaryButton": {"label": "Call to action", "href": ""},
+        "secondaryButton": {"label": "Secondary action", "href": ""},
+        "height": 480,
+        "contentAlignment": "center",
+        "visibility": {"showPreheading": true, "showHeading": true, "showSubheading": true},
+        "preheading": "",
+        "heading": "",
+        "subheading": "",
+        "preheadingColor": "",
+        "headingColor": "",
+        "subheadingColor": "",
+        "alignment": "center",
+        "background": "transparent",
+        "maxWidth": 1920,
+        "horizontalPadding": 0,
+        "verticalPadding": 0
+      },
+      "doNotAuthor": []
+    },
+
+    "Image": {
+      "description": "Single image with optional caption and aspect ratio.",
+      "category": "Content",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "src": {"type": "string"},
+          "alt": {"type": "string"},
+          "caption": {"type": "string"},
+          "width": {"type": "enum", "enum": ["auto", "full"]},
+          "align": {"type": "enum", "enum": ["left", "center", "right"]},
+          "aspectRatio": {"type": "enum", "enum": ["auto", "1/1", "4/3", "3/2", "16/9", "21/9"]},
+          "objectFit": {"type": "enum", "enum": ["cover", "contain"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "src": "https://placehold.co/1200x600/cccccc/333333?text=Image",
+        "alt": "",
+        "caption": "",
+        "width": "auto",
+        "align": "center",
+        "aspectRatio": "auto",
+        "objectFit": "cover",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48
+      },
+      "doNotAuthor": []
+    },
+
+    "Gallery": {
+      "description": "Multi-image grid with optional captions and click-to-enlarge lightbox.",
+      "category": "Content",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "keys": {
+                "src": {"type": "string"},
+                "alt": {"type": "string"},
+                "caption": {"type": "string"}
+              }
+            }
+          },
+          "columns": {"type": "enum", "enum": [2, 3, 4, 5]},
+          "gap": {"type": "number", "minimum": 0, "maximum": 48},
+          "aspectRatio": {"type": "enum", "enum": ["1/1", "4/3", "3/2", "16/9", "auto"]},
+          "lightbox": {"type": "enum", "enum": [true, false]},
+          "showCaptions": {"type": "enum", "enum": [true, false]},
+          "preheading": {"type": "string"},
+          "heading": {"type": "string"},
+          "subheading": {"type": "string"},
+          "preheadingColor": {"type": "string"},
+          "headingColor": {"type": "string"},
+          "subheadingColor": {"type": "string"},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "columns": 3,
+        "gap": 12,
+        "aspectRatio": "auto",
+        "lightbox": true,
+        "showCaptions": false,
+        "preheading": "",
+        "heading": "",
+        "subheading": "",
+        "preheadingColor": "#000000",
+        "headingColor": "#1c2024",
+        "subheadingColor": "#60646c",
+        "alignment": "center",
+        "background": "transparent",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48
+      },
+      "doNotAuthor": []
+    },
+
+    "Button": {
+      "description": "Call-to-action link with label and URL.",
+      "category": "Content",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "label": {"type": "string"},
+          "href": {"type": "string"},
+          "variant": {"type": "enum", "enum": ["solid", "soft", "outline", "ghost"]},
+          "size": {"type": "enum", "enum": ["1", "2", "3", "4"]},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "textColor": {"type": "string"},
+          "backgroundColor": {"type": "string"},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "label": "Button",
+        "href": "#",
+        "variant": "solid",
+        "size": "3",
+        "alignment": "left",
+        "textColor": "",
+        "backgroundColor": "",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48
+      },
+      "doNotAuthor": []
+    },
+
+    "IntakeForm": {
+      "description": "Configurable intake form — OUT OF SCOPE for import.",
+      "category": "Interactive",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": true,
+      "chromeReason": "Its questions provision a real form record on save. Orgs create these by hand in the builder.",
+      "richtextProps": [],
+      "props": {"properties": {}},
+      "defaults": {},
+      "doNotAuthor": ["formUuid", "resolvedQuestions", "resolvedRequireName", "resolvedRequireEmail", "resolvedError"]
+    },
+
+    "NavMenu": {
+      "description": "Site navigation menu — zone-only, template-owned.",
+      "category": "Site chrome",
+      "zones": ["header"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": true,
+      "chromeReason": "Zone-only. Zones are template-owned.",
+      "richtextProps": [],
+      "props": {"properties": {}},
+      "defaults": {},
+      "doNotAuthor": ["resolvedRegistrationUrl"]
+    },
+
+    "SiteNotice": {
+      "description": "Single-line announcement band — zone-only, template-owned.",
+      "category": "Site chrome",
+      "zones": ["preHeader"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": true,
+      "chromeReason": "Zone-only. Zones are template-owned.",
+      "richtextProps": [],
+      "props": {"properties": {}},
+      "defaults": {},
+      "doNotAuthor": []
+    },
+
+    "FooterColumns": {
+      "description": "Multi-column footer link list — zone-only, template-owned.",
+      "category": "Site chrome",
+      "zones": ["footer"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": true,
+      "chromeReason": "Zone-only. Zones are template-owned.",
+      "richtextProps": [],
+      "props": {"properties": {}},
+      "defaults": {},
+      "doNotAuthor": []
+    },
+
+    "FooterLogo": {
+      "description": "Footer logo + tagline + copyright — zone-only, template-owned.",
+      "category": "Site chrome",
+      "zones": ["footer"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": true,
+      "chromeReason": "Zone-only. Zones are template-owned.",
+      "richtextProps": [],
+      "props": {"properties": {}},
+      "defaults": {},
+      "doNotAuthor": []
+    },
+
+    "FooterSocial": {
+      "description": "Row of social-media icon links — zone-only, template-owned.",
+      "category": "Site chrome",
+      "zones": ["footer"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": true,
+      "chromeReason": "Zone-only. Zones are template-owned.",
+      "richtextProps": [],
+      "props": {"properties": {}},
+      "defaults": {},
+      "doNotAuthor": []
+    }
+  }
+}
