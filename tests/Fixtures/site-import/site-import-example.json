@@ -1,0 +1,2345 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "url": "https://www.riversideminorhockey.ca",
+    "scrapedAt": "2026-08-22T15:04:11Z",
+    "pagesDiscovered": 21,
+    "pagesMapped": 14
+  },
+  "site": {
+    "siteName": "Riverside Minor Hockey Association",
+    "logoUrl": "tl-asset:site-logo",
+    "favicon": "tl-asset:site-favicon",
+    "primaryColor": "#0a4d8c",
+    "neutralColor": "#12263f",
+    "headerColor": "#0a4d8c",
+    "headerTextColor": "#ffffff",
+    "headerBackgroundImage": "tl-asset:header-bg",
+    "siteBackground": "#f4f6f9",
+    "siteBackgroundImage": "tl-asset:site-bg",
+    "siteBackgroundSize": "cover",
+    "siteBackgroundPosition": "center",
+    "siteBackgroundRepeat": "no-repeat",
+    "pageBackground": "#ffffff",
+    "footerCopyright": "© 2026 Riverside Minor Hockey Association. All rights reserved.",
+    "contactEmail": "info@riversideminorhockey.ca",
+    "socialLinks": {
+      "facebook": "https://facebook.com/riversideminorhockey",
+      "twitter": "https://twitter.com/riversidemha",
+      "instagram": "https://instagram.com/riversideminorhockey",
+      "tiktok": "",
+      "youtube": "https://youtube.com/@riversideminorhockey",
+      "linkedin": ""
+    }
+  },
+  "pages": [
+    {
+      "id": "home",
+      "slug": "",
+      "title": "Home",
+      "parentId": null,
+      "navOrder": 0,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Hero",
+            "props": {
+              "id": "hero-000r0x",
+              "layout": "overlay",
+              "imageUrl": "tl-asset:hero-home",
+              "height": 520,
+              "primaryButton": {
+                "label": "Register for 2026–27",
+                "href": "/registration"
+              },
+              "secondaryButton": {
+                "label": "Find your division",
+                "href": "/teams"
+              },
+              "contentAlignment": "left",
+              "preheading": "Since 1978",
+              "heading": "Hockey for every kid in Riverside",
+              "subheading": "Nine divisions, four rinks, one community.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "left",
+              "background": "transparent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48,
+              "visibility": {
+                "showPreheading": true,
+                "showHeading": true,
+                "showSubheading": true
+              }
+            }
+          },
+          {
+            "type": "StatsCounter",
+            "props": {
+              "id": "statscounter-000qur",
+              "items": [
+                {
+                  "value": "512",
+                  "label": "Registered players",
+                  "valueColor": "#0a4d8c",
+                  "labelColor": "#5b6b7f"
+                },
+                {
+                  "value": "38",
+                  "label": "Teams",
+                  "valueColor": "#0a4d8c",
+                  "labelColor": "#5b6b7f"
+                },
+                {
+                  "value": "4",
+                  "label": "Arenas",
+                  "valueColor": "#0a4d8c",
+                  "labelColor": "#5b6b7f"
+                },
+                {
+                  "value": "140",
+                  "label": "Volunteers",
+                  "valueColor": "#0a4d8c",
+                  "labelColor": "#5b6b7f"
+                }
+              ],
+              "size": "small",
+              "preheading": "The 2025–26 season",
+              "heading": "Riverside by the numbers",
+              "subheading": "Where 512 registered players actually end up.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "center",
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "FeatureGrid",
+            "props": {
+              "id": "featuregrid-0001yj",
+              "columns": 3,
+              "items": [
+                {
+                  "icon": "🏒",
+                  "title": "Learn to Skate",
+                  "body": "Eight-week intro program for ages 4–6, equipment provided."
+                },
+                {
+                  "icon": "🥇",
+                  "title": "Divisional hockey",
+                  "body": "U7 through U18 house league, balanced teams, weekly games."
+                },
+                {
+                  "icon": "🎯",
+                  "title": "Development stream",
+                  "body": "Extra skills sessions for players moving toward competitive tiers."
+                }
+              ],
+              "featureTitleColor": "#12263f",
+              "featureBodyColor": "#5b6b7f",
+              "preheading": "Programs",
+              "heading": "What we run",
+              "subheading": "Programs from first skate to junior development.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "right",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "NewsRotator",
+            "props": {
+              "id": "newsrotator-000sxs",
+              "visibleCards": 1,
+              "autoplay": true,
+              "intervalSeconds": 6,
+              "showDots": true,
+              "showArrows": true,
+              "preheading": "Latest",
+              "heading": "News from the association",
+              "subheading": "Announcements, deadlines and game reports.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "left",
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "ScoresSchedule",
+            "props": {
+              "id": "scoresschedule-00013p",
+              "mode": "recent",
+              "layout": "cards",
+              "division": "all",
+              "maxGames": 12,
+              "showLocation": true,
+              "showLogos": true,
+              "dateGrouping": "none",
+              "showGamesOnly": true,
+              "showPagination": true,
+              "moreLinkHref": "/schedule",
+              "moreLinkLabel": "Scores and schedule",
+              "accentColor": "#c8102e",
+              "preheading": "This week",
+              "heading": "Scores and upcoming games",
+              "subheading": "Results post within an hour of the final whistle.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "center",
+              "background": "transparent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Testimonials",
+            "props": {
+              "id": "testimonials-000prp",
+              "items": [
+                {
+                  "quote": "Both our kids started at Learn to Skate and never left. The coaches actually know them by name.",
+                  "author": "Dana Whitfield",
+                  "role": "Parent, U11 and U15",
+                  "photo": "tl-asset:testi-1"
+                },
+                {
+                  "quote": "The equipment bank meant we could say yes when our daughter asked to play. That mattered more than I can explain.",
+                  "author": "Marcus Ellery",
+                  "role": "Parent, U9",
+                  "photo": "tl-asset:testi-2"
+                }
+              ],
+              "testimonialQuoteColor": "#12263f",
+              "testimonialAuthorColor": "#12263f",
+              "testimonialRoleColor": "#5b6b7f",
+              "autoplay": false,
+              "intervalSeconds": 6,
+              "showDots": false,
+              "preheading": "Families",
+              "heading": "What families say",
+              "subheading": "Why parents keep coming back to Riverside.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "right",
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Sponsors",
+            "props": {
+              "id": "sponsors-000osr",
+              "heading": "Our sponsors",
+              "autoplay": true,
+              "slidesToShow": 4
+            }
+          },
+          {
+            "type": "CTABanner",
+            "props": {
+              "id": "ctabanner-000oba",
+              "preheading": "Registration is open",
+              "heading": "Spring evaluations start April 6",
+              "body": "Returning players register by March 15 to keep their division placement.",
+              "ctaLabel": "Start registration",
+              "ctaHref": "/registration",
+              "alignment": "left",
+              "background": "accent",
+              "horizontalPadding": 96,
+              "verticalPadding": 96
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-about",
+      "slug": "about",
+      "title": "About Us",
+      "parentId": null,
+      "navOrder": 1,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Hero",
+            "props": {
+              "id": "hero-000rq8",
+              "layout": "overlay",
+              "imageUrl": "tl-asset:hero-home",
+              "height": 520,
+              "primaryButton": {
+                "label": "Register for 2026–27",
+                "href": "/registration"
+              },
+              "secondaryButton": {
+                "label": "Find your division",
+                "href": "/teams"
+              },
+              "contentAlignment": "center",
+              "preheading": "Since 1978",
+              "heading": "Hockey for every kid in Riverside",
+              "subheading": "Nine divisions, four rinks, one community.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "center",
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48,
+              "visibility": {
+                "showPreheading": true,
+                "showHeading": true,
+                "showSubheading": true
+              }
+            }
+          },
+          {
+            "type": "Text",
+            "props": {
+              "id": "text-000fjr",
+              "body": "<p>Riverside Minor Hockey has run community hockey on the city's west side since <strong>1978</strong>. We field teams from U7 through U18 and keep registration open to every family in the catchment.</p><ul><li>Nine divisions across four arenas</li><li>Certified coaches at every level</li><li>Financial assistance for families who need it</li></ul><p>Questions? <a href=\"/contact\">Get in touch</a>.</p>",
+              "as": "p",
+              "align": "left",
+              "color": "#12263f",
+              "fontSize": 18,
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "TwoColumn",
+            "props": {
+              "id": "twocolumn-0009r4",
+              "leftHeading": "Our mission",
+              "leftHeadingColor": "#12263f",
+              "leftBody": "<h3>Our mission</h3><p>Keep hockey <em>affordable</em> and welcoming, so that cost is never the reason a kid stops playing.</p><blockquote>Every kid who wants to play, plays.</blockquote>",
+              "leftBodyColor": "#12263f",
+              "rightHeading": "Our volunteers",
+              "rightHeadingColor": "#12263f",
+              "rightBody": "<h3>Our volunteers</h3><p>Riverside is run by parents. Around <strong>140 volunteers</strong> cover coaching, timekeeping, tournaments and the equipment bank each season.</p><ol><li>Coach or assistant coach</li><li>Team manager</li><li>Tournament crew</li></ol>",
+              "rightBodyColor": "#12263f",
+              "background": "#ffffff",
+              "backgroundImage": "tl-asset:ice-texture",
+              "backgroundOpacity": 40
+            }
+          },
+          {
+            "type": "Executives",
+            "props": {
+              "id": "executives-0007p4",
+              "columns": 2,
+              "preheading": "Governance",
+              "heading": "Association executive",
+              "subheading": "Elected officers for the 2026–27 season.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "right",
+              "background": "transparent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "TeamMembers",
+            "props": {
+              "id": "teammembers-000hqw",
+              "columns": 3,
+              "showImage": true,
+              "items": [
+                {
+                  "photo": "tl-asset:staff-1",
+                  "name": "Rosa Keller",
+                  "role": "President",
+                  "email": "president@riversideminorhockey.ca",
+                  "bio": "Riverside parent since 2014, board member since 2019."
+                },
+                {
+                  "photo": "tl-asset:staff-2",
+                  "name": "Tomas Nowak",
+                  "role": "Registrar",
+                  "email": "registrar@riversideminorhockey.ca",
+                  "bio": "Handles registration, division placement and transfers."
+                },
+                {
+                  "photo": "tl-asset:staff-3",
+                  "name": "Aisha Bennett",
+                  "role": "Ice scheduler",
+                  "email": "ice@riversideminorhockey.ca",
+                  "bio": "Coordinates practice and game ice across four arenas."
+                }
+              ],
+              "memberNameColor": "#12263f",
+              "memberRoleColor": "#0a4d8c",
+              "memberEmailColor": "#0a4d8c",
+              "memberBioColor": "#5b6b7f",
+              "preheading": "Our people",
+              "heading": "Board and staff",
+              "subheading": "The volunteers who keep Riverside running.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "left",
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Accordion",
+            "props": {
+              "id": "accordion-000kqt",
+              "items": [
+                {
+                  "title": "How do I register?",
+                  "body": "<p>Registration runs online. Create an account, pick your division, and pay in full or in three instalments.</p>",
+                  "titleColor": "#12263f",
+                  "bodyColor": "#5b6b7f",
+                  "defaultOpen": true
+                },
+                {
+                  "title": "What equipment does my child need?",
+                  "body": "<p>Full protective gear and a CSA-approved helmet. Our <a href=\"/registration\">equipment bank</a> lends gear at no cost.</p><ul><li>Helmet with cage</li><li>Shoulder and elbow pads</li><li>Skates and stick</li></ul>",
+                  "titleColor": "#12263f",
+                  "bodyColor": "#5b6b7f",
+                  "defaultOpen": false
+                },
+                {
+                  "title": "Is financial assistance available?",
+                  "body": "<p>Yes. We never turn a family away for cost — email <a href=\"mailto:info@riversideminorhockey.ca\">the registrar</a> and the conversation stays confidential.</p>",
+                  "titleColor": "#12263f",
+                  "bodyColor": "#5b6b7f",
+                  "defaultOpen": false
+                }
+              ],
+              "mode": "multi",
+              "maxWidth": 1280,
+              "verticalPadding": 48,
+              "horizontalPadding": 48,
+              "surface": "transparent",
+              "colorOptions": {
+                "background": "#ffffff",
+                "divider": "#dde3ea",
+                "questions": "#12263f",
+                "body": "#5b6b7f"
+              }
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-about-history",
+      "slug": "about/history",
+      "title": "Our History",
+      "parentId": "p-about",
+      "navOrder": 0,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Text",
+            "props": {
+              "id": "text-000g92",
+              "body": "Fifty seasons on the west side",
+              "as": "h2",
+              "align": "center",
+              "color": "#12263f",
+              "fontSize": 18,
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Text",
+            "props": {
+              "id": "text-000gyd",
+              "body": "<p>Riverside Minor Hockey has run community hockey on the city's west side since <strong>1978</strong>. We field teams from U7 through U18 and keep registration open to every family in the catchment.</p><ul><li>Nine divisions across four arenas</li><li>Certified coaches at every level</li><li>Financial assistance for families who need it</li></ul><p>Questions? <a href=\"/contact\">Get in touch</a>.</p>",
+              "as": "p",
+              "align": "right",
+              "color": "#12263f",
+              "fontSize": 18,
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Text",
+            "props": {
+              "id": "text-000hno",
+              "body": "Where the fees go",
+              "as": "h3",
+              "align": "left",
+              "color": "#12263f",
+              "fontSize": 18,
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Table",
+            "props": {
+              "id": "table-0007n2",
+              "rows": [
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000icz",
+                            "body": "Division",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000j2a",
+                            "body": "Birth years",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000jrl",
+                            "body": "Season fee",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000kgw",
+                            "body": "U7",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000l67",
+                            "body": "2020–2021",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000lvi",
+                            "body": "$395",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000mkt",
+                            "body": "U9",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000na4",
+                            "body": "2018–2019",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000nzf",
+                            "body": "$460",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000ooq",
+                            "body": "U11",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000pe1",
+                            "body": "2016–2017",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000q3c",
+                            "body": "$525",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000qsn",
+                            "body": "U13",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000rhy",
+                            "body": "2014–2015",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000s79",
+                            "body": "$585",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000swk",
+                            "body": "U15",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000tlv",
+                            "body": "2012–2013",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000ub6",
+                            "body": "$640",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "cells": [
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000v0h",
+                            "body": "U18",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000vps",
+                            "body": "2009–2011",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "type": "Text",
+                          "props": {
+                            "id": "text-000wf3",
+                            "body": "$695",
+                            "as": "p"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "hasHeaderRow": true,
+              "variant": "surface",
+              "size": "2",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Gallery",
+            "props": {
+              "id": "gallery-0006vb",
+              "images": [
+                {
+                  "src": "tl-asset:gal-1",
+                  "alt": "U15 team celebrating at provincials",
+                  "caption": "U15 provincial finalists"
+                },
+                {
+                  "src": "tl-asset:gal-2",
+                  "alt": "Learn-to-skate session",
+                  "caption": "Learn to Skate, Saturday mornings"
+                },
+                {
+                  "src": "tl-asset:gal-3",
+                  "alt": "Outdoor classic at Riverside Park",
+                  "caption": "The annual Outdoor Classic"
+                },
+                {
+                  "src": "tl-asset:gal-4",
+                  "alt": "Volunteers sorting donated equipment",
+                  "caption": "Equipment bank volunteers"
+                }
+              ],
+              "columns": 3,
+              "gap": 24,
+              "aspectRatio": "1/1",
+              "lightbox": true,
+              "showCaptions": true,
+              "preheading": "Photos",
+              "heading": "Season gallery",
+              "subheading": "Moments from the 2025–26 season.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "center",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-programs",
+      "slug": "programs",
+      "title": "Programs",
+      "parentId": null,
+      "navOrder": 2,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Hero",
+            "props": {
+              "id": "hero-000sfj",
+              "layout": "overlay",
+              "imageUrl": "tl-asset:hero-home",
+              "height": 520,
+              "primaryButton": {
+                "label": "Register for 2026–27",
+                "href": "/registration"
+              },
+              "secondaryButton": {
+                "label": "Find your division",
+                "href": "/teams"
+              },
+              "contentAlignment": "right",
+              "preheading": "Since 1978",
+              "heading": "Hockey for every kid in Riverside",
+              "subheading": "Nine divisions, four rinks, one community.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "right",
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48,
+              "visibility": {
+                "showPreheading": true,
+                "showHeading": true,
+                "showSubheading": true
+              }
+            }
+          },
+          {
+            "type": "Tabs",
+            "props": {
+              "id": "tabs-000o87",
+              "tab1Label": "U7–U9",
+              "tab1": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-000x4e",
+                    "body": "<p>Learn to Skate and U7–U9 house league. Practices Saturday mornings at Centennial Arena.</p>",
+                    "as": "p",
+                    "align": "center",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                }
+              ],
+              "tab2Label": "U11–U13",
+              "tab2": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-000xtp",
+                    "body": "<p>U11–U13 divisional play, one practice and one game per week.</p>",
+                    "as": "p",
+                    "align": "right",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                },
+                {
+                  "type": "Accordion",
+                  "props": {
+                    "id": "accordion-000lg4",
+                    "items": [
+                      {
+                        "title": "How do I register?",
+                        "body": "<p>Registration runs online. Create an account, pick your division, and pay in full or in three instalments.</p>",
+                        "titleColor": "#12263f",
+                        "bodyColor": "#5b6b7f",
+                        "defaultOpen": true
+                      },
+                      {
+                        "title": "What equipment does my child need?",
+                        "body": "<p>Full protective gear and a CSA-approved helmet. Our <a href=\"/registration\">equipment bank</a> lends gear at no cost.</p><ul><li>Helmet with cage</li><li>Shoulder and elbow pads</li><li>Skates and stick</li></ul>",
+                        "titleColor": "#12263f",
+                        "bodyColor": "#5b6b7f",
+                        "defaultOpen": false
+                      },
+                      {
+                        "title": "Is financial assistance available?",
+                        "body": "<p>Yes. We never turn a family away for cost — email <a href=\"mailto:info@riversideminorhockey.ca\">the registrar</a> and the conversation stays confidential.</p>",
+                        "titleColor": "#12263f",
+                        "bodyColor": "#5b6b7f",
+                        "defaultOpen": false
+                      }
+                    ],
+                    "mode": "single",
+                    "maxWidth": 1280,
+                    "verticalPadding": 48,
+                    "horizontalPadding": 48,
+                    "surface": "subtle",
+                    "colorOptions": {
+                      "background": "#ffffff",
+                      "divider": "#dde3ea",
+                      "questions": "#12263f",
+                      "body": "#5b6b7f"
+                    }
+                  }
+                }
+              ],
+              "tab3Label": "U15–U18",
+              "tab3": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-000yj0",
+                    "body": "<p>U15–U18 competitive tiers with an evaluation process each spring.</p>",
+                    "as": "p",
+                    "align": "left",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                },
+                {
+                  "type": "Table",
+                  "props": {
+                    "id": "table-0008cd",
+                    "rows": [
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-000z8b",
+                                  "body": "Division",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-000zxm",
+                                  "body": "Birth years",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0010mx",
+                                  "body": "Season fee",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0011c8",
+                                  "body": "U7",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-00121j",
+                                  "body": "2020–2021",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0012qu",
+                                  "body": "$395",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0013g5",
+                                  "body": "U9",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-00145g",
+                                  "body": "2018–2019",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0014ur",
+                                  "body": "$460",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0015k2",
+                                  "body": "U11",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-00169d",
+                                  "body": "2016–2017",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0016yo",
+                                  "body": "$525",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0017nz",
+                                  "body": "U13",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0018da",
+                                  "body": "2014–2015",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-00192l",
+                                  "body": "$585",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-0019rw",
+                                  "body": "U15",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-001ah7",
+                                  "body": "2012–2013",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-001b6i",
+                                  "body": "$640",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cells": [
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-001bvt",
+                                  "body": "U18",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-001cl4",
+                                  "body": "2009–2011",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "content": [
+                              {
+                                "type": "Text",
+                                "props": {
+                                  "id": "text-001daf",
+                                  "body": "$695",
+                                  "as": "p"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "hasHeaderRow": true,
+                    "variant": "ghost",
+                    "size": "3",
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                }
+              ],
+              "tab4Label": "Coaches",
+              "tab4": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-001dzq",
+                    "body": "<p>Coach certification, screening and clinic dates.</p>",
+                    "as": "p",
+                    "align": "center",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                },
+                {
+                  "type": "FileDownload",
+                  "props": {
+                    "id": "filedownload-000kru",
+                    "fileUrl": "tl-asset:registration-package",
+                    "label": "2026–27 registration package (PDF)",
+                    "size": "small",
+                    "align": "right",
+                    "color": "#12263f",
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                }
+              ],
+              "tabStyle": "underline",
+              "background": "transparent",
+              "textColor": "#12263f",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Grid",
+            "props": {
+              "id": "grid-0008n1",
+              "columns": "3",
+              "columnWeights": "1fr 1fr 1fr",
+              "gap": 24,
+              "background": "#ffffff",
+              "backgroundImage": "tl-asset:grid-bg",
+              "backgroundOpacity": 40,
+              "column1": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-001ep1",
+                    "body": "<h3>U7–U9</h3><p>First skates, no scores kept.</p>",
+                    "as": "p",
+                    "align": "left",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                }
+              ],
+              "column1Align": "stretch",
+              "column2": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-001fec",
+                    "body": "<h3>U11–U13</h3><p>House league with divisional play.</p>",
+                    "as": "p",
+                    "align": "center",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                }
+              ],
+              "column2Align": "stretch",
+              "column3": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-001g3n",
+                    "body": "<h3>U15–U18</h3><p>Competitive tiers and development.</p>",
+                    "as": "p",
+                    "align": "right",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                },
+                {
+                  "type": "Button",
+                  "props": {
+                    "id": "button-00076m",
+                    "label": "Compare divisions",
+                    "href": "/teams",
+                    "variant": "outline",
+                    "size": "1",
+                    "alignment": "left",
+                    "textColor": "#12263f",
+                    "backgroundColor": "#0a4d8c",
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                }
+              ],
+              "column3Align": "stretch",
+              "column4": [],
+              "column4Align": "stretch",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-teams",
+      "slug": "teams",
+      "title": "Teams",
+      "parentId": null,
+      "navOrder": 3,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Teams",
+            "props": {
+              "id": "teams-000jdh",
+              "columns": 4,
+              "showLogos": false,
+              "showCity": true,
+              "preheading": "Teams",
+              "heading": "Find your team",
+              "subheading": "Rosters, schedules and staff for every team.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "center",
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "TeamRoster",
+            "props": {
+              "id": "teamroster-000ar3",
+              "preheading": "Roster",
+              "heading": "Team roster",
+              "subheading": "Players and staff for the selected team.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "right",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48,
+              "columns": 1,
+              "showJerseyNumber": true,
+              "showPosition": true,
+              "teamNameColor": "#12263f",
+              "positionColor": "#12263f",
+              "accentColor": "#c8102e"
+            }
+          },
+          {
+            "type": "Standings",
+            "props": {
+              "id": "standings-0005s9",
+              "showLogos": true,
+              "showStreak": true,
+              "highlightTop": 2,
+              "accentColor": "#c8102e",
+              "preheading": "Standings",
+              "heading": "Divisional standings",
+              "subheading": "Live tables across all nine divisions.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "left",
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Statistics",
+            "props": {
+              "id": "statistics-00022n",
+              "sport": "hockey",
+              "statCategory": "Points",
+              "secondaryStatCategory": "Games Played",
+              "mode": "all_players",
+              "showSecondary": true,
+              "preheading": "Leaders",
+              "heading": "Scoring leaders",
+              "subheading": "Points, goals and assists by division.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "center",
+              "background": "transparent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-schedule",
+      "slug": "schedule",
+      "title": "Schedule & Scores",
+      "parentId": null,
+      "navOrder": 4,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "EventMarquee",
+            "props": {
+              "id": "eventmarquee-0004k2",
+              "speed": "slow",
+              "direction": "left",
+              "pauseOnHover": true,
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Schedule",
+            "props": {
+              "id": "schedule-000s2y",
+              "mode": "upcoming",
+              "layout": "list",
+              "division": "East",
+              "maxGames": 12,
+              "showLocation": false,
+              "showLogos": false,
+              "dateGrouping": "day",
+              "showGamesOnly": false,
+              "showPagination": false,
+              "moreLinkHref": "/schedule",
+              "moreLinkLabel": "Full schedule",
+              "accentColor": "#c8102e",
+              "preheading": "Fixtures",
+              "heading": "Upcoming games",
+              "subheading": "Ice times are confirmed 72 hours ahead.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "right",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Scores",
+            "props": {
+              "id": "scores-00034o",
+              "mode": "all",
+              "layout": "cards",
+              "division": "West",
+              "maxGames": 12,
+              "showLocation": true,
+              "showLogos": true,
+              "dateGrouping": "week",
+              "showGamesOnly": true,
+              "showPagination": true,
+              "moreLinkHref": "/schedule",
+              "moreLinkLabel": "All results",
+              "accentColor": "#c8102e",
+              "preheading": "Results",
+              "heading": "Recent scores",
+              "subheading": "Every division, updated as games finalize.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "left",
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Suspensions",
+            "props": {
+              "id": "suspensions-000bht",
+              "layout": "cards",
+              "showDates": true,
+              "showReason": true,
+              "preheading": "Discipline",
+              "heading": "Active suspensions",
+              "subheading": "Published per league policy.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "center",
+              "background": "transparent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-news",
+      "slug": "news",
+      "title": "News",
+      "parentId": null,
+      "navOrder": 5,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "NewsList",
+            "props": {
+              "id": "newslist-000sid",
+              "maxItems": 10,
+              "showImages": true,
+              "showSummary": true,
+              "preheading": "Archive",
+              "heading": "All association news",
+              "subheading": "Every announcement, newest first.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "right",
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "PhotosRotator",
+            "props": {
+              "id": "photosrotator-00028t",
+              "photos": [
+                {
+                  "image": "tl-asset:rot-1",
+                  "alt": "Practice drills at Centennial",
+                  "caption": "Tuesday practice"
+                },
+                {
+                  "image": "tl-asset:rot-2",
+                  "alt": "U13 team photo",
+                  "caption": "U13 Riverside Rapids"
+                },
+                {
+                  "image": "tl-asset:rot-3",
+                  "alt": "Tournament weekend crowd",
+                  "caption": "Tournament weekend"
+                }
+              ],
+              "visibleCards": 3,
+              "aspectRatio": "4/3",
+              "showCaptions": false,
+              "autoplay": false,
+              "intervalSeconds": 6,
+              "showDots": true,
+              "showArrows": false,
+              "preheading": "Photos",
+              "heading": "From the rink",
+              "subheading": "Recent shots from practices and games.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "left",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-photos",
+      "slug": "photos",
+      "title": "Photos",
+      "parentId": null,
+      "navOrder": 6,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Slider",
+            "props": {
+              "id": "slider-000nee",
+              "slides": [
+                {
+                  "image": "tl-asset:slide-1",
+                  "alt": "Registration open banner",
+                  "caption": "Registration for 2026–27 is open",
+                  "link": "/registration"
+                },
+                {
+                  "image": "tl-asset:slide-2",
+                  "alt": "Spring evaluations banner",
+                  "caption": "Spring evaluations begin April 6",
+                  "link": "/schedule"
+                },
+                {
+                  "image": "tl-asset:slide-3",
+                  "alt": "Volunteer call banner",
+                  "caption": "We need coaches and managers",
+                  "link": "/about"
+                }
+              ],
+              "aspectRatio": "3/2",
+              "objectFit": "cover",
+              "autoplay": true,
+              "intervalSeconds": 6,
+              "loop": true,
+              "showDots": false,
+              "showArrows": true,
+              "preheading": "Highlights",
+              "heading": "This season at Riverside",
+              "subheading": "Dates, deadlines and how to get involved.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "center",
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Image",
+            "props": {
+              "id": "image-000b4g",
+              "src": "tl-asset:arena-exterior",
+              "alt": "Centennial Arena on a winter morning",
+              "caption": "Centennial Arena, our home rink since 1981",
+              "width": "auto",
+              "align": "left",
+              "aspectRatio": "3/2",
+              "objectFit": "contain",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-partners",
+      "slug": "partners",
+      "title": "Sponsors & Partners",
+      "parentId": null,
+      "navOrder": 7,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Fundraisers",
+            "props": {
+              "id": "fundraisers-0009n0",
+              "variant": "compact",
+              "openTitle": "Open campaigns",
+              "showClosed": true,
+              "showProgress": true,
+              "gridSectionTitleColor": "#12263f",
+              "fundraiserTitleColor": "#12263f",
+              "fundraiserSubtitleColor": "#12263f",
+              "preheading": "Support us",
+              "heading": "Current fundraisers",
+              "subheading": "Every dollar goes to ice time and the equipment bank.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "right",
+              "background": "transparent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "SubOrganizations",
+            "props": {
+              "id": "suborganizations-000o87",
+              "columns": 3,
+              "showLogos": false,
+              "showCity": false,
+              "organizationNameColor": "#12263f",
+              "organizationCityColor": "#12263f",
+              "preheading": "Network",
+              "heading": "Clubs in our association",
+              "subheading": "Nine member clubs across the west side.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "left",
+              "background": "subtle",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-facilities",
+      "slug": "facilities",
+      "title": "Arenas",
+      "parentId": null,
+      "navOrder": 8,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Locations",
+            "props": {
+              "id": "locations-0008u8",
+              "columns": 3,
+              "showMap": true,
+              "preheading": "Where we play",
+              "heading": "Our arenas",
+              "subheading": "Four rinks within fifteen minutes of Riverside.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "center",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Video",
+            "props": {
+              "id": "video-0005zg",
+              "url": "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+              "caption": {
+                "text": "Season highlights, 2025–26",
+                "color": "#5b6b7f"
+              },
+              "aspectRatio": "9/16",
+              "autoplay": false,
+              "muted": true,
+              "loop": false,
+              "background": "inverse",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Spacer",
+            "props": {
+              "id": "spacer-0007n2",
+              "size": 48,
+              "color": "transparent"
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-registration",
+      "slug": "registration",
+      "title": "Registration",
+      "parentId": null,
+      "navOrder": 9,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "Section",
+            "props": {
+              "id": "section-000ntt",
+              "background": "#ffffff",
+              "backgroundImage": "tl-asset:section-bg",
+              "overlay": "rgba(18,38,63,0.55)",
+              "paddingTop": 48,
+              "paddingBottom": 48,
+              "horizontalPadding": 48,
+              "maxWidth": "full",
+              "align": "right",
+              "textColor": "#12263f",
+              "content": [
+                {
+                  "type": "Text",
+                  "props": {
+                    "id": "text-001gsy",
+                    "body": "<h2>How registration works</h2><p>Three steps: create an account, choose a division, pay or request assistance.</p>",
+                    "as": "p",
+                    "align": "center",
+                    "color": "#12263f",
+                    "fontSize": 18,
+                    "maxWidth": 1280,
+                    "horizontalPadding": 48,
+                    "verticalPadding": 48
+                  }
+                },
+                {
+                  "type": "CTABanner",
+                  "props": {
+                    "id": "ctabanner-000p0l",
+                    "preheading": "Registration is open",
+                    "heading": "Spring evaluations start April 6",
+                    "body": "Returning players register by March 15 to keep their division placement.",
+                    "ctaLabel": "Start registration",
+                    "ctaHref": "/registration",
+                    "alignment": "right",
+                    "background": "transparent",
+                    "horizontalPadding": 96,
+                    "verticalPadding": 96
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "FileDownload",
+            "props": {
+              "id": "filedownload-000lh5",
+              "fileUrl": "tl-asset:registration-package",
+              "label": "2026–27 registration package (PDF)",
+              "size": "large",
+              "align": "left",
+              "color": "#12263f",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          },
+          {
+            "type": "Button",
+            "props": {
+              "id": "button-0007vx",
+              "label": "Register for the 2026–27 season",
+              "href": "/registration",
+              "variant": "solid",
+              "size": "3",
+              "alignment": "left",
+              "textColor": "#12263f",
+              "backgroundColor": "#0a4d8c",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-faq",
+      "slug": "faq",
+      "title": "FAQ",
+      "parentId": null,
+      "navOrder": 10,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "FAQ",
+            "props": {
+              "id": "faq-000f2a",
+              "items": [
+                {
+                  "title": "How do I register?",
+                  "body": "<p>Registration runs online. Create an account, pick your division, and pay in full or in three instalments.</p>",
+                  "titleColor": "#12263f",
+                  "bodyColor": "#5b6b7f",
+                  "defaultOpen": true
+                },
+                {
+                  "title": "What equipment does my child need?",
+                  "body": "<p>Full protective gear and a CSA-approved helmet. Our <a href=\"/registration\">equipment bank</a> lends gear at no cost.</p><ul><li>Helmet with cage</li><li>Shoulder and elbow pads</li><li>Skates and stick</li></ul>",
+                  "titleColor": "#12263f",
+                  "bodyColor": "#5b6b7f",
+                  "defaultOpen": false
+                },
+                {
+                  "title": "Is financial assistance available?",
+                  "body": "<p>Yes. We never turn a family away for cost — email <a href=\"mailto:info@riversideminorhockey.ca\">the registrar</a> and the conversation stays confidential.</p>",
+                  "titleColor": "#12263f",
+                  "bodyColor": "#5b6b7f",
+                  "defaultOpen": false
+                }
+              ],
+              "mode": "single",
+              "maxWidth": 1280,
+              "verticalPadding": 48,
+              "horizontalPadding": 48,
+              "surface": "accent",
+              "colorOptions": {
+                "background": "#ffffff",
+                "divider": "#dde3ea",
+                "questions": "#12263f",
+                "body": "#5b6b7f",
+                "heading": "#12263f",
+                "preheading": "#c8102e"
+              },
+              "preheading": "Questions",
+              "heading": "Frequently asked questions",
+              "subheading": "Registration, equipment and cost.",
+              "preheadingColor": "#c8102e",
+              "headingColor": "#12263f",
+              "subheadingColor": "#5b6b7f",
+              "alignment": "center",
+              "background": "subtle"
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-contact",
+      "slug": "contact",
+      "title": "Contact",
+      "parentId": null,
+      "navOrder": 11,
+      "showInNav": true,
+      "data": {
+        "content": [
+          {
+            "type": "ContactForm",
+            "props": {
+              "id": "contactform-000pom",
+              "preheading": "Get in touch",
+              "heading": "Contact us",
+              "subheading": "Questions about registration, ice times or volunteering.",
+              "preheadingColor": "#ffd8dd",
+              "headingColor": "#ffffff",
+              "subheadingColor": "#d7e2ef",
+              "alignment": "right",
+              "background": "accent",
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48,
+              "showPhone": true,
+              "showSubject": true,
+              "submitLabel": "Send message",
+              "submitVariant": "solid",
+              "contactEmail": "info@riversideminorhockey.ca",
+              "successMessage": "Thanks — we'll reply within two business days.",
+              "successMessageColor": "#1a7f4b"
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    },
+    {
+      "id": "p-policies",
+      "slug": "policies",
+      "title": "Policies",
+      "parentId": null,
+      "navOrder": 12,
+      "showInNav": false,
+      "data": {
+        "content": [
+          {
+            "type": "Text",
+            "props": {
+              "id": "text-001hi9",
+              "body": "<p>Riverside Minor Hockey has run community hockey on the city's west side since <strong>1978</strong>. We field teams from U7 through U18 and keep registration open to every family in the catchment.</p><ul><li>Nine divisions across four arenas</li><li>Certified coaches at every level</li><li>Financial assistance for families who need it</li></ul><p>Questions? <a href=\"/contact\">Get in touch</a>.</p>",
+              "as": "p",
+              "align": "center",
+              "color": "#12263f",
+              "fontSize": 18,
+              "maxWidth": 1280,
+              "horizontalPadding": 48,
+              "verticalPadding": 48
+            }
+          }
+        ],
+        "root": {},
+        "zones": {}
+      }
+    }
+  ],
+  "assets": [
+    {
+      "ref": "site-logo",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/riverside-logo.png",
+      "filename": "riverside-logo.png",
+      "mimeType": "image/png",
+      "alt": "Riverside Minor Hockey Association crest",
+      "usage": "logo"
+    },
+    {
+      "ref": "site-favicon",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/favicon.png",
+      "filename": "favicon.png",
+      "mimeType": "image/png",
+      "alt": "Riverside Minor Hockey favicon",
+      "usage": "favicon"
+    },
+    {
+      "ref": "header-bg",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/header-boards.jpg",
+      "filename": "header-boards.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Rink boards behind the site header",
+      "usage": "other"
+    },
+    {
+      "ref": "site-bg",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/ice-pattern.jpg",
+      "filename": "ice-pattern.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Subtle ice pattern",
+      "usage": "other"
+    },
+    {
+      "ref": "hero-home",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/rink-banner.jpg",
+      "filename": "rink-banner.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Riverside players lining up for a face-off",
+      "usage": "hero"
+    },
+    {
+      "ref": "testi-1",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/parent-dana.jpg",
+      "filename": "parent-dana.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Dana Whitfield",
+      "usage": "other"
+    },
+    {
+      "ref": "testi-2",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/parent-marcus.jpg",
+      "filename": "parent-marcus.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Marcus Ellery",
+      "usage": "other"
+    },
+    {
+      "ref": "ice-texture",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/ice-texture.jpg",
+      "filename": "ice-texture.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Ice surface texture",
+      "usage": "other"
+    },
+    {
+      "ref": "staff-1",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/president-rk.jpg",
+      "filename": "president-rk.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Rosa Keller",
+      "usage": "other"
+    },
+    {
+      "ref": "staff-2",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/registrar-tn.jpg",
+      "filename": "registrar-tn.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Tomas Nowak",
+      "usage": "other"
+    },
+    {
+      "ref": "staff-3",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/ice-scheduler-ab.jpg",
+      "filename": "ice-scheduler-ab.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Aisha Bennett",
+      "usage": "other"
+    },
+    {
+      "ref": "gal-1",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/u15-provincials.jpg",
+      "filename": "u15-provincials.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "U15 team celebrating at provincials",
+      "usage": "gallery"
+    },
+    {
+      "ref": "gal-2",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/learn-to-skate.jpg",
+      "filename": "learn-to-skate.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Learn-to-skate session",
+      "usage": "gallery"
+    },
+    {
+      "ref": "gal-3",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/outdoor-classic.jpg",
+      "filename": "outdoor-classic.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Outdoor classic at Riverside Park",
+      "usage": "gallery"
+    },
+    {
+      "ref": "gal-4",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/equipment-bank.jpg",
+      "filename": "equipment-bank.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Volunteers sorting donated equipment",
+      "usage": "gallery"
+    },
+    {
+      "ref": "registration-package",
+      "sourceUrl": "https://www.riversideminorhockey.ca/docs/2026-27-registration-package.pdf",
+      "filename": "2026-27-registration-package.pdf",
+      "mimeType": "application/pdf",
+      "alt": "2026–27 registration package",
+      "usage": "document"
+    },
+    {
+      "ref": "grid-bg",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/boards-blur.jpg",
+      "filename": "boards-blur.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Blurred rink boards",
+      "usage": "other"
+    },
+    {
+      "ref": "rot-1",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/practice-drills.jpg",
+      "filename": "practice-drills.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Practice drills at Centennial",
+      "usage": "gallery"
+    },
+    {
+      "ref": "rot-2",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/team-photo-u13.jpg",
+      "filename": "team-photo-u13.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "U13 team photo",
+      "usage": "gallery"
+    },
+    {
+      "ref": "rot-3",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/tournament-weekend.jpg",
+      "filename": "tournament-weekend.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Tournament weekend crowd",
+      "usage": "gallery"
+    },
+    {
+      "ref": "slide-1",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/banner-registration.jpg",
+      "filename": "banner-registration.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Registration open banner",
+      "usage": "gallery"
+    },
+    {
+      "ref": "slide-2",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/banner-tryouts.jpg",
+      "filename": "banner-tryouts.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Spring evaluations banner",
+      "usage": "gallery"
+    },
+    {
+      "ref": "slide-3",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/banner-volunteers.jpg",
+      "filename": "banner-volunteers.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Volunteer call banner",
+      "usage": "gallery"
+    },
+    {
+      "ref": "arena-exterior",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/centennial-arena.jpg",
+      "filename": "centennial-arena.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Centennial Arena on a winter morning",
+      "usage": "gallery"
+    },
+    {
+      "ref": "section-bg",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/stands.jpg",
+      "filename": "stands.jpg",
+      "mimeType": "image/jpeg",
+      "alt": "Spectators in the stands",
+      "usage": "other"
+    }
+  ],
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "form_not_imported",
+      "sourceUrl": "https://www.riversideminorhockey.ca/volunteer-application",
+      "message": "Volunteer application form found but intake forms are never imported. Rebuild by hand; it collected: full name, email, phone, preferred role, police check on file (yes/no), availability (checkbox list), notes.",
+      "droppedContent": "<form action=\"/volunteer-submit\"> … 7 fields, 1 file upload … </form>"
+    },
+    {
+      "severity": "warning",
+      "code": "asset_type_rejected",
+      "sourceUrl": "https://www.riversideminorhockey.ca/img/logo.svg",
+      "message": "Source logo was SVG, which is not an accepted asset type. Rasterized to PNG at 1024px on the long edge and declared as site-logo."
+    },
+    {
+      "severity": "warning",
+      "code": "unmappable_section",
+      "sourceUrl": "https://www.riversideminorhockey.ca/sponsors",
+      "message": "Sponsor logo carousel with a per-logo hyperlink on each item — no block supports per-item links. Placed the Sponsors widget instead, which renders live sponsor records.",
+      "droppedContent": "<div class=\"sponsor-carousel\"> … 14 <a><img></a> pairs … </div>"
+    },
+    {
+      "severity": "info",
+      "code": "page_skipped_pagination",
+      "sourceUrl": "https://www.riversideminorhockey.ca/news/page/2",
+      "message": "Paginated duplicate of /news. Mapped the first page only."
+    },
+    {
+      "severity": "info",
+      "code": "page_skipped_platform",
+      "sourceUrl": "https://www.riversideminorhockey.ca/login",
+      "message": "Login page is a platform feature, not content."
+    }
+  ]
+}

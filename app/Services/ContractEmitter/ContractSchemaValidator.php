@@ -292,6 +292,58 @@ final class ContractSchemaValidator
                     }
                 }
                 break;
+
+            case 'boolean':
+                if (! is_bool($value)) {
+                    $issues[] = new ValidationIssue(
+                        severity: 'error',
+                        code: 'wrong_type',
+                        message: 'Expected boolean, got '.self::describe($value).'.',
+                        path: $path,
+                    );
+                }
+                break;
+
+            case 'string_or_number':
+                // Slice 16b knownDiscrepancies: schema declares string
+                // but the block ships numbers. Accept either.
+                if (! is_string($value) && ! is_int($value) && ! is_float($value)) {
+                    $issues[] = new ValidationIssue(
+                        severity: 'error',
+                        code: 'wrong_type',
+                        message: 'Expected string or number, got '.self::describe($value).'.',
+                        path: $path,
+                    );
+                }
+                break;
+
+            case 'slot':
+                // Slot: array of block objects. Block-shape validation
+                // recurses via ContractPayloadEmitter's page-tree walk,
+                // not here — this validator sees ONE block at a time.
+                if (! is_array($value)) {
+                    $issues[] = new ValidationIssue(
+                        severity: 'error',
+                        code: 'wrong_type',
+                        message: 'Slot expects an array of blocks, got '.self::describe($value).'.',
+                        path: $path,
+                    );
+                }
+                break;
+
+            case 'opaque':
+                // Opaque server-owned reference (TeamRoster.selection.divisionIds[] etc.).
+                // Any JSON value type is acceptable — reviewer / product side owns the shape.
+                break;
+        }
+
+        // Handle nullable strings (Locations.items[].description) — null
+        // is a legitimate value here per the knownDiscrepancy.
+        if ($type === 'string' && ($propSchema['nullable'] ?? false) === true && $value === null) {
+            // silently allowed; would otherwise hit the string wrong_type branch above.
+            $issues = array_values(array_filter($issues, static function (ValidationIssue $i) use ($path): bool {
+                return ! ($i->code === 'wrong_type' && $i->path === $path);
+            }));
         }
 
         return $issues;
