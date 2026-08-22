@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Services\ContractEmitter\ContractPayloadEmitter;
+use App\Services\ContractEmitter\ContractSchema;
+use App\Services\ContractEmitter\ContractSchemaValidator;
+use App\Services\ContractEmitter\DiagnosticsCollector;
+use App\Services\ContractEmitter\PageTreeBuilder;
+use App\Services\ContractEmitter\PuckToContractMapper;
+use App\Services\ContractEmitter\RichTextSanitizer;
+use App\Services\ContractEmitter\SiteSettingsEmitter;
 use App\Services\Conversion\CacheConversionContextStore;
 use App\Services\Conversion\CacheConversionResultStore;
 use App\Services\Conversion\CacheConversionStatusStore;
@@ -129,6 +137,20 @@ class AppServiceProvider extends ServiceProvider
         // binding (StubProductClient today, real HTTP later) flows
         // through DI consistently.
         $this->app->singleton(DraftLanding::class);
+
+        // Contract-payload emitter — TeamLinkt Site Import Contract v1.
+        // Singletons across the collaborator graph so the payload
+        // build is a cheap function of ConversionResult.
+        $this->app->singleton(ContractSchema::class, function () {
+            return ContractSchema::load();
+        });
+        $this->app->singleton(ContractSchemaValidator::class);
+        $this->app->singleton(RichTextSanitizer::class);
+        $this->app->singleton(PuckToContractMapper::class);
+        $this->app->singleton(PageTreeBuilder::class);
+        $this->app->singleton(SiteSettingsEmitter::class);
+        $this->app->singleton(DiagnosticsCollector::class);
+        $this->app->singleton(ContractPayloadEmitter::class);
 
         // Step-6 conversion pipeline: per-conversion stores + dedupe
         // for the trigger endpoint. All cache-backed via the app's
