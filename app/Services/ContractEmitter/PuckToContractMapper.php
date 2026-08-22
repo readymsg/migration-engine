@@ -580,6 +580,17 @@ final class PuckToContractMapper
             return $this->emitSponsors($flatContent, $srcUrl);
         }
 
+        // Slice 15e: news-list detection. All-Cards Columns whose
+        // Card shapes are news-article-like (title = headline, body
+        // = summary text, image = article photo, href = article
+        // URL) fold to a single NewsList widget. Distinct from
+        // sponsor-deck by: heterogeneous non-placeholder hrefs +
+        // longer bodies. Distinct from people-directory by: no
+        // email/phone signal + href-heavy.
+        if ($this->looksLikeNewsList($flatContent)) {
+            return $this->emitNewsList($flatContent, $srcUrl);
+        }
+
         // Slice 15c: emit a Grid block. Contract's Grid accepts
         // 2/3/4 columns; we clamp the source count and drop
         // whichever columns can't fit (rare — 5+ column source
@@ -765,6 +776,78 @@ final class PuckToContractMapper
         // Sponsor characteristic: majority have BOTH image (logo)
         // and href (outbound link, even placeholder #).
         return $cardsWithImage >= $half && $cardsWithHref >= $half;
+    }
+
+    /**
+     * News-list pattern: 3+ Cards where each Card looks like a news
+     * article — title (headline), body (summary), image (article
+     * photo), and href pointing to a real article URL (not sponsor-
+     * shape placeholder "#" or scheme-less). Distinct from sponsor-
+     * deck by: hrefs are heterogeneous real URLs, not placeholders;
+     * bodies are prose (>80 chars typical), not "Visit Website"
+     * CTAs.
+     *
+     * @param  array<int, array<string, mixed>>  $children
+     */
+    private function looksLikeNewsList(array $children): bool
+    {
+        if (count($children) < 3) {
+            return false;
+        }
+        $realHrefs = 0;
+        $longBodies = 0;
+        foreach ($children as $child) {
+            if (! is_array($child) || ($child['type'] ?? null) !== 'Card') {
+                return false;
+            }
+            $props = is_array($child['props'] ?? null) ? $child['props'] : [];
+            $href = is_string($props['href'] ?? null) ? trim($props['href']) : '';
+            $body = is_string($props['body'] ?? null) ? $props['body'] : '';
+            // Real href = http(s):// AND not a sponsor CTA pattern.
+            if (preg_match('#^https?://#i', $href) === 1) {
+                $realHrefs++;
+            }
+            // News summaries tend to be prose paragraphs; sponsor
+            // CTAs are short ("Visit Website", "Learn more").
+            if (strlen(trim($body)) >= 80) {
+                $longBodies++;
+            }
+        }
+        $half = (int) ceil(count($children) / 2);
+
+        // BOTH signals required to distinguish from sponsor decks.
+        return $realHrefs >= $half && $longBodies >= $half;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $cards
+     */
+    private function emitNewsList(array $cards, ?string $srcUrl): MappedContent
+    {
+        $summary = [];
+        foreach ($cards as $card) {
+            $props = is_array($card['props'] ?? null) ? $card['props'] : [];
+            $title = is_string($props['title'] ?? null) ? $props['title'] : '';
+            if ($title !== '') {
+                $summary[] = $title;
+            }
+        }
+
+        return new MappedContent(
+            blocks: [new Block(type: 'NewsList', props: [
+                'id' => $this->id('newslist', $srcUrl ?? '', (string) count($cards)),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'news_list_placed_widget',
+                message: sprintf(
+                    'Detected news-list pattern (%d article Cards). Placed a NewsList widget; scraped article summaries discarded — widgets read live from TeamLinkt.',
+                    count($cards),
+                ),
+                sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
+                droppedContent: implode(' · ', array_slice($summary, 0, 5)),
+            )],
+        );
     }
 
     /**

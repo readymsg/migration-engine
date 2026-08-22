@@ -567,6 +567,45 @@ final class PuckToContractMapperTest extends TestCase
     }
 
     #[Test]
+    public function columns_of_news_article_cards_place_a_newslist_widget(): void
+    {
+        // News-shape Cards: title=headline, body=prose summary,
+        // image=photo, href=real https:// URL. Distinct from
+        // sponsor-shape by long-body + real-URL signals.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Columns', 'props' => [
+                'columns' => [
+                    ['children' => [['type' => 'Card', 'props' => [
+                        'title' => 'Tryouts Season Recap',
+                        'body' => 'Our fall tryouts wrapped up last weekend with over 200 athletes participating across all divisions. The board sends its thanks to every volunteer coach.',
+                        'href' => 'https://www.tbirdhoops.org/news/tryouts-2025',
+                    ]]]],
+                    ['children' => [['type' => 'Card', 'props' => [
+                        'title' => 'Championship Win',
+                        'body' => 'The U16 boys division won the regional championship this weekend after a hard-fought season. Congratulations to Coach Whitenack and the entire team.',
+                        'href' => 'https://www.tbirdhoops.org/news/u16-championship',
+                    ]]]],
+                    ['children' => [['type' => 'Card', 'props' => [
+                        'title' => 'Registration Now Open',
+                        'body' => 'Spring registration opened this week. Early-bird pricing available through March 15 — visit the registration page to secure your spot in the program.',
+                        'href' => 'https://www.tbirdhoops.org/news/spring-registration',
+                    ]]]],
+                ],
+            ]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('NewsList', $out->blocks[0]->type);
+        // Widget = placement only; scraped content NOT leaked into props.
+        $this->assertArrayNotHasKey('items', $out->blocks[0]->props);
+        $this->assertArrayNotHasKey('resolvedItems', $out->blocks[0]->props);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('news_list_placed_widget', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
     public function columns_of_sponsor_cards_place_a_sponsors_widget(): void
     {
         // Slice 15b: sponsor-deck detection. What Slice 13 correctly
