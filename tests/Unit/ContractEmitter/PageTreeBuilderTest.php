@@ -52,7 +52,10 @@ final class PageTreeBuilderTest extends TestCase
         $this->assertSame('', $home->slug);
         $this->assertSame('Home', $home->title);
 
-        $about = $this->findPageBySlug($tree->pages, 'page-2');
+        // Slice A: slugs come from the title. `page-2` becomes `about`.
+        // The id STILL matches the source slug (payload-local join key,
+        // separate from the URL-facing slug).
+        $about = $this->findPageBySlug($tree->pages, 'about');
         $this->assertNotNull($about);
         $this->assertSame('About', $about->title);
         $this->assertSame('page-2', $about->id);
@@ -154,11 +157,14 @@ final class PageTreeBuilderTest extends TestCase
     #[Test]
     public function slug_lowercased_and_extensions_stripped(): void
     {
+        // Slice A: slugs derive from titles. Extensions on source
+        // slugs are irrelevant when the title carries the readable
+        // name.
         $r = $this->makeResult(
             nav: [
                 $this->navResolved('Home', 'page-1', 0),
-                $this->navResolved('About HTML', 'About-Us.html', 1),
-                $this->navResolved('Programs PHP', 'Programs.php', 2),
+                $this->navResolved('About Us', 'About-Us.html', 1),
+                $this->navResolved('Programs', 'Programs.php', 2),
             ],
             pageMap: ['page-1' => [], 'About-Us.html' => [], 'Programs.php' => []],
         );
@@ -171,6 +177,49 @@ final class PageTreeBuilderTest extends TestCase
         }
         $this->assertContains('about-us', $slugs);
         $this->assertContains('programs', $slugs);
+    }
+
+    #[Test]
+    public function slug_derives_from_title_not_source_slug(): void
+    {
+        // Slice A: the whole point. Opaque source slugs (page-<node_id>)
+        // become readable URLs (about-us) via the title.
+        $r = $this->makeResult(
+            nav: [
+                $this->navResolved('Home', 'page-7188115', 0),
+                $this->navResolved('About Us', 'page-7188116', 1),
+                $this->navResolved('TBird News', 'page-7660695', 2),
+            ],
+            pageMap: ['page-7188115' => [], 'page-7188116' => [], 'page-7660695' => []],
+        );
+        $tree = $this->builder->build($r);
+        $slugs = array_map(fn ($p) => $p->slug, $tree->pages);
+        // Home is "" (unchanged).
+        $this->assertContains('', $slugs);
+        // Others readable, NOT page-<node_id>.
+        $this->assertContains('about-us', $slugs);
+        $this->assertContains('tbird-news', $slugs);
+        // Explicitly assert the opaque form did NOT survive.
+        $this->assertNotContains('page-7188116', $slugs);
+        $this->assertNotContains('page-7660695', $slugs);
+    }
+
+    #[Test]
+    public function slug_falls_back_to_source_when_title_normalises_to_empty(): void
+    {
+        // Punctuation-only title, or empty title → the source-slug
+        // form is the safe fallback.
+        $r = $this->makeResult(
+            nav: [
+                $this->navResolved('Home', 'page-1', 0),
+                $this->navResolved('!@#$', 'page-99', 1),
+            ],
+            pageMap: ['page-1' => [], 'page-99' => []],
+        );
+        $tree = $this->builder->build($r);
+        $slugs = array_map(fn ($p) => $p->slug, $tree->pages);
+        // Empty-slug-from-title path activates the fallback.
+        $this->assertContains('page-99', $slugs);
     }
 
     // ─── nav ordering + showInNav ───────────────────────────────────────

@@ -69,7 +69,7 @@ final class PageTreeBuilder
             $showInNav = $navEntry !== null && $navEntry->status === ResolvedNavStatus::Resolved;
 
             $title = $navEntry !== null ? $navEntry->label : $this->titleFromPuck($result->page_map[$sourceSlug] ?? [], $sourceSlug);
-            $slug = $isHome ? '' : $this->normaliseSlug($sourceSlug);
+            $slug = $isHome ? '' : $this->slugFromTitle($title, $sourceSlug);
 
             // Slug rule 3 + 4: refuse `view*` and rename with a diagnostic.
             if ($slug !== '' && ($slug === 'view' || str_starts_with($slug, 'view/'))) {
@@ -222,6 +222,34 @@ final class PageTreeBuilder
         }
 
         return $ordered;
+    }
+
+    /**
+     * Slice A: readable slugs. Prefer a slug derived from the page's
+     * title over the opaque `page-<node_id>` source slug — the admin
+     * reviewing the draft sees `/about` instead of `/page-7188115`,
+     * and the contract's "faster to correct than to build from
+     * scratch" framing depends on the human-touched surface being
+     * legible.
+     *
+     * Fallback ladder:
+     *   1. Title → slug (About Us → about-us, TBird News → tbird-news).
+     *   2. If the title normalises to empty (empty title, all-punctuation
+     *      title), fall back to the source-slug normaliser (page-N).
+     *   3. Reserved-word matches (`view`, `view/*`) and CI-collisions
+     *      are handled by the caller — this helper only produces the
+     *      preferred slug shape.
+     */
+    private function slugFromTitle(string $title, string $sourceSlug): string
+    {
+        $fromTitle = $this->normaliseSlug($title);
+        if ($fromTitle !== '') {
+            return $fromTitle;
+        }
+
+        // Empty title or slug-of-punctuation-only. Fall back to the
+        // pathological-case-safe source form.
+        return $this->normaliseSlug($sourceSlug);
     }
 
     private function normaliseSlug(string $raw): string
