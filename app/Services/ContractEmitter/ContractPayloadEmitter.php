@@ -48,6 +48,7 @@ final class ContractPayloadEmitter
         private readonly DiagnosticsCollector $diagnosticsCollector,
         private readonly ContractSchemaValidator $blockValidator,
         private readonly OrgTypeGate $orgTypeGate,
+        private readonly BlockDeltaAuditor $blockDeltaAuditor,
     ) {}
 
     public function emit(
@@ -58,6 +59,10 @@ final class ContractPayloadEmitter
         $ledger = new AssetLedger;
         $assetContext = new AssetContext($result->asset_refs);
         $extraDiagnostics = [];
+        // Mapper transformations report to this audit; the block-
+        // delta auditor reconciles source-input, mapper-in/out, and
+        // envelope-output counts at the end of emission.
+        $mapperAudit = new MapperAudit;
 
         // Step 1: SiteSettings (may register logo token).
         $site = $this->siteSettingsEmitter->emit($result, $ledger);
@@ -84,6 +89,8 @@ final class ContractPayloadEmitter
                 assetContext: $assetContext,
                 ledger: $ledger,
                 sourcePageUrl: $result->source_url,
+                isTopLevel: true,
+                audit: $mapperAudit,
             );
             foreach ($mapped->diagnostics as $d) {
                 $extraDiagnostics[] = $d;
@@ -102,6 +109,14 @@ final class ContractPayloadEmitter
             );
             foreach ($gatedDiagnostics as $d) {
                 $extraDiagnostics[] = $d;
+            }
+            // Audit the gating drop: mapper counted each of these
+            // blocks as an OUTPUT, but the envelope won't. Record
+            // the correction so BlockDeltaAuditor doesn't flag the
+            // difference as a silent drop.
+            $droppedCount = count($mapped->blocks) - count($gatedBlocks);
+            if ($droppedCount > 0) {
+                $mapperAudit->record('org_type_gate_dropped', 0, -$droppedCount);
             }
 
             // Repair id collisions within the page. The mapper's ids
@@ -129,6 +144,34 @@ final class ContractPayloadEmitter
 
         // Step 5: Diagnostics — combine extras + result-derived.
         $diagnostics = $this->diagnosticsCollector->collect($result, $extraDiagnostics);
+
+        // Step 5b: block-delta audit. Every content block that
+        // entered the mapper must be accounted for in the output
+        // (as a top-level block, a nested slot child, or a
+        // documented drop diagnostic). If reconciliation fails,
+        // an error diagnostic surfaces the gap. See BlockDeltaAuditor
+        // for the delta rules per diagnostic code.
+        $preAuditEnvelope = new Envelope(
+            schemaVersion: Envelope::SCHEMA_VERSION,
+            source: new Source(
+                url: $result->source_url,
+                scrapedAt: $scrapedAt ?? gmdate('Y-m-d\TH:i:s\Z'),
+                pagesDiscovered: count($result->page_map),
+                pagesMapped: count($filledPages),
+            ),
+            site: $site,
+            pages: new DataCollection(Page::class, $filledPages),
+            assets: $assets,
+            diagnostics: new DataCollection(Diagnostic::class, $diagnostics),
+        );
+        $auditReport = $this->blockDeltaAuditor->audit(
+            $result->page_map,
+            $preAuditEnvelope,
+            $mapperAudit,
+        );
+        foreach ($this->blockDeltaAuditor->toDiagnostics($auditReport) as $d) {
+            $diagnostics[] = $d;
+        }
 
         // Build the envelope.
         $envelope = new Envelope(

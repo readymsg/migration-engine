@@ -61,6 +61,7 @@ final class PuckToContractMapper
     /**
      * @param  array<int, array<string, mixed>>  $content  raw content array from an old PuckOutput
      * @param  bool  $isTopLevel  true for the outer mapContent call — used to gate page-level pre-scans (Locations widget). Recursive calls from mapColumns pass false so nested-in-Grid content doesn't produce a Locations widget inside each Grid slot.
+     * @param  MapperAudit|null  $audit  optional transformation ledger — records (cause, inputBlocks, outputBlocks) per mapper call for the BlockDeltaAuditor to reconcile against.
      */
     public function mapContent(
         array $content,
@@ -68,6 +69,7 @@ final class PuckToContractMapper
         AssetLedger $ledger,
         ?string $sourcePageUrl = null,
         bool $isTopLevel = true,
+        ?MapperAudit $audit = null,
     ): MappedContent {
         $blocks = [];
         $diagnostics = [];
@@ -92,6 +94,8 @@ final class PuckToContractMapper
                     ),
                     sourceUrl: $sourcePageUrl !== null ? $sourcePageUrl : new Optional,
                 );
+                // Audit: N Google Maps images consumed, 1 Locations widget emitted.
+                $audit?->record('google_maps_to_locations', $mapUrlsCount, 1);
             }
         }
 
@@ -101,11 +105,13 @@ final class PuckToContractMapper
             }
             // Skip Google Maps Images — consumed by the page-level
             // Locations widget (already emitted or emitted at an
-            // ancestor mapContent call).
+            // ancestor mapContent call). Do NOT audit — they were
+            // already accounted for in the locations_widget_placed
+            // record above.
             if ($this->isGoogleMapsImage($entry)) {
                 continue;
             }
-            $result = $this->mapOne($entry, $assetContext, $ledger, $sourcePageUrl);
+            $result = $this->mapOne($entry, $assetContext, $ledger, $sourcePageUrl, $audit);
             foreach ($result->blocks as $b) {
                 $blocks[] = $b;
             }
@@ -171,11 +177,12 @@ final class PuckToContractMapper
         AssetContext $assetContext,
         AssetLedger $ledger,
         ?string $sourcePageUrl,
+        ?MapperAudit $audit,
     ): MappedContent {
         $type = (string) $entry['type'];
         $props = is_array($entry['props'] ?? null) ? $entry['props'] : [];
 
-        return match ($type) {
+        $result = match ($type) {
             'Text' => $this->mapText($props),
             'Heading' => $this->mapHeading($props),
             'Hero' => $this->mapHero($props, $assetContext, $ledger, $sourcePageUrl),
@@ -183,7 +190,7 @@ final class PuckToContractMapper
             'Gallery' => $this->mapGallery($props, $assetContext, $ledger, $sourcePageUrl),
             'ButtonGroup' => $this->mapButtonGroup($props),
             'Card' => $this->mapCard($props, $assetContext, $ledger, $sourcePageUrl),
-            'Columns' => $this->mapColumns($props, $assetContext, $ledger, $sourcePageUrl),
+            'Columns' => $this->mapColumns($props, $assetContext, $ledger, $sourcePageUrl, $audit),
             default => new MappedContent(
                 blocks: [],
                 diagnostics: [new Diagnostic(
@@ -194,6 +201,39 @@ final class PuckToContractMapper
                 )],
             ),
         };
+
+        // Audit reporting per-block-type. Columns is special: it
+        // handles its own audit records (fold-to-widget or Grid
+        // recursion) inside mapColumns, so skip it here to avoid
+        // double-counting.
+        if ($type !== 'Columns') {
+            $inputBlocks = $this->inputBlockCountFor($type, $props);
+            $audit?->record("map_{$this->snake($type)}", $inputBlocks, count($result->blocks));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $props
+     */
+    private function inputBlockCountFor(string $type, array $props): int
+    {
+        // ButtonGroup is 1-source-block-with-N-buttons in old
+        // schema. Each button represents a source "block" for
+        // audit purposes because mapButtonGroup emits N Buttons.
+        if ($type === 'ButtonGroup') {
+            $buttons = is_array($props['buttons'] ?? null) ? $props['buttons'] : [];
+
+            return count($buttons);
+        }
+
+        return 1;
+    }
+
+    private function snake(string $s): string
+    {
+        return strtolower((string) preg_replace('/([A-Z])/', '_$1', lcfirst($s)));
     }
 
     /** @param array<string, mixed> $props */
@@ -545,8 +585,13 @@ final class PuckToContractMapper
     }
 
     /** @param array<string, mixed> $props */
-    private function mapColumns(array $props, AssetContext $ctx, AssetLedger $ledger, ?string $srcUrl): MappedContent
-    {
+    private function mapColumns(
+        array $props,
+        AssetContext $ctx,
+        AssetLedger $ledger,
+        ?string $srcUrl,
+        ?MapperAudit $audit,
+    ): MappedContent {
         $columns = is_array($props['columns'] ?? null) ? $props['columns'] : [];
         $flatContent = [];
         foreach ($columns as $col) {
@@ -560,6 +605,7 @@ final class PuckToContractMapper
                 }
             }
         }
+        $flatContentCount = $this->countChildrenAsSourceBlocks($flatContent);
         if ($flatContent === []) {
             return new MappedContent(blocks: [], diagnostics: []);
         }
@@ -567,36 +613,58 @@ final class PuckToContractMapper
         // Slice 13: people-directory detection.
         if ($this->looksLikePeopleDirectory($flatContent)) {
             $columnCount = count($columns);
+            $audit?->record('columns_fold_teammembers', $flatContentCount, 1);
 
             return $this->emitTeamMembers($flatContent, $columnCount, $ctx, $ledger, $srcUrl);
         }
 
-        // Slice 15b: sponsor-deck detection. Placed AFTER the
-        // people-directory check so the two heuristics never both
-        // fire (the sponsor check requires majority-href, which the
-        // people check specifically rejects — but explicit order
-        // keeps the intent clear).
+        // Slice 15b: sponsor-deck detection.
         if ($this->looksLikeSponsorDeck($flatContent)) {
+            $audit?->record('columns_fold_sponsors', $flatContentCount, 1);
+
             return $this->emitSponsors($flatContent, $srcUrl);
         }
 
-        // Slice 15e: news-list detection. All-Cards Columns whose
-        // Card shapes are news-article-like (title = headline, body
-        // = summary text, image = article photo, href = article
-        // URL) fold to a single NewsList widget. Distinct from
-        // sponsor-deck by: heterogeneous non-placeholder hrefs +
-        // longer bodies. Distinct from people-directory by: no
-        // email/phone signal + href-heavy.
+        // Slice 15e: news-list detection.
         if ($this->looksLikeNewsList($flatContent)) {
+            $audit?->record('columns_fold_newslist', $flatContentCount, 1);
+
             return $this->emitNewsList($flatContent, $srcUrl);
         }
 
-        // Slice 15c: emit a Grid block. Contract's Grid accepts
-        // 2/3/4 columns; we clamp the source count and drop
-        // whichever columns can't fit (rare — 5+ column source
-        // layouts are uncommon and clamping is more transparent
-        // than dropping the whole layout).
-        return $this->emitGrid($columns, $ctx, $ledger, $srcUrl);
+        // Slice 15c: emit a Grid block. mapContent recurse call
+        // handles per-child auditing; we record the +1 Grid wrapper
+        // separately.
+        $result = $this->emitGrid($columns, $ctx, $ledger, $srcUrl, $audit);
+        $audit?->record('columns_wrap_grid', 0, 1);
+
+        return $result;
+    }
+
+    /**
+     * Convert flattened column children to a source-block count for
+     * audit purposes. ButtonGroup contributes N-buttons per group
+     * (matches the ButtonGroup→N-Buttons rule in inputBlockCountFor).
+     *
+     * @param  array<int, array<string, mixed>>  $children
+     */
+    private function countChildrenAsSourceBlocks(array $children): int
+    {
+        $count = 0;
+        foreach ($children as $c) {
+            if (! is_array($c) || ! is_string($c['type'] ?? null)) {
+                continue;
+            }
+            if ($c['type'] === 'ButtonGroup') {
+                $buttons = is_array($c['props']['buttons'] ?? null) ? $c['props']['buttons'] : [];
+                $count += count($buttons);
+
+                continue;
+            }
+            $count++;
+        }
+
+        return $count;
     }
 
     /**
@@ -607,6 +675,7 @@ final class PuckToContractMapper
         AssetContext $ctx,
         AssetLedger $ledger,
         ?string $srcUrl,
+        ?MapperAudit $audit,
     ): MappedContent {
         $sourceCount = count($sourceColumns);
         // Contract Grid.columns enum is ["2","3","4"] STRINGS. Clamp
@@ -634,7 +703,9 @@ final class PuckToContractMapper
             }
             // Nested call: pass isTopLevel=false so we don't
             // emit a Locations widget inside each Grid slot.
-            $mapped = $this->mapContent($children, $ctx, $ledger, $srcUrl, isTopLevel: false);
+            // Audit is forwarded so nested-in-Grid mappings still
+            // report their transformations.
+            $mapped = $this->mapContent($children, $ctx, $ledger, $srcUrl, isTopLevel: false, audit: $audit);
             foreach ($mapped->diagnostics as $d) {
                 $diagnostics[] = $d;
             }
