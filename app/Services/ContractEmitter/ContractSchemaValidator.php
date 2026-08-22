@@ -87,10 +87,15 @@ final class ContractSchemaValidator
             );
         }
 
-        // Rule 3 + 4: prop-key legality.
+        // Rule 3 + 4: prop-key legality. Slice 15 reads the exact
+        // serverOwnedProps and storedOnlyProps lists from the file
+        // (x-teamlinkt.vocabularies) instead of a `resolved*` prefix
+        // heuristic that could false-positive on org content.
         $properties = $this->schema->propProperties($block->type);
         $defaults = $this->schema->defaults($block->type);
         $doNotAuthor = $this->schema->doNotAuthorProps($block->type);
+        $serverOwnedForBlock = $this->serverOwnedTopKeysFor($block->type);
+        $storedOnlyForBlock = $this->storedOnlyTopKeysFor($block->type);
 
         foreach ($block->props as $key => $value) {
             if (! is_string($key)) {
@@ -100,32 +105,39 @@ final class ContractSchemaValidator
             if ($key === 'id') {
                 continue;
             }
-            // Rule 4: resolved* and formUuid are server-owned.
+            // Rule 4a: exact serverOwnedProps path match (file-driven).
+            if (in_array($key, $serverOwnedForBlock, true) || in_array($key, $doNotAuthor, true)) {
+                $issues[] = new ValidationIssue(
+                    severity: 'error',
+                    code: 'server_owned_prop_authored',
+                    message: "Prop `{$key}` on `{$block->type}` is server-owned (x-teamlinkt.vocabularies.serverOwnedProps). Never author it.",
+                    path: "{$prefix}props.{$key}",
+                );
+
+                continue;
+            }
+            // Rule 4b: belt-and-braces heuristic for anything that
+            // slipped through — the file might grow a new server-
+            // owned prop before we regenerate the fixture; the
+            // `resolved` prefix + `formUuid` sentinel remain a
+            // structural guarantee.
             if (str_starts_with($key, 'resolved') || $key === 'formUuid') {
                 $issues[] = new ValidationIssue(
                     severity: 'error',
                     code: 'server_owned_prop_authored',
-                    message: "Prop `{$key}` on `{$block->type}` is server-owned (produced at render/save time). Never author it.",
+                    message: "Prop `{$key}` on `{$block->type}` matches the server-owned naming convention (`resolved*` / `formUuid`).",
                     path: "{$prefix}props.{$key}",
                 );
 
                 continue;
             }
-            if (in_array($key, $doNotAuthor, true)) {
-                $issues[] = new ValidationIssue(
-                    severity: 'error',
-                    code: 'server_owned_prop_authored',
-                    message: "Prop `{$key}` on `{$block->type}` is listed as do-not-author (server-owned).",
-                    path: "{$prefix}props.{$key}",
-                );
-
-                continue;
-            }
-            // Rule 3: must exist in properties OR in defaults (the
-            // "stored-but-not-editable" escape hatch — e.g. Hero.visibility).
+            // Rule 3: must exist in properties OR be a listed stored-only
+            // prop (the "no editor field but you may set it" escape hatch
+            // — e.g. Hero.visibility). storedOnlyProps is the exact list
+            // from x-teamlinkt.vocabularies.storedOnlyProps.paths.
             $inProperties = array_key_exists($key, $properties);
-            $inDefaults = array_key_exists($key, $defaults);
-            if (! $inProperties && ! $inDefaults) {
+            $isStoredOnly = in_array($key, $storedOnlyForBlock, true) || array_key_exists($key, $defaults);
+            if (! $inProperties && ! $isStoredOnly) {
                 $issues[] = new ValidationIssue(
                     severity: 'error',
                     code: 'unknown_prop_key',
@@ -347,6 +359,47 @@ final class ContractSchemaValidator
         }
 
         return $issues;
+    }
+
+    /**
+     * @return array<int, string> top-level prop names on this block that are server-owned
+     */
+    private function serverOwnedTopKeysFor(string $blockType): array
+    {
+        return $this->topKeysMatchingBlock($this->schema->serverOwnedProps(), $blockType);
+    }
+
+    /**
+     * @return array<int, string> top-level prop names on this block that are stored-only (no editor field)
+     */
+    private function storedOnlyTopKeysFor(string $blockType): array
+    {
+        return $this->topKeysMatchingBlock($this->schema->storedOnlyProps(), $blockType);
+    }
+
+    /**
+     * Extract the top-level prop names for `$blockType` from a list of
+     * dotted paths (e.g. `Hero.visibility`, `IntakeForm.resolvedQuestions`).
+     *
+     * @param  array<int, string>  $paths
+     * @return array<int, string>
+     */
+    private function topKeysMatchingBlock(array $paths, string $blockType): array
+    {
+        $prefix = $blockType.'.';
+        $out = [];
+        foreach ($paths as $path) {
+            if (! str_starts_with($path, $prefix)) {
+                continue;
+            }
+            $tail = substr($path, strlen($prefix));
+            $head = strtok($tail, '.[');
+            if (is_string($head) && ! in_array($head, $out, true)) {
+                $out[] = $head;
+            }
+        }
+
+        return $out;
     }
 
     private static function describe(mixed $value): string

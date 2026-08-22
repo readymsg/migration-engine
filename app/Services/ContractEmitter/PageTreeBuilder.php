@@ -42,6 +42,10 @@ use Spatie\LaravelData\Optional;
 //     a fixture actually needs it (Slice 16 broaden phase).
 final class PageTreeBuilder
 {
+    public function __construct(
+        private readonly ContractSchema $schema,
+    ) {}
+
     public function build(ConversionResult $result): PageTree
     {
         $diagnostics = [];
@@ -71,13 +75,17 @@ final class PageTreeBuilder
             $title = $navEntry !== null ? $navEntry->label : $this->titleFromPuck($result->page_map[$sourceSlug] ?? [], $sourceSlug);
             $slug = $isHome ? '' : $this->slugFromTitle($title, $sourceSlug);
 
-            // Slug rule 3 + 4: refuse `view*` and rename with a diagnostic.
-            if ($slug !== '' && ($slug === 'view' || str_starts_with($slug, 'view/'))) {
+            // Slug rule 3 + 4: refuse reserved top-level slugs.
+            // Slice 15: the list comes from x-teamlinkt.vocabularies.reservedTopLevelSlugs
+            // (today: ['view'] — matches the pre-Slice-15 hardcode). Reserved
+            // slugs are exact match OR "reserved/" prefix; any additions engineering
+            // makes to the file flow through here without a code change.
+            if ($slug !== '' && $this->isReservedSlug($slug)) {
                 $renamed = 'page-'.$slug;
                 $diagnostics[] = new Diagnostic(
                     severity: 'warning',
                     code: 'reserved_slug_renamed',
-                    message: "Source slug `{$slug}` collides with the reserved `view*` route prefix. Renamed to `{$renamed}`.",
+                    message: "Source slug `{$slug}` collides with a reserved top-level slug prefix. Renamed to `{$renamed}`.",
                     sourceUrl: new Optional,
                 );
                 $slug = $renamed;
@@ -290,5 +298,16 @@ final class PageTreeBuilder
         // for parentId. Never stored — we mint a UUID per page.
         // `home` is conventionally the homepage."
         return $isHome ? 'home' : $sourceSlug;
+    }
+
+    private function isReservedSlug(string $slug): bool
+    {
+        foreach ($this->schema->reservedTopLevelSlugs() as $reserved) {
+            if ($slug === $reserved || str_starts_with($slug, $reserved.'/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

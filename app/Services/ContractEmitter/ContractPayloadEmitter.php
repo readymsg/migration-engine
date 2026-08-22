@@ -49,6 +49,7 @@ final class ContractPayloadEmitter
         private readonly ContractSchemaValidator $blockValidator,
         private readonly OrgTypeGate $orgTypeGate,
         private readonly BlockDeltaAuditor $blockDeltaAuditor,
+        private readonly ContractSchema $schema,
     ) {}
 
     public function emit(
@@ -390,14 +391,21 @@ final class ContractPayloadEmitter
                 }
                 $slugsCanonical[$canonical] = true;
 
-                // Rule 10: view-prefixed.
-                if ($page->slug === 'view' || str_starts_with($page->slug, 'view/')) {
-                    $errors[] = new ValidationIssue(
-                        severity: 'error',
-                        code: 'reserved_view_slug',
-                        message: "Slug `{$page->slug}` uses the reserved `view*` prefix.",
-                        path: "pages[{$pi}].slug",
-                    );
+                // Rule 10: reserved top-level slugs (from
+                // x-teamlinkt.vocabularies.reservedTopLevelSlugs). Today
+                // that's ['view']; the check reads the list from the
+                // schema so any future addition flows through.
+                foreach ($this->schema->reservedTopLevelSlugs() as $reserved) {
+                    if ($page->slug === $reserved || str_starts_with($page->slug, $reserved.'/')) {
+                        $errors[] = new ValidationIssue(
+                            severity: 'error',
+                            code: 'reserved_top_level_slug',
+                            message: "Slug `{$page->slug}` uses reserved top-level slug `{$reserved}`.",
+                            path: "pages[{$pi}].slug",
+                        );
+
+                        break;
+                    }
                 }
             }
             $pi++;

@@ -14,6 +14,7 @@ use App\Data\NavItem;
 use App\Data\ResolvedNavItem;
 use App\Data\ResolvedNavStatus;
 use App\Data\SiteImport\Page;
+use App\Services\ContractEmitter\ContractSchema;
 use App\Services\ContractEmitter\PageTreeBuilder;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\DataCollection;
@@ -29,7 +30,7 @@ final class PageTreeBuilderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->builder = new PageTreeBuilder;
+        $this->builder = new PageTreeBuilder(ContractSchema::load());
     }
 
     // ─── homepage detection ─────────────────────────────────────────────
