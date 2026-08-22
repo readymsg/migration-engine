@@ -780,6 +780,90 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── video fold ─────────────────────────────────────────────────────
+
+    #[Test]
+    public function cjfl_home_youtube_embed_folds_to_video(): void
+    {
+        // cjfl Home has the Grayson Statham "Under The Helmet" YouTube
+        // embed. Block-fill currently drops the URL when it emits a
+        // Card summary of the section — the new IR concept prompts it
+        // to preserve the URL inside a Text so the mapper can fold.
+        $body = '### Video Zone: Around the League'."\n".
+                '[CJFL Under The Helmet - Grayson Statham](https://www.youtube.com/watch?v=cZ7WGdTMdUY)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Video', $out->blocks[0]->type);
+        $this->assertSame('https://www.youtube.com/watch?v=cZ7WGdTMdUY', $out->blocks[0]->props['url']);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_body_folded_to_video', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function bare_youtu_be_url_folds_to_video(): void
+    {
+        // Short form URL, no markdown link syntax.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => 'https://youtu.be/dQw4w9WgXcQ']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Video', $out->blocks[0]->type);
+        $this->assertSame('https://youtu.be/dQw4w9WgXcQ', $out->blocks[0]->props['url']);
+    }
+
+    #[Test]
+    public function vimeo_url_also_folds_to_video(): void
+    {
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => '[Season highlights](https://vimeo.com/123456789)']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Video', $out->blocks[0]->type);
+        $this->assertSame('https://vimeo.com/123456789', $out->blocks[0]->props['url']);
+    }
+
+    // ─── video NEGATIVE tests ───────────────────────────────────────────
+
+    #[Test]
+    public function prose_paragraph_with_inline_youtube_url_stays_as_text(): void
+    {
+        // Any hero-paragraph-length body with a YouTube URL mentioned
+        // mid-prose must NOT fold. The ≤3-line compact-body gate holds.
+        $body = "The Canadian Junior Football League has a rich broadcast history. Games are streamed weekly across our platform.\n\n".
+                "Watch the latest highlight reel at https://www.youtube.com/watch?v=cZ7WGdTMdUY where fans can catch every touchdown.\n\n".
+                "Our media partners provide ongoing coverage throughout the season, ensuring fans stay connected wherever they are.\n\n".
+                'Additional archives are available on request.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function non_video_url_link_body_does_not_fold(): void
+    {
+        // A body with only a link to a non-video URL is NOT a video
+        // block. This is FeatureGrid or file_download territory.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => '[About Us](https://www.cjfl.org/about)']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertNotSame('Video', $out->blocks[0]->type);
+    }
+
     // ─── file_download fold ─────────────────────────────────────────────
 
     #[Test]

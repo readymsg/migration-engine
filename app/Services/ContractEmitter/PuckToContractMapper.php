@@ -241,6 +241,22 @@ final class PuckToContractMapper
     {
         $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
 
+        // IR concept `video`: a Text block whose body's primary content
+        // is a YouTube/Vimeo URL, either as a markdown link or bare.
+        // Checked BEFORE file_download because a single link line
+        // could match either — but the video URL host discriminates.
+        $videoFold = $this->tryFoldToVideo($rawBody);
+        if ($videoFold !== null) {
+            return new MappedContent(
+                blocks: [$videoFold],
+                diagnostics: [new Diagnostic(
+                    severity: 'info',
+                    code: 'text_body_folded_to_video',
+                    message: 'Detected YouTube/Vimeo URL in a compact text body. Folded to a Video block.',
+                )],
+            );
+        }
+
         // IR concept `file_download`: a Text block whose body is
         // exactly ONE heading-styled or bulleted document-link line
         // (URL ends in .pdf/.doc/.docx/.xls/.xlsx/.ppt/.pptx). Fold
@@ -1194,6 +1210,70 @@ final class PuckToContractMapper
         $hash = substr(sha1(implode('|', $parts)), 0, 6);
 
         return "{$prefix}-{$hash}";
+    }
+
+    // IR concept `video` — fold detection.
+    //
+    // Detection gate:
+    //   - Body ≤ VIDEO_MAX_LINES non-blank lines (compact — a hero
+    //     paragraph with a video URL isn't a video block).
+    //   - Contains a YouTube (youtube.com/watch, youtu.be, embed) or
+    //     Vimeo (vimeo.com) URL, either as a markdown link or bare.
+    //   - First matching URL becomes Video.url.
+    //   - Optional non-URL line becomes Video.caption.text.
+    //
+    // Adjacent patterns that MUST NOT fold:
+    //   - Prose paragraph with an inline video URL mentioned mid-
+    //     sentence: > VIDEO_MAX_LINES worth of content disqualifies.
+    //   - Bare URL in a news article body: has surrounding prose,
+    //     fails the compact-body gate.
+    //   - Card with attribution text but no URL (current block-fill
+    //     output for cjfl "Under the Helmet" — body dropped the URL):
+    //     mapCard doesn't route through mapText, so no risk here.
+    private const VIDEO_MAX_LINES = 3;
+
+    private const VIDEO_URL_PATTERN = '#https?://(?:(?:www\.)?youtube\.com/(?:watch\?v=|embed/)|youtu\.be/|(?:www\.)?vimeo\.com/)[A-Za-z0-9_\-?&=/.]+#i';
+
+    private function tryFoldToVideo(string $rawBody): ?Block
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $nonBlank = array_values(array_filter(
+            array_map('trim', $lines),
+            static fn (string $l): bool => $l !== '',
+        ));
+        if (count($nonBlank) === 0 || count($nonBlank) > self::VIDEO_MAX_LINES) {
+            return null;
+        }
+
+        $videoUrl = null;
+        $captionLines = [];
+        foreach ($nonBlank as $line) {
+            if ($videoUrl === null && preg_match(self::VIDEO_URL_PATTERN, $line, $m) === 1) {
+                $videoUrl = $m[0];
+
+                continue;
+            }
+            $captionLines[] = $line;
+        }
+        if ($videoUrl === null) {
+            return null;
+        }
+        $caption = trim(implode(' ', $captionLines));
+        // Strip markdown link text if the caption was itself a link.
+        $caption = preg_replace('/\[([^\]]+)\]\([^)]+\)/', '$1', $caption) ?? $caption;
+
+        $props = [
+            'id' => $this->id('video', $videoUrl),
+            'url' => $videoUrl,
+        ];
+        if ($caption !== '') {
+            $props['caption'] = ['text' => $caption];
+        }
+
+        return new Block(type: 'Video', props: $props);
     }
 
     // IR concept `file_download` — fold detection.

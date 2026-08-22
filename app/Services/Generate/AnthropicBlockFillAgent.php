@@ -93,6 +93,26 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
               - 'list'                                         → Text (use a
                                                                   bulleted
                                                                   markdown body)
+              - 'video' / 'video_embed' /                       → Text with a
+                'youtube' / 'vimeo'                                compact body
+                                                                  (≤3 non-blank
+                                                                  lines) that
+                                                                  includes a
+                                                                  YouTube or
+                                                                  Vimeo URL as
+                                                                  a markdown
+                                                                  link or bare
+                                                                  URL. The mapper
+                                                                  folds to a
+                                                                  Video block —
+                                                                  do NOT emit
+                                                                  Video yourself.
+                                                                  The URL is
+                                                                  required in
+                                                                  the body;
+                                                                  don't strip it
+                                                                  as SE widget
+                                                                  garbage.
               - 'file_download' / 'document_link' /             → Text with a
                 'pdf_link'                                         body that is
                                                                   EXACTLY ONE
