@@ -241,6 +241,28 @@ final class PuckToContractMapper
     {
         $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
 
+        // IR concept `feature_grid`: block-fill emitted a Text block
+        // whose body is exclusively link-only lines (bulleted `- [T](u)`,
+        // heading `### [T](u)`, or bare `[T](u)`), ≥3 items. cjfl Awards
+        // and langdon For Coaches are the canonical shapes. Checked
+        // BEFORE FAQ because a link-only body has no `**Q?**` markers,
+        // and BEFORE stat_table because link-only items have no
+        // column separators. Does NOT compete with the existing
+        // Sponsors / TeamMembers / NewsList / Grid folds — those live
+        // inside mapColumns on Card sequences, a different source
+        // shape entirely.
+        $featureGridFold = $this->tryFoldToFeatureGrid($rawBody);
+        if ($featureGridFold !== null) {
+            return new MappedContent(
+                blocks: [$featureGridFold],
+                diagnostics: [new Diagnostic(
+                    severity: 'info',
+                    code: 'text_body_folded_to_feature_grid',
+                    message: 'Detected link-heading grid pattern (≥3 link-only lines with no interstitial prose). Folded to a FeatureGrid block.',
+                )],
+            );
+        }
+
         // IR concept `faq`: block-fill emitted a Text block whose body
         // contains ≥3 `**Question?**` bold-question markers, or is
         // preceded by a "Frequently Asked Questions" heading with ≥2
@@ -1153,6 +1175,109 @@ final class PuckToContractMapper
         $hash = substr(sha1(implode('|', $parts)), 0, 6);
 
         return "{$prefix}-{$hash}";
+    }
+
+    // IR concept `feature_grid` — fold detection.
+    //
+    // Detection gate:
+    //   - Every non-blank line in the body matches a link-only shape:
+    //       * bulleted:  `^- [text](url)$` or `^* [text](url)$`
+    //       * heading:   `^#+ [text](url)$`
+    //       * bare:      `^[text](url)$`
+    //   - ≥ FEATURE_GRID_MIN_ITEMS such lines total.
+    //   - No prose paragraphs between the link lines. Any non-blank
+    //     line that isn't a link-only line disqualifies (falls
+    //     through to normal Text).
+    //
+    // Adjacent patterns that MUST NOT fold:
+    //   - Sponsors / TeamMembers / NewsList / Grid folds all detect
+    //     Card sequences inside Columns.columns[].children. Our
+    //     detection is at the Text-body level — the source shapes
+    //     don't overlap.
+    //   - stat_table records have dash-separated columns; link-only
+    //     lines have no separator between the text and the URL is
+    //     part of the anchor, not a column.
+    //   - FAQ has whole-line `**?**` questions; link lines don't.
+    //   - Prose with occasional links falls through — the "every
+    //     line is a link" gate is strict.
+    private const FEATURE_GRID_MIN_ITEMS = 3;
+
+    private function tryFoldToFeatureGrid(string $rawBody): ?Block
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false || $lines === []) {
+            return null;
+        }
+        $items = [];
+        $preheading = null;
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            // Optional single leading section heading that isn't a link
+            // itself — treat as the FeatureGrid.heading prop.
+            if ($preheading === null && $items === []
+                && preg_match('/^#+\s+([^\[].*)$/', $trimmed, $m) === 1) {
+                $preheading = trim($m[1]);
+
+                continue;
+            }
+            // Bulleted / numbered link line.
+            if (preg_match('/^(?:[-*]|\d+\.)\s+\[([^\]]+)\]\(([^)]+)\)\s*$/', $trimmed, $m) === 1) {
+                $items[] = ['title' => trim($m[1]), 'href' => trim($m[2])];
+
+                continue;
+            }
+            // Heading link line.
+            if (preg_match('/^#+\s+\[([^\]]+)\]\(([^)]+)\)\s*$/', $trimmed, $m) === 1) {
+                $items[] = ['title' => trim($m[1]), 'href' => trim($m[2])];
+
+                continue;
+            }
+            // Bare link line.
+            if (preg_match('/^\[([^\]]+)\]\(([^)]+)\)\s*$/', $trimmed, $m) === 1) {
+                $items[] = ['title' => trim($m[1]), 'href' => trim($m[2])];
+
+                continue;
+            }
+
+            // Anything else disqualifies — no interstitial prose.
+            return null;
+        }
+        if (count($items) < self::FEATURE_GRID_MIN_ITEMS) {
+            return null;
+        }
+
+        // Contract's FeatureGrid.items has {icon?, title, body?}.
+        // hrefs don't fit; the block itself is not linkable. Encode
+        // the href by prefixing the title with the raw URL so the
+        // reviewer sees which page the item points at. A future
+        // slice can promote hrefs when FeatureGrid grows a link prop.
+        $gridItems = [];
+        foreach ($items as $item) {
+            $gridItems[] = [
+                'title' => $item['title'],
+                'body' => $item['href'],
+            ];
+        }
+        // Clamp columns to the enum [2,3,4]. Pick 3 as the default
+        // (matches the schema's own defaults blob).
+        $columns = match (true) {
+            count($items) <= 4 => 2,
+            count($items) <= 9 => 3,
+            default => 4,
+        };
+        $props = [
+            'id' => $this->id('feature-grid', ...array_column($items, 'title')),
+            'items' => $gridItems,
+            'columns' => $columns,
+        ];
+        if ($preheading !== null && $preheading !== '') {
+            $props['heading'] = $preheading;
+        }
+
+        return new Block(type: 'FeatureGrid', props: $props);
     }
 
     // IR concept `faq` — fold detection.

@@ -780,6 +780,185 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── feature_grid fold ──────────────────────────────────────────────
+
+    #[Test]
+    public function cjfl_awards_link_heading_body_folds_to_feature_grid(): void
+    {
+        // cjfl Awards. Block-fill emits Awards' 13 link-headings as
+        // one Text block with a bulleted list of `- [text](url)` items.
+        // The mapper folds to a FeatureGrid.
+        $body = '- [Canadian Bowl Champions](https://www.cjfl.org/page/show/1286366-canadian-bowl-champions)'."\n".
+                '- [Gord Currie Coach of the Year](https://www.cjfl.org/page/show/1286341-gord-currie-coach-of-the-year)'."\n".
+                '- [Rookie of the Year](https://www.cjfl.org/page/show/1286342-rookie-of-the-year)'."\n".
+                '- [Larry Wruck Defensive Player of the Year](https://www.cjfl.org/page/show/1286343-larry-wruck-defensive-player-of-the-year)'."\n".
+                '- [Peter Dalla Riva Offensive Player of the Year](https://www.cjfl.org/page/show/1286344-peter-dalla-riva-offensive-player-of-the-year)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('FeatureGrid', $out->blocks[0]->type);
+        $items = $out->blocks[0]->props['items'];
+        $this->assertCount(5, $items);
+        $this->assertSame('Canadian Bowl Champions', $items[0]['title']);
+        $this->assertStringContainsString('cjfl.org', $items[0]['body']);
+        // Columns clamps to [2,3,4] — 5 items → 3.
+        $this->assertSame(3, $out->blocks[0]->props['columns']);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_body_folded_to_feature_grid', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function langdon_for_coaches_heading_link_body_folds_to_feature_grid(): void
+    {
+        // langdon For Coaches. Block-fill emits `### [Text](url)`
+        // headings as one Text block. Same fold.
+        $body = '### [Coach Clinic Training](https://cdn3.sportngin.com/attachments/document/0d5e-2802916/Coach_s_Clinc_Slide_Deck_2023.pptx)'."\n".
+                '### [T-Ball Coaches Handbook](https://cdn4.sportngin.com/attachments/document/b1b4-2786436/Langdon_Little_League_-_T-Ball_Coach_Handbook.pdf)'."\n".
+                '### [Coach Pitch Program](https://cdn4.sportngin.com/attachments/document/24df-2921331/Coach_Pitch_Program.pdf)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('FeatureGrid', $out->blocks[0]->type);
+        $this->assertCount(3, $out->blocks[0]->props['items']);
+    }
+
+    #[Test]
+    public function optional_section_heading_becomes_feature_grid_heading(): void
+    {
+        // A leading non-link `## Awards` heading followed by link-only
+        // lines is treated as the FeatureGrid.heading prop.
+        $body = '## Awards'."\n".
+                '- [Award A](https://x.example/a)'."\n".
+                '- [Award B](https://x.example/b)'."\n".
+                '- [Award C](https://x.example/c)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('FeatureGrid', $out->blocks[0]->type);
+        $this->assertSame('Awards', $out->blocks[0]->props['heading']);
+        $this->assertCount(3, $out->blocks[0]->props['items']);
+    }
+
+    // ─── feature_grid NEGATIVE tests (must NOT regress existing folds) ──
+
+    #[Test]
+    public function sponsor_deck_in_columns_still_folds_to_sponsors_widget(): void
+    {
+        // LOAD-BEARING: Sponsors detection lives in mapColumns on Card
+        // sequences with image+href. Our new mapText fold operates on
+        // a different code path — must not regress this. The pattern:
+        // Columns → 3+ Cards each with image + href → Sponsors widget.
+        $refs = new DataCollection(AssetRef::class, [
+            new AssetRef(s3_key: 's3://x/sponsor1.png', mime_type: 'image/png', source_url: 'https://cdn.x/sponsor1.png'),
+            new AssetRef(s3_key: 's3://x/sponsor2.png', mime_type: 'image/png', source_url: 'https://cdn.x/sponsor2.png'),
+            new AssetRef(s3_key: 's3://x/sponsor3.png', mime_type: 'image/png', source_url: 'https://cdn.x/sponsor3.png'),
+        ]);
+        $ctx = new AssetContext($refs);
+
+        $out = $this->mapper->mapContent(
+            [[
+                'type' => 'Columns',
+                'props' => ['columns' => [
+                    ['children' => [
+                        ['type' => 'Card', 'props' => ['title' => 'Dicks Sporting Goods', 'image' => 's3://x/sponsor1.png', 'href' => 'https://dicks.example.com']],
+                    ]],
+                    ['children' => [
+                        ['type' => 'Card', 'props' => ['title' => 'Baron Rings', 'image' => 's3://x/sponsor2.png', 'href' => 'https://baron.example.com']],
+                    ]],
+                    ['children' => [
+                        ['type' => 'Card', 'props' => ['title' => 'Cleland Contracting', 'image' => 's3://x/sponsor3.png', 'href' => 'https://cleland.example.com']],
+                    ]],
+                ]],
+            ]],
+            $ctx,
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('Sponsors', $out->blocks[0]->type);
+        $this->assertNotSame('FeatureGrid', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function people_directory_in_columns_still_folds_to_team_members_widget(): void
+    {
+        // Same posture: TeamMembers detection on Card sequences with
+        // photo + name + role. Must not regress to FeatureGrid.
+        $refs = new DataCollection(AssetRef::class, [
+            new AssetRef(s3_key: 's3://x/p1.png', mime_type: 'image/png', source_url: 'https://cdn.x/p1.png'),
+            new AssetRef(s3_key: 's3://x/p2.png', mime_type: 'image/png', source_url: 'https://cdn.x/p2.png'),
+            new AssetRef(s3_key: 's3://x/p3.png', mime_type: 'image/png', source_url: 'https://cdn.x/p3.png'),
+        ]);
+        $ctx = new AssetContext($refs);
+
+        $out = $this->mapper->mapContent(
+            [[
+                'type' => 'Columns',
+                'props' => ['columns' => [
+                    ['children' => [
+                        ['type' => 'Card', 'props' => ['title' => 'President', 'body' => 'Scott Whitenack', 'image' => 's3://x/p1.png']],
+                    ]],
+                    ['children' => [
+                        ['type' => 'Card', 'props' => ['title' => 'Secretary', 'body' => 'Kristin Peoples', 'image' => 's3://x/p2.png']],
+                    ]],
+                    ['children' => [
+                        ['type' => 'Card', 'props' => ['title' => 'Treasurer', 'body' => 'Janet Habedank', 'image' => 's3://x/p3.png']],
+                    ]],
+                ]],
+            ]],
+            $ctx,
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('TeamMembers', $out->blocks[0]->type);
+        $this->assertNotSame('FeatureGrid', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function prose_with_occasional_link_stays_as_text_not_feature_grid(): void
+    {
+        // Any non-blank line that isn't link-only disqualifies. Real
+        // scraped prose with mid-paragraph links must NOT fold.
+        $body = 'For more information, see [our history page](https://x/history) or contact us. '.
+                'Registration is open [here](https://x/register). '.
+                'Read the [rules](https://x/rules) before signing up.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function two_link_headings_below_min_stays_as_text(): void
+    {
+        // Under the min-3 threshold.
+        $body = '- [Rules](https://x/rules)'."\n".
+                '- [Register](https://x/register)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
     // ─── faq fold ───────────────────────────────────────────────────────
 
     #[Test]

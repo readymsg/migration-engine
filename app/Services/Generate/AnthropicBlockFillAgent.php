@@ -93,6 +93,32 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
               - 'list'                                         → Text (use a
                                                                   bulleted
                                                                   markdown body)
+              - 'feature_grid' / 'link_grid' /                  → Text with a
+                'resource_grid'                                    body of
+                                                                  link-only
+                                                                  lines only
+                                                                  (bulleted or
+                                                                  heading style),
+                                                                  ≥3 items, no
+                                                                  interstitial
+                                                                  prose. The
+                                                                  mapper folds
+                                                                  to a
+                                                                  FeatureGrid.
+                                                                  Do NOT emit
+                                                                  FeatureGrid
+                                                                  yourself. If
+                                                                  the source has
+                                                                  cards with
+                                                                  images (people,
+                                                                  sponsors), use
+                                                                  Columns of Cards
+                                                                  instead — the
+                                                                  mapper folds
+                                                                  those to
+                                                                  TeamMembers or
+                                                                  Sponsors, not
+                                                                  FeatureGrid.
               - 'faq' / 'faq_list' /                            → Text with a
                 'frequently_asked_questions'                       body containing
                                                                   ≥3 whole-line

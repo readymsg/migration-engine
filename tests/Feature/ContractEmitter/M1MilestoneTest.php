@@ -74,12 +74,18 @@ final class M1MilestoneTest extends TestCase
             }
         }
         // Palette expands per slice: 5 blocks at M1, +TeamMembers at
-        // Slice 13, +Sponsors/NewsList/Locations/Grid at Slice 15.
+        // Slice 13, +Sponsors/NewsList/Locations/Grid at Slice 15,
+        // +Table/FAQ/FeatureGrid/FileDownload/Video via the five IR
+        // concepts landed after Slice 16 (the tbirdhoops fold that
+        // fires today is FeatureGrid on the Home "Quick Links" section;
+        // Table/FAQ/FileDownload/Video are added to the allowlist so
+        // future fold-firings don't regress this pin).
         $allowed = [
             'Text', 'Hero', 'Image', 'Gallery', 'Button',
             'TeamMembers',
             'Grid', 'Sponsors', 'NewsList', 'Locations',
             'Standings', 'Scores', 'Schedule',
+            'Table', 'FAQ', 'FeatureGrid', 'FileDownload', 'Video',
         ];
         foreach (array_keys($emittedTypes) as $type) {
             $this->assertContains(
