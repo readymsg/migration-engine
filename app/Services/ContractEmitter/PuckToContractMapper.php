@@ -60,18 +60,49 @@ final class PuckToContractMapper
 
     /**
      * @param  array<int, array<string, mixed>>  $content  raw content array from an old PuckOutput
+     * @param  bool  $isTopLevel  true for the outer mapContent call — used to gate page-level pre-scans (Locations widget). Recursive calls from mapColumns pass false so nested-in-Grid content doesn't produce a Locations widget inside each Grid slot.
      */
     public function mapContent(
         array $content,
         AssetContext $assetContext,
         AssetLedger $ledger,
         ?string $sourcePageUrl = null,
+        bool $isTopLevel = true,
     ): MappedContent {
         $blocks = [];
         $diagnostics = [];
 
+        // Slice 15d: at page top level, scan the WHOLE tree for
+        // Google Maps static-map URLs. If any are found, emit ONE
+        // Locations widget at the top of the page and skip all
+        // Google Maps Images downstream (both top-level and nested
+        // in Columns children).
+        if ($isTopLevel) {
+            $mapUrlsCount = $this->countGoogleMapsUrlsRecursively($content);
+            if ($mapUrlsCount > 0) {
+                $blocks[] = new Block(type: 'Locations', props: [
+                    'id' => $this->id('locations', $sourcePageUrl ?? '', (string) $mapUrlsCount),
+                ]);
+                $diagnostics[] = new Diagnostic(
+                    severity: 'info',
+                    code: 'locations_widget_placed',
+                    message: sprintf(
+                        'Detected %d Google Maps static-map image(s) on this page. Placed a Locations widget; scraped map URLs discarded (widgets read live from TeamLinkt).',
+                        $mapUrlsCount,
+                    ),
+                    sourceUrl: $sourcePageUrl !== null ? $sourcePageUrl : new Optional,
+                );
+            }
+        }
+
         foreach ($content as $i => $entry) {
             if (! is_array($entry) || ! is_string($entry['type'] ?? null)) {
+                continue;
+            }
+            // Skip Google Maps Images — consumed by the page-level
+            // Locations widget (already emitted or emitted at an
+            // ancestor mapContent call).
+            if ($this->isGoogleMapsImage($entry)) {
                 continue;
             }
             $result = $this->mapOne($entry, $assetContext, $ledger, $sourcePageUrl);
@@ -84,6 +115,52 @@ final class PuckToContractMapper
         }
 
         return new MappedContent(blocks: $blocks, diagnostics: $diagnostics);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $content
+     */
+    private function countGoogleMapsUrlsRecursively(array $content): int
+    {
+        $count = 0;
+        foreach ($content as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            if ($this->isGoogleMapsImage($entry)) {
+                $count++;
+
+                continue;
+            }
+            // Recurse into Columns children.
+            if (($entry['type'] ?? null) === 'Columns') {
+                $columns = is_array($entry['props']['columns'] ?? null) ? $entry['props']['columns'] : [];
+                foreach ($columns as $col) {
+                    if (! is_array($col)) {
+                        continue;
+                    }
+                    $children = is_array($col['children'] ?? null) ? $col['children'] : [];
+                    $count += $this->countGoogleMapsUrlsRecursively($children);
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * @param  array<string, mixed>  $entry
+     */
+    private function isGoogleMapsImage(array $entry): bool
+    {
+        if (($entry['type'] ?? null) !== 'Image') {
+            return false;
+        }
+        $props = is_array($entry['props'] ?? null) ? $entry['props'] : [];
+        $src = is_string($props['src'] ?? null) ? $props['src'] : '';
+
+        return str_contains($src, 'maps.googleapis.com')
+            || str_contains($src, 'maps.google.com');
     }
 
     /**
@@ -544,7 +621,9 @@ final class PuckToContractMapper
             if ($children === []) {
                 continue;
             }
-            $mapped = $this->mapContent($children, $ctx, $ledger, $srcUrl);
+            // Nested call: pass isTopLevel=false so we don't
+            // emit a Locations widget inside each Grid slot.
+            $mapped = $this->mapContent($children, $ctx, $ledger, $srcUrl, isTopLevel: false);
             foreach ($mapped->diagnostics as $d) {
                 $diagnostics[] = $d;
             }

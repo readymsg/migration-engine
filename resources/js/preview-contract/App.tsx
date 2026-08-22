@@ -8,12 +8,13 @@ import Gallery from './components/Gallery';
 import Button from './components/Button';
 import TeamMembers from './components/TeamMembers';
 import Sponsors from './components/Sponsors';
+import Locations from './components/Locations';
 import Grid from './components/Grid';
 import './preview-contract.css';
 
 const KNOWN_TYPES = new Set([
     'Hero', 'Text', 'Image', 'Gallery', 'Button',
-    'TeamMembers', 'Sponsors', 'Grid',
+    'TeamMembers', 'Sponsors', 'Locations', 'Grid',
 ]);
 
 export default function App({ slug }: { slug: string }) {
@@ -84,6 +85,8 @@ function BlockSwitch({ block, envelope }: { block: import('./types').Block; enve
             return <TeamMembers block={block} assets={envelope.assets} />;
         case 'Sponsors':
             return <Sponsors block={block} />;
+        case 'Locations':
+            return <Locations block={block} />;
         case 'Grid':
             return <Grid block={block} assets={envelope.assets} />;
     }

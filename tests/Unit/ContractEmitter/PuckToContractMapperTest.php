@@ -508,6 +508,65 @@ final class PuckToContractMapperTest extends TestCase
     }
 
     #[Test]
+    public function google_maps_images_place_one_locations_widget_per_page(): void
+    {
+        // Slice 15d: Google Maps static-map image URLs (no fetchable
+        // file extension → previously image_asset_unresolvable
+        // dropped) now trigger a single Locations widget at page
+        // top level. Individual map Images are consumed.
+        $mapUrl1 = 'https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?token=1';
+        $mapUrl2 = 'https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?token=2';
+        $out = $this->mapper->mapContent(
+            [
+                ['type' => 'Text', 'props' => ['body' => '<p>Our facilities</p>']],
+                ['type' => 'Image', 'props' => ['src' => $mapUrl1, 'alt' => 'Facility 1 map']],
+                ['type' => 'Image', 'props' => ['src' => $mapUrl2, 'alt' => 'Facility 2 map']],
+            ],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        // ONE Locations widget emitted at the top; two Image blocks
+        // consumed; the Text survives unchanged.
+        $types = array_map(fn ($b) => $b->type, $out->blocks);
+        $this->assertSame(['Locations', 'Text'], $types);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('locations_widget_placed', $codes);
+        // No image_asset_unresolvable diagnostics — those were only
+        // emitted by mapImage, which we no longer call for map URLs.
+        $this->assertNotContains('image_asset_unresolvable', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function google_maps_images_nested_in_columns_also_consumed_by_page_locations(): void
+    {
+        // Facilities shape: map images inside Columns children. Only
+        // ONE Locations widget emitted at page top (not one per
+        // Grid slot).
+        $mapUrl = 'https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?token=x';
+        $out = $this->mapper->mapContent(
+            [
+                ['type' => 'Columns', 'props' => [
+                    'columns' => [
+                        ['children' => [['type' => 'Image', 'props' => ['src' => $mapUrl, 'alt' => 'map']]]],
+                        ['children' => [['type' => 'Image', 'props' => ['src' => $mapUrl.'2', 'alt' => 'map2']]]],
+                    ],
+                ]],
+            ],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $types = array_map(fn ($b) => $b->type, $out->blocks);
+        // Locations at top, then Grid (with empty-after-map-filter
+        // columns → sparse omission).
+        $this->assertContains('Locations', $types);
+        // Only ONE Locations block per page.
+        $locationsCount = count(array_filter($out->blocks, fn ($b) => $b->type === 'Locations'));
+        $this->assertSame(1, $locationsCount, 'exactly one Locations widget per page');
+    }
+
+    #[Test]
     public function columns_of_sponsor_cards_place_a_sponsors_widget(): void
     {
         // Slice 15b: sponsor-deck detection. What Slice 13 correctly
