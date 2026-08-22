@@ -73,12 +73,15 @@ final class M1MilestoneTest extends TestCase
                 $emittedTypes[$block->type] = ($emittedTypes[$block->type] ?? 0) + 1;
             }
         }
-        $allowed = ['Text', 'Hero', 'Image', 'Gallery', 'Button'];
+        // Palette widened by Slice 13: TeamMembers joined the M1
+        // palette (Board / Contacts people directories fold to a
+        // TeamMembers widget). Slice 15 broadens further.
+        $allowed = ['Text', 'Hero', 'Image', 'Gallery', 'Button', 'TeamMembers'];
         foreach (array_keys($emittedTypes) as $type) {
             $this->assertContains(
                 $type,
                 $allowed,
-                "M1 palette leak: `{$type}` emitted but not in the 5-block M1 palette. Slice 15 will broaden.",
+                "Palette leak: `{$type}` emitted but not in the current palette.",
             );
         }
         // Every M1 palette member should appear at least once except
@@ -88,6 +91,11 @@ final class M1MilestoneTest extends TestCase
         $this->assertGreaterThan(0, $emittedTypes['Text'] ?? 0, 'expected Text blocks on tbirdhoops');
         $this->assertGreaterThan(0, $emittedTypes['Hero'] ?? 0, 'expected Hero on Home');
         $this->assertGreaterThan(0, $emittedTypes['Gallery'] ?? 0, 'expected Gallery blocks (tbirdhoops has 9 old-schema Galleries)');
+        $this->assertGreaterThan(
+            0,
+            $emittedTypes['TeamMembers'] ?? 0,
+            'expected at least one TeamMembers block (Slice 13 folds Board/Contacts people directories)',
+        );
 
         // ─── assets: no s3://, all http(s) sourceUrls ───────────────
         $encoded = json_encode($env->toArray(), JSON_THROW_ON_ERROR);

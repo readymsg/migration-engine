@@ -350,6 +350,129 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── Slice 13: Columns of Cards → TeamMembers ───────────────────────
+
+    #[Test]
+    public function columns_of_people_cards_board_shape_fold_to_team_members(): void
+    {
+        // Board-style Cards: title=name, body=role, image=photo.
+        // 3+ Cards with images should fold to a single TeamMembers.
+        $refs = new DataCollection(AssetRef::class, [
+            new AssetRef(s3_key: 's3://x/scott.jpg', mime_type: 'image/jpeg', source_url: 'https://cdn.example.com/scott.jpg'),
+            new AssetRef(s3_key: 's3://x/eric.jpg', mime_type: 'image/jpeg', source_url: 'https://cdn.example.com/eric.jpg'),
+            new AssetRef(s3_key: 's3://x/dana.jpg', mime_type: 'image/jpeg', source_url: 'https://cdn.example.com/dana.jpg'),
+        ]);
+        $ctx = new AssetContext($refs);
+        $out = $this->mapper->mapContent(
+            [['type' => 'Columns', 'props' => [
+                'columns' => [
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Scott Whitenack', 'body' => 'President', 'image' => 's3://x/scott.jpg']]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Eric Debord', 'body' => 'Coordinator', 'image' => 's3://x/eric.jpg']]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Dana Whitfield', 'body' => 'Treasurer', 'image' => 's3://x/dana.jpg']]]],
+                ],
+            ]]],
+            $ctx,
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $tm = $out->blocks[0];
+        $this->assertSame('TeamMembers', $tm->type);
+        $this->assertSame(3, $tm->props['columns']); // preserved from source
+        $items = $tm->props['items'];
+        $this->assertCount(3, $items);
+        $this->assertSame('Scott Whitenack', $items[0]['name']);
+        $this->assertSame('President', $items[0]['role']);
+        $this->assertStringStartsWith('tl-asset:', $items[0]['photo']);
+        // Diagnostic emitted for the fold.
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('columns_folded_to_team_members', $codes);
+        // The columns_flattened diagnostic must NOT fire (we didn't
+        // flatten — we folded).
+        $this->assertNotContains('columns_flattened', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function columns_of_people_cards_contacts_shape_fold_to_team_members(): void
+    {
+        // Contacts-style Cards: title=role, body="name\nemail\nphone",
+        // image empty. Must parse the multi-line body correctly.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Columns', 'props' => [
+                'columns' => [
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'President', 'body' => "Scott Whitenack\nswhitenack@cinci.rr.com\n📞 513-702-4623"]]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Treasurer', 'body' => "Janet Habedank\ntbirdhoopstreasurer@gmail.com\n📞 513-460-7753"]]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Scheduling', 'body' => "Kristin Peoples\nkristinolversonpeoples@gmail.com"]]]],
+                ],
+            ]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(1, $out->blocks);
+        $items = $out->blocks[0]->props['items'];
+        $this->assertCount(3, $items);
+        // Name extracted from first non-email line.
+        $this->assertSame('Scott Whitenack', $items[0]['name']);
+        $this->assertSame('President', $items[0]['role']);
+        $this->assertSame('swhitenack@cinci.rr.com', $items[0]['email']);
+        // Phone line preserved as bio.
+        $this->assertStringContainsString('513-702-4623', $items[0]['bio']);
+        // Third item has no phone line → empty bio.
+        $this->assertSame('Kristin Peoples', $items[2]['name']);
+        $this->assertSame('kristinolversonpeoples@gmail.com', $items[2]['email']);
+        $this->assertSame('', $items[2]['bio']);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function columns_of_sponsor_cards_do_no_t_fold_to_team_members(): void
+    {
+        // Sponsor cards: title=business name, body=CTA, href set even
+        // when placeholder "#". Must NOT fold to TeamMembers — falls
+        // back to columns_flattened.
+        $refs = new DataCollection(AssetRef::class, [
+            new AssetRef(s3_key: 's3://x/logo1.png', mime_type: 'image/png', source_url: 'https://cdn.example.com/logo1.png'),
+            new AssetRef(s3_key: 's3://x/logo2.png', mime_type: 'image/png', source_url: 'https://cdn.example.com/logo2.png'),
+            new AssetRef(s3_key: 's3://x/logo3.png', mime_type: 'image/png', source_url: 'https://cdn.example.com/logo3.png'),
+        ]);
+        $out = $this->mapper->mapContent(
+            [['type' => 'Columns', 'props' => [
+                'columns' => [
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Dicks Sporting Goods', 'body' => 'Visit Website', 'image' => 's3://x/logo1.png', 'href' => 'https://www.dickssportinggoods.com/']]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Become a sponsor', 'body' => 'Want to support youth basketball?', 'image' => 's3://x/logo2.png', 'href' => '#']]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Become a sponsor', 'body' => 'Support Lakota Thunderbird.', 'image' => 's3://x/logo3.png', 'href' => '#']]]],
+                ],
+            ]]],
+            new AssetContext($refs),
+            new AssetLedger,
+        );
+        // NOT folded to TeamMembers.
+        $types = array_map(fn ($b) => $b->type, $out->blocks);
+        $this->assertNotContains('TeamMembers', $types, 'sponsor Cards must NOT be misidentified as a people directory');
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        // Fell back to flatten path.
+        $this->assertContains('columns_flattened', $codes);
+    }
+
+    #[Test]
+    public function two_card_columns_does_no_t_fold_to_team_members(): void
+    {
+        // Threshold ≥ 3 rejects two-card layouts (About Us shape:
+        // "Boys 3rd–6th Flight Teams — contact Michael at ...").
+        $out = $this->mapper->mapContent(
+            [['type' => 'Columns', 'props' => [
+                'columns' => [
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Boys Teams', 'body' => 'Contact Michael at mlewis@tbirdhoops.org']]]],
+                    ['children' => [['type' => 'Card', 'props' => ['title' => 'Girls Teams', 'body' => 'Contact Eric at eric@example.com']]]],
+                ],
+            ]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $types = array_map(fn ($b) => $b->type, $out->blocks);
+        $this->assertNotContains('TeamMembers', $types);
+    }
+
     // ─── Columns → flatten + diagnostic ─────────────────────────────────
 
     #[Test]

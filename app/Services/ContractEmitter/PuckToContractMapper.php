@@ -393,10 +393,6 @@ final class PuckToContractMapper
     /** @param array<string, mixed> $props */
     private function mapColumns(array $props, AssetContext $ctx, AssetLedger $ledger, ?string $srcUrl): MappedContent
     {
-        // Contract Grid is out of the M1 palette. Flatten: extract
-        // every column's children and emit them at the top level,
-        // in order. Record the flattening as a diagnostic so a
-        // reviewer can see the layout signal was lost.
         $columns = is_array($props['columns'] ?? null) ? $props['columns'] : [];
         $flatContent = [];
         foreach ($columns as $col) {
@@ -413,6 +409,24 @@ final class PuckToContractMapper
         if ($flatContent === []) {
             return new MappedContent(blocks: [], diagnostics: []);
         }
+
+        // Slice 13: people-directory detection. If this Columns's
+        // children are all Cards AND the Cards shape as a directory
+        // (any image set OR body contains "@" for email OR
+        // multi-line body), fold the whole block into a single
+        // TeamMembers block instead of unfolding every Card into
+        // Text+Image+Text+Button. Cleaner output; and TeamMembers
+        // has its own columns prop so the multi-column layout that
+        // Grid-deferred flattening would have destroyed is
+        // RESTORED — best of both worlds.
+        if ($this->looksLikePeopleDirectory($flatContent)) {
+            $columnCount = count($columns);
+
+            return $this->emitTeamMembers($flatContent, $columnCount, $ctx, $ledger, $srcUrl);
+        }
+
+        // Default: Grid deferred → flatten. Record the loss so a
+        // reviewer sees the layout drop.
         $mapped = $this->mapContent($flatContent, $ctx, $ledger, $srcUrl);
         $diag = new Diagnostic(
             severity: 'info',
@@ -424,6 +438,178 @@ final class PuckToContractMapper
         return new MappedContent(
             blocks: $mapped->blocks,
             diagnostics: array_merge([$diag], $mapped->diagnostics),
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $children
+     */
+    private function looksLikePeopleDirectory(array $children): bool
+    {
+        // Every child must be a Card AND at least 3 total. Threshold
+        // was 2 originally; bumped to 3 after the About Us false-
+        // positive: 2 Cards with contact-email bodies but describing
+        // PROGRAMS, not people ("Boys 3rd–6th Grade Flight Teams —
+        // contact Michael Lewis at ..."). A two-card layout is more
+        // likely a program/feature pair than a directory; three+
+        // is the point where directory-shape becomes the dominant
+        // interpretation.
+        if (count($children) < 3) {
+            return false;
+        }
+        $cardsWithSignal = 0;
+        $cardsWithHref = 0;
+        foreach ($children as $child) {
+            if (! is_array($child) || ($child['type'] ?? null) !== 'Card') {
+                return false;
+            }
+            $props = is_array($child['props'] ?? null) ? $child['props'] : [];
+            $hasImage = is_string($props['image'] ?? null) && $props['image'] !== '';
+            $body = is_string($props['body'] ?? null) ? $props['body'] : '';
+            $hasEmail = str_contains($body, '@');
+            $hasMultiLineBody = str_contains($body, "\n");
+            if ($hasImage || $hasEmail || $hasMultiLineBody) {
+                $cardsWithSignal++;
+            }
+            // Sponsors / resource links carry an href even when it's
+            // a "#" placeholder ("Become a sponsor → #"). People
+            // cards on the board / contacts pages don't. Count any
+            // non-empty href as the link-intent signal.
+            if (is_string($props['href'] ?? null) && trim($props['href']) !== '') {
+                $cardsWithHref++;
+            }
+        }
+        $half = (int) ceil(count($children) / 2);
+
+        // Positive signal: majority have image OR email OR multi-line body.
+        if ($cardsWithSignal < $half) {
+            return false;
+        }
+
+        // Negative signal: sponsor/resource-link decks have href on
+        // most cards ("Dicks Sporting Goods → Visit Website"). People
+        // directory cards rarely carry an outbound href. Reject when
+        // href is dominant even if the image signal is high.
+        if ($cardsWithHref >= $half) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $cards
+     */
+    private function emitTeamMembers(
+        array $cards,
+        int $sourceColumnCount,
+        AssetContext $ctx,
+        AssetLedger $ledger,
+        ?string $srcUrl,
+    ): MappedContent {
+        $items = [];
+        $memberDiagnostics = [];
+        foreach ($cards as $i => $card) {
+            $props = is_array($card['props'] ?? null) ? $card['props'] : [];
+            $title = $this->sanitiser->plainText(is_string($props['title'] ?? null) ? $props['title'] : '');
+            $body = is_string($props['body'] ?? null) ? $props['body'] : '';
+            $image = is_string($props['image'] ?? null) ? $props['image'] : '';
+            $href = is_string($props['href'] ?? null) ? trim($props['href']) : '';
+
+            // Two Card shapes exist on tbirdhoops alone:
+            //   Board-style:    title=name, body=role,  image=photo.
+            //   Contacts-style: title=role, body="name\nemail\nphone",
+            //                   image=empty.
+            //
+            // The differentiator: image populated → Board-style.
+            // Both shapes fold to the same TeamMembers.items[] entry.
+            $item = ['photo' => '', 'name' => '', 'role' => '', 'email' => '', 'bio' => ''];
+            if ($image !== '') {
+                // Board-style.
+                $token = $this->tokenise($image, $ctx, $ledger, 'other', $title !== '' ? $title : null);
+                if ($token !== null) {
+                    $item['photo'] = $token;
+                }
+                $item['name'] = $title;
+                $item['role'] = $this->sanitiser->plainText($body);
+            } else {
+                // Contacts-style.
+                $item['role'] = $title;
+                $lines = array_values(array_filter(
+                    array_map('trim', preg_split('/\r?\n/', $body) ?: []),
+                    static fn (string $l): bool => $l !== '',
+                ));
+                // Find email + separate name line.
+                $emailLine = null;
+                $nameCandidate = '';
+                $residual = [];
+                foreach ($lines as $line) {
+                    if ($emailLine === null && preg_match('/\S+@\S+\.\S+/', $line, $m) === 1) {
+                        $emailLine = $m[0];
+
+                        continue;
+                    }
+                    if ($nameCandidate === '' && ! str_starts_with($line, '📞')) {
+                        $nameCandidate = $line;
+
+                        continue;
+                    }
+                    $residual[] = $line;
+                }
+                $item['name'] = $nameCandidate !== '' ? $this->sanitiser->plainText($nameCandidate) : $title;
+                $item['email'] = $emailLine ?? '';
+                if ($residual !== []) {
+                    $item['bio'] = $this->sanitiser->plainText(implode(' · ', $residual));
+                }
+            }
+
+            // Href on the Card sometimes carries a mailto: — capture if we don't already have one.
+            if ($item['email'] === '' && str_starts_with(strtolower($href), 'mailto:')) {
+                $item['email'] = substr($href, 7);
+            }
+
+            // A card with no name at all is a directory shape we
+            // don't understand; drop with a diagnostic.
+            if ($item['name'] === '' && $item['role'] === '') {
+                $memberDiagnostics[] = new Diagnostic(
+                    severity: 'info',
+                    code: 'people_directory_item_skipped',
+                    message: "Card {$i} in a people-directory Columns has neither name nor role; skipped.",
+                    sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
+                );
+
+                continue;
+            }
+            $items[] = $item;
+        }
+
+        if ($items === []) {
+            return new MappedContent(blocks: [], diagnostics: $memberDiagnostics);
+        }
+
+        // Clamp source column count to the TeamMembers enum [2,3,4].
+        $columns = max(2, min(4, $sourceColumnCount));
+
+        $block = new Block(type: 'TeamMembers', props: [
+            'id' => $this->id('teammembers', $srcUrl ?? '', (string) count($items)),
+            'columns' => $columns,
+            'items' => $items,
+        ]);
+
+        return new MappedContent(
+            blocks: [$block],
+            diagnostics: array_merge([
+                new Diagnostic(
+                    severity: 'info',
+                    code: 'columns_folded_to_team_members',
+                    message: sprintf(
+                        'Detected people-directory pattern (%d Cards in %d source columns). Folded to a single TeamMembers block — layout preserved via TeamMembers.columns.',
+                        count($cards),
+                        $sourceColumnCount,
+                    ),
+                    sourceUrl: $srcUrl !== null ? $srcUrl : new Optional,
+                ),
+            ], $memberDiagnostics),
         );
     }
 

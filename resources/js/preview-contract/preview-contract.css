@@ -249,6 +249,80 @@ html, body { margin: 0; padding: 0; }
     color: var(--cp-primary);
 }
 
+/* TeamMembers — people directory grid (Board / Contacts). */
+.cp-team-members {
+    max-width: 1120px;
+    margin: 32px auto;
+    padding: 0 24px;
+}
+.cp-team-members__preheading {
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    color: var(--cp-muted);
+    margin-bottom: 6px;
+}
+.cp-team-members__heading {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--cp-primary);
+    margin-bottom: 20px;
+    text-align: center;
+}
+.cp-team-members__grid {
+    display: grid;
+    gap: 20px;
+}
+.cp-team-members__card {
+    text-align: center;
+    padding: 16px 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+}
+.cp-team-members__photo,
+.cp-team-members__photo-fallback {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 12px;
+    display: block;
+}
+.cp-team-members__photo-fallback {
+    background: var(--cp-primary);
+    color: #ffffff;
+    line-height: 96px;
+    font-weight: 700;
+    font-size: 28px;
+    text-transform: uppercase;
+}
+.cp-team-members__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--cp-body-fg);
+    margin-bottom: 4px;
+}
+.cp-team-members__role {
+    font-size: 13px;
+    color: var(--cp-primary);
+    margin-bottom: 6px;
+}
+.cp-team-members__email {
+    font-size: 12px;
+    color: var(--cp-primary);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+.cp-team-members__email:hover { text-decoration: underline; }
+.cp-team-members__bio {
+    font-size: 12px;
+    color: var(--cp-muted);
+    line-height: 1.4;
+}
+
 /* Unknown block-type placeholder — mostly renders as a visible gap
    so a reviewer notices the coverage hole. */
 .cp-unknown {

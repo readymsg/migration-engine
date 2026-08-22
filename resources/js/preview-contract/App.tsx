@@ -6,9 +6,10 @@ import Text from './components/Text';
 import ImageBlock from './components/Image';
 import Gallery from './components/Gallery';
 import Button from './components/Button';
+import TeamMembers from './components/TeamMembers';
 import './preview-contract.css';
 
-const KNOWN_TYPES = new Set(['Hero', 'Text', 'Image', 'Gallery', 'Button']);
+const KNOWN_TYPES = new Set(['Hero', 'Text', 'Image', 'Gallery', 'Button', 'TeamMembers']);
 
 export default function App({ slug }: { slug: string }) {
     const [envelope, setEnvelope] = useState<Envelope | null>(null);
@@ -74,6 +75,8 @@ function BlockSwitch({ block, envelope }: { block: import('./types').Block; enve
             return <Gallery block={block} assets={envelope.assets} />;
         case 'Button':
             return <Button block={block} />;
+        case 'TeamMembers':
+            return <TeamMembers block={block} assets={envelope.assets} />;
     }
     return null;
 }
