@@ -300,7 +300,8 @@ final class PuckToContractMapperTest extends TestCase
     public function button_without_label_or_href_is_dropped(): void
     {
         // Label-less button: silent-loss risk (would render as
-        // "Button" default). Href-less button: dead link. Both drop.
+        // "Button" default). Href-less button: dead link. Both drop
+        // WITH a partial diagnostic (per-item drops are noted).
         $out = $this->mapper->mapContent(
             [['type' => 'ButtonGroup', 'props' => [
                 'buttons' => [
@@ -313,6 +314,88 @@ final class PuckToContractMapperTest extends TestCase
             new AssetLedger,
         );
         $this->assertCount(1, $out->blocks, 'only the fully-populated button survives');
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('button_group_partial', $codes, 'partial-drop must be diagnostic-visible');
+    }
+
+    // ─── silent-loss guards ─────────────────────────────────────────────
+
+    #[Test]
+    public function button_group_with_no_survivors_emits_dropped_diagnostic(): void
+    {
+        $out = $this->mapper->mapContent(
+            [['type' => 'ButtonGroup', 'props' => [
+                'buttons' => [
+                    ['label' => '', 'href' => '/x'],
+                    ['label' => 'Learn', 'href' => ''],
+                ],
+            ]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(0, $out->blocks);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('button_group_dropped_empty', $codes);
+    }
+
+    #[Test]
+    public function empty_heading_emits_dropped_diagnostic(): void
+    {
+        $out = $this->mapper->mapContent(
+            [['type' => 'Heading', 'props' => ['level' => 2, 'text' => '']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(0, $out->blocks);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('heading_dropped_empty', $codes);
+    }
+
+    #[Test]
+    public function text_devoured_by_sanitiser_emits_dropped_diagnostic(): void
+    {
+        // Body was non-empty in source (had markup) but the TipTap-
+        // subset stripper reduced it to nothing. Reviewer should
+        // see because that markup existed and now it's gone.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => '<script>alert(1)</script>']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(0, $out->blocks);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_body_sanitised_to_empty', $codes);
+    }
+
+    #[Test]
+    public function text_with_genuinely_empty_body_is_silent_noop(): void
+    {
+        // An empty-body Text was no-op in source too. No diagnostic —
+        // that would be noise.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => '']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(0, $out->blocks);
+        $this->assertCount(0, $out->diagnostics);
+    }
+
+    #[Test]
+    public function card_with_unresolvable_image_only_emits_dropped_diagnostic(): void
+    {
+        // Card whose only field is an image, and that image is
+        // unresolvable. Card produces zero blocks (all-fields-empty
+        // after resolution). Must be visible.
+        $out = $this->mapper->mapContent(
+            [['type' => 'Card', 'props' => ['image' => '/preview-assets?p=unknown']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertCount(0, $out->blocks);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('card_image_unresolvable', $codes);
+        $this->assertContains('card_dropped_no_survivable_content', $codes);
     }
 
     // ─── Card → Text + Image + Text + Button unfolding ──────────────────

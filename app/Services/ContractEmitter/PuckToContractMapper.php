@@ -122,10 +122,24 @@ final class PuckToContractMapper
     /** @param array<string, mixed> $props */
     private function mapText(array $props): MappedContent
     {
-        $body = is_string($props['body'] ?? null) ? $props['body'] : '';
-        $body = $this->sanitiser->sanitize($body);
+        $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
+        $body = $this->sanitiser->sanitize($rawBody);
         if ($body === '') {
-            return new MappedContent(blocks: [], diagnostics: []);
+            // Silent-loss guard: source had a Text block. If pre-
+            // sanitize was empty, the source itself was no-op. If
+            // pre-sanitize was NON-empty (had markup) but sanitize
+            // reduced it to '', the TipTap-subset stripper devoured
+            // the whole thing — reviewer should see.
+            $diagnostics = [];
+            if (trim($rawBody) !== '') {
+                $diagnostics[] = new Diagnostic(
+                    severity: 'warning',
+                    code: 'text_body_sanitised_to_empty',
+                    message: 'Text block dropped: body was non-empty in source but sanitised to nothing (all markup outside the TipTap subset).',
+                );
+            }
+
+            return new MappedContent(blocks: [], diagnostics: $diagnostics);
         }
         $align = is_string($props['align'] ?? null) && in_array($props['align'], ['left', 'center', 'right'], true)
             ? $props['align']
@@ -148,7 +162,14 @@ final class PuckToContractMapper
     {
         $text = is_string($props['text'] ?? null) ? trim($props['text']) : '';
         if ($text === '') {
-            return new MappedContent(blocks: [], diagnostics: []);
+            return new MappedContent(
+                blocks: [],
+                diagnostics: [new Diagnostic(
+                    severity: 'info',
+                    code: 'heading_dropped_empty',
+                    message: 'Heading block dropped: source `text` field was empty.',
+                )],
+            );
         }
         $text = $this->sanitiser->plainText($text);
         $level = $props['level'] ?? 2;
@@ -313,13 +334,22 @@ final class PuckToContractMapper
     {
         $buttons = is_array($props['buttons'] ?? null) ? $props['buttons'] : [];
         $blocks = [];
+        $droppedForMissingLabel = 0;
+        $droppedForMissingHref = 0;
         foreach ($buttons as $i => $b) {
             if (! is_array($b)) {
                 continue;
             }
             $label = $this->sanitiser->plainText(is_string($b['label'] ?? null) ? $b['label'] : '');
             $href = is_string($b['href'] ?? null) ? trim($b['href']) : '';
-            if ($label === '' || $href === '') {
+            if ($label === '') {
+                $droppedForMissingLabel++;
+
+                continue;
+            }
+            if ($href === '') {
+                $droppedForMissingHref++;
+
                 continue;
             }
             $variant = is_string($b['variant'] ?? null) && in_array($b['variant'], ['solid', 'soft', 'outline', 'ghost'], true)
@@ -333,7 +363,39 @@ final class PuckToContractMapper
             ]);
         }
 
-        return new MappedContent(blocks: $blocks, diagnostics: []);
+        $diagnostics = [];
+        // Silent-loss guards. ButtonGroup with mixed valid+invalid
+        // buttons: the invalids drop; log the count so a reviewer
+        // knows the group wasn't emitted whole. Empty group (all
+        // buttons rejected OR source had zero buttons): flag as its
+        // own drop with the specific reason.
+        $totalIn = count($buttons);
+        if ($blocks === []) {
+            $diagnostics[] = new Diagnostic(
+                severity: 'warning',
+                code: 'button_group_dropped_empty',
+                message: sprintf(
+                    'ButtonGroup dropped: source had %d button(s), 0 survived (missing label=%d, missing href=%d).',
+                    $totalIn,
+                    $droppedForMissingLabel,
+                    $droppedForMissingHref,
+                ),
+            );
+        } elseif ($droppedForMissingLabel > 0 || $droppedForMissingHref > 0) {
+            $diagnostics[] = new Diagnostic(
+                severity: 'info',
+                code: 'button_group_partial',
+                message: sprintf(
+                    'ButtonGroup partial: %d of %d buttons emitted (%d dropped for missing label, %d for missing href).',
+                    count($blocks),
+                    $totalIn,
+                    $droppedForMissingLabel,
+                    $droppedForMissingHref,
+                ),
+            );
+        }
+
+        return new MappedContent(blocks: $blocks, diagnostics: $diagnostics);
     }
 
     /** @param array<string, mixed> $props */
@@ -385,6 +447,21 @@ final class PuckToContractMapper
                 'href' => $href,
                 'variant' => 'outline',
             ]);
+        }
+
+        // Silent-loss guard: a Card that had SOMETHING in source but
+        // produced zero output blocks (all fields sanitised away, or
+        // image failed to resolve AND no other content). Log it so
+        // the reviewer knows a Card was in source but didn't survive.
+        if ($blocks === []) {
+            $hadAnyField = $title !== '' || $body !== '' || $image !== '' || $href !== '';
+            if ($hadAnyField) {
+                $diagnostics[] = new Diagnostic(
+                    severity: 'info',
+                    code: 'card_dropped_no_survivable_content',
+                    message: 'Card dropped: source had fields but none survived sanitising / asset-resolving.',
+                );
+            }
         }
 
         return new MappedContent(blocks: $blocks, diagnostics: $diagnostics);
