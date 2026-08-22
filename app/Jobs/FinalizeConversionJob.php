@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Data\ConversionFailure;
 use App\Data\ConversionPipelineStage;
+use App\Data\ConversionResult;
+use App\Data\ConversionStage;
 use App\Data\ConversionStatus;
+use App\Data\OrgType;
+use App\Services\ContractEmitter\ContractEnvelopeStore;
+use App\Services\ContractEmitter\ContractPayloadEmitter;
 use App\Services\Conversion\ConversionContextStore;
 use App\Services\Conversion\ConversionCostGuard;
 use App\Services\Conversion\ConversionResultStore;
@@ -27,6 +33,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use Spatie\LaravelData\DataCollection;
 use Throwable;
 
 // The step-6 post-batch (post-reconcile) stages of the conversion
@@ -82,6 +89,8 @@ final class FinalizeConversionJob implements ShouldQueue
         ContentLoader $contentLoader,
         PlatformBlockRenderer $platformRenderer,
         DraftLanding $draftLanding,
+        ContractPayloadEmitter $contractEmitter,
+        ContractEnvelopeStore $envelopeStore,
     ): void {
         // Idempotency guard — if already finalized, no-op. The
         // sweeper's Finalize-kick recovery relies on this.
@@ -163,8 +172,32 @@ final class FinalizeConversionJob implements ShouldQueue
             manifest: $context->manifest,
         );
 
-        // Persist the final result. Doubles as the idempotency
-        // marker (see the guard at top of handle()).
+        // Contract-payload emit — produces the Site Import Contract
+        // v1 envelope. Persists REGARDLESS of validation success:
+        // an invalid envelope is still useful for debugging (the
+        // reviewer inspects the diagnostics + specific errors).
+        //
+        // Validation errors surface via two channels, same as every
+        // other pipeline failure:
+        //   1. envelope.diagnostics[] — the reviewer's channel.
+        //   2. ConversionResult.failures[] — the /api/conversions/{id}
+        //      response body. So a demo watcher sees "N envelope
+        //      validation errors" alongside stage failures.
+        //
+        // If the emitter itself THROWS (unexpected — the block
+        // validator is pure and shouldn't fault), catch and record
+        // as a contract-emit ConversionFailure so the conversion
+        // status still resolves to Partial rather than hanging.
+        $conversion = $this->emitContractEnvelope(
+            $conversion,
+            $context->orgType,
+            $contractEmitter,
+            $envelopeStore,
+        );
+
+        // Persist the final result (with contract-emit failures
+        // folded in). Doubles as the idempotency marker (see the
+        // guard at top of handle()).
         $resultStore->put($this->conversion_id, $conversion);
 
         // Terminal status derived from the ConversionResult's own
@@ -198,6 +231,91 @@ final class FinalizeConversionJob implements ShouldQueue
         // via retry).
         app(ConversionCostGuard::class)
             ->releaseConcurrency();
+    }
+
+    private function emitContractEnvelope(
+        ConversionResult $conversion,
+        OrgType $orgType,
+        ContractPayloadEmitter $emitter,
+        ContractEnvelopeStore $envelopeStore,
+    ): ConversionResult {
+        $extraFailures = [];
+        try {
+            $emitResult = $emitter->emit($conversion, $orgType);
+            // Persist regardless of validation state.
+            $envelopeStore->put($this->conversion_id, $emitResult->envelope);
+
+            // Surface validation errors as ConversionFailures so
+            // the /api/conversions/{id} response body carries them
+            // alongside stage failures.
+            foreach ($emitResult->errors as $issue) {
+                $path = is_string($issue->path) ? $issue->path : '(envelope)';
+                $extraFailures[] = new ConversionFailure(
+                    page_slug: '(envelope)',
+                    page_title: 'Contract envelope',
+                    page_node_id: null,
+                    stage: ConversionStage::ContractEmit,
+                    reason: sprintf('validation %s at %s: %s', $issue->code, $path, $issue->message),
+                );
+            }
+
+            Log::info('Contract envelope emitted', [
+                'conversion_id' => $this->conversion_id,
+                'pages' => $emitResult->envelope->pages->count(),
+                'assets' => $emitResult->envelope->assets->count(),
+                'diagnostics' => $emitResult->envelope->diagnostics->count(),
+                'validation_errors' => count($emitResult->errors),
+                'validation_warnings' => count($emitResult->warnings),
+            ]);
+        } catch (Throwable $e) {
+            // Unexpected throw — a real bug in the emitter. Record
+            // as a failure but don't halt the finalize (the
+            // ConversionResult still needs to persist for the demo
+            // status to resolve).
+            Log::error('Contract envelope emit threw', [
+                'conversion_id' => $this->conversion_id,
+                'error' => $e->getMessage(),
+            ]);
+            $extraFailures[] = new ConversionFailure(
+                page_slug: '(envelope)',
+                page_title: 'Contract envelope',
+                page_node_id: null,
+                stage: ConversionStage::ContractEmit,
+                reason: 'contract-emit threw: '.$e->getMessage(),
+            );
+        }
+
+        if ($extraFailures === []) {
+            return $conversion;
+        }
+
+        // Rebuild the ConversionResult with extra failures folded
+        // in. Bump status Completed → Partial (contract-emit errors
+        // are non-catastrophic; other stages succeeded).
+        $mergedFailures = array_merge(
+            $conversion->failures->items(),
+            $extraFailures,
+        );
+        $newStatus = $conversion->status === ConversionStatus::Completed
+            ? ConversionStatus::Partial
+            : $conversion->status;
+
+        return new ConversionResult(
+            conversion_id: $conversion->conversion_id,
+            org_id: $conversion->org_id,
+            source_url: $conversion->source_url,
+            page_map: $conversion->page_map,
+            nav: $conversion->nav,
+            failures: new DataCollection(ConversionFailure::class, $mergedFailures),
+            block_issues_by_slug: $conversion->block_issues_by_slug,
+            status: $newStatus,
+            brand: $conversion->brand,
+            style_brief: $conversion->style_brief,
+            asset_refs: $conversion->asset_refs,
+            draft_id: $conversion->draft_id,
+            draft_url: $conversion->draft_url,
+            scrub_issues_by_slug: $conversion->scrub_issues_by_slug,
+        );
     }
 
     public function failed(Throwable $exception): void

@@ -19,4 +19,10 @@ enum ConversionStage: string
     case Assembler = 'assembler';
     case PlatformRender = 'platform-render';
     case DraftLanding = 'draft-landing';
+    // The new post-DraftLanding stage: ContractPayloadEmitter
+    // produces the Site Import Contract v1 Envelope. Validation
+    // errors from the emitter surface as ConversionFailures with
+    // this stage so the reviewer sees them alongside every other
+    // pipeline failure.
+    case ContractEmit = 'contract-emit';
 }

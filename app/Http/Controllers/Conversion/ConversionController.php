@@ -99,7 +99,14 @@ final class ConversionController extends Controller
             'conversion_id' => $conversionId,
             'status_url' => route('conversions.status', $conversionId),
             'result_url' => route('conversions.show', $conversionId),
+            // Old preview (ConversionResult shape) — kept alive
+            // during the transition window; Slice 18 will retire it.
             'preview_url' => url('/preview/'.$conversionId),
+            // Contract preview (Envelope shape) — the new
+            // reviewer surface. Both URLs point at the same
+            // conversion; the two rendering paths coexist until
+            // the contract preview has fully replaced the old one.
+            'contract_preview_url' => url('/preview-contract/'.$conversionId),
             'deduped' => ! $isNew,
         ], $isNew ? 202 : 200);
     }

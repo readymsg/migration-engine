@@ -8,6 +8,8 @@ use App\Services\ContractEmitter\ContractPayloadEmitter;
 use App\Services\ContractEmitter\ContractSchema;
 use App\Services\ContractEmitter\ContractSchemaValidator;
 use App\Services\ContractEmitter\BlockDeltaAuditor;
+use App\Services\ContractEmitter\CacheContractEnvelopeStore;
+use App\Services\ContractEmitter\ContractEnvelopeStore;
 use App\Services\ContractEmitter\DiagnosticsCollector;
 use App\Services\ContractEmitter\OrgTypeGate;
 use App\Services\ContractEmitter\PageTreeBuilder;
@@ -155,6 +157,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(OrgTypeGate::class);
         $this->app->singleton(BlockDeltaAuditor::class);
         $this->app->singleton(ContractPayloadEmitter::class);
+        $this->app->singleton(ContractEnvelopeStore::class, CacheContractEnvelopeStore::class);
 
         // Step-6 conversion pipeline: per-conversion stores + dedupe
         // for the trigger endpoint. All cache-backed via the app's

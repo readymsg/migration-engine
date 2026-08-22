@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Demo;
 
 use App\Http\Controllers\Controller;
+use App\Services\ContractEmitter\ContractEnvelopeStore;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -20,8 +21,28 @@ use JsonException;
 // comparison; Slice 18 retires it once M1 stabilises.
 final class ContractPreviewController extends Controller
 {
+    public function __construct(
+        private readonly ContractEnvelopeStore $envelopeStore,
+    ) {}
+
     public function show(string $slug): View|Response
     {
+        // Live conversion path — check the envelope store first.
+        // conv-<id> slug format matches ConversionController's minted
+        // ids (Str::random(16) prefixed with 'conv-').
+        if (str_starts_with($slug, 'conv-')) {
+            if ($this->envelopeStore->get($slug) === null) {
+                return response(
+                    "Conversion `{$slug}` has no contract envelope yet. Poll /api/conversions/{$slug}/status; envelope lands after finalize completes.",
+                    404,
+                    ['Content-Type' => 'text/plain; charset=utf-8'],
+                );
+            }
+
+            return view('preview-contract', ['slug' => $slug]);
+        }
+
+        // Static fixture path (kept alive for tbirdhoops).
         $path = $this->fixturePath($slug);
         if (! is_file($path)) {
             return response(
@@ -36,6 +57,15 @@ final class ContractPreviewController extends Controller
 
     public function envelope(string $slug): JsonResponse|Response
     {
+        if (str_starts_with($slug, 'conv-')) {
+            $envelope = $this->envelopeStore->get($slug);
+            if ($envelope === null) {
+                return response("No envelope for conversion `{$slug}`.", 404);
+            }
+
+            return response()->json($envelope->toArray());
+        }
+
         $path = $this->fixturePath($slug);
         if (! is_file($path)) {
             return response(
