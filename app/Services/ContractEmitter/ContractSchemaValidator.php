@@ -155,9 +155,58 @@ final class ContractSchemaValidator
                     $issues[] = $issue;
                 }
             }
+
+            // Slice 16a hard-rule: never copy a stock-media default
+            // into a prop (Contract hardRules #9). Those paths are
+            // environment-resolved placeholders — shipping one
+            // literally puts a stock hockey photo on the club's site.
+            foreach ($this->stockMediaValuesFor($block->type) as $placeholder) {
+                if (self::valueContainsStockMedia($value, $placeholder)) {
+                    $issues[] = new ValidationIssue(
+                        severity: 'error',
+                        code: 'stock_media_default_copied',
+                        message: "Prop value on `{$block->type}.{$key}` contains stock-media placeholder `{$placeholder}` — Contract hardRule #9. Omit the prop to take the environment-resolved default.",
+                        path: "{$prefix}props.{$key}",
+                    );
+
+                    break; // one match per prop is enough
+                }
+            }
         }
 
         return $issues;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function stockMediaValuesFor(string $blockType): array
+    {
+        $all = $this->schema->stockMediaDefaults();
+
+        return $all[$blockType] ?? [];
+    }
+
+    /**
+     * Does the prop value (or any nested item within it) equal one of
+     * the stock-media placeholders for this block? Handles arrays of
+     * strings (Gallery.images[].src etc.) and arrays of objects
+     * (walks recursively).
+     */
+    private static function valueContainsStockMedia(mixed $value, string $placeholder): bool
+    {
+        if (is_string($value)) {
+            return $value === $placeholder;
+        }
+        if (is_array($value)) {
+            foreach ($value as $inner) {
+                if (self::valueContainsStockMedia($inner, $placeholder)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
