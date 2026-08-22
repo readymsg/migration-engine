@@ -169,6 +169,89 @@ final class ContractSchemaValidatorTest extends TestCase
         $this->assertSame([], $this->errors($issues), 'Button.size accepts STRING "3", not number 3');
     }
 
+    #[Test]
+    public function grid_block_with_valid_props_has_no_errors(): void
+    {
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'Grid',
+            props: [
+                'id' => 'grid-abc123',
+                'columns' => '3',
+                'gap' => 24,
+            ],
+        ));
+        $this->assertSame([], $this->errors($issues), 'Grid.columns accepts STRING "3" (unlike FeatureGrid which is number)');
+    }
+
+    #[Test]
+    public function sponsors_block_with_valid_props_has_no_errors(): void
+    {
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'Sponsors',
+            props: ['id' => 'sponsors-abc123', 'heading' => 'Our Sponsors', 'slidesToShow' => 4],
+        ));
+        $this->assertSame([], $this->errors($issues));
+    }
+
+    #[Test]
+    public function newslist_block_with_valid_props_has_no_errors(): void
+    {
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'NewsList',
+            props: ['id' => 'newslist-abc123', 'maxItems' => 6, 'showImages' => true],
+        ));
+        $this->assertSame([], $this->errors($issues));
+    }
+
+    #[Test]
+    public function newslist_resolved_items_is_refused(): void
+    {
+        // Server-owned; must never be authored (do-not-author list).
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'NewsList',
+            props: ['id' => 'newslist-abc123', 'resolvedItems' => [1, 2, 3]],
+        ));
+        $codes = array_map(fn ($i) => $i->code, $this->errors($issues));
+        $this->assertContains('server_owned_prop_authored', $codes);
+    }
+
+    #[Test]
+    public function locations_block_with_valid_items_has_no_errors(): void
+    {
+        $issues = $this->validator->validateBlock(new Block(
+            type: 'Locations',
+            props: [
+                'id' => 'locations-abc123',
+                'items' => [
+                    ['name' => 'Rink 1', 'address' => '100 Main St', 'lat' => 51.0, 'lng' => -114.0],
+                ],
+                'columns' => 2,
+            ],
+        ));
+        $this->assertSame([], $this->errors($issues));
+    }
+
+    #[Test]
+    public function standings_gate_only_covers_league_high_school_association(): void
+    {
+        // Contract Part II: Standings gated to league, high_school,
+        // association. This test pins the CATALOGUE data — the
+        // enforcement itself happens at emit time (Slice 15f).
+        $schema = ContractSchema::load();
+        $this->assertTrue($schema->blockAllowsOrgType('Standings', 'league'));
+        $this->assertTrue($schema->blockAllowsOrgType('Standings', 'high_school'));
+        $this->assertTrue($schema->blockAllowsOrgType('Standings', 'association'));
+        $this->assertFalse($schema->blockAllowsOrgType('Standings', 'club'));
+        $this->assertFalse($schema->blockAllowsOrgType('Standings', 'civic'));
+        $this->assertFalse($schema->blockAllowsOrgType('Standings', 'multi_location'));
+
+        // Sponsors and Grid: all orgTypes.
+        $this->assertTrue($schema->blockAllowsOrgType('Sponsors', 'club'));
+        $this->assertTrue($schema->blockAllowsOrgType('Grid', 'club'));
+        $this->assertTrue($schema->blockAllowsOrgType('NewsList', 'club'));
+        $this->assertTrue($schema->blockAllowsOrgType('Locations', 'club'));
+    }
+
     // ─── rule 1: unknown block type ────────────────────────────────────────
 
     #[Test]

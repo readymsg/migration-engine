@@ -74,6 +74,37 @@ final class ContractSchema
     }
 
     /**
+     * Contract Part II "Org types" gates block legality by org type.
+     * Emitting a restricted block for the wrong orgType is an error
+     * (not a warning) — Slice 15f enforces this at emit time.
+     *
+     * @return array<int, string> either ["all"] or a specific subset like ["league","high_school","association"]
+     */
+    public function orgTypesFor(string $type): array
+    {
+        $entry = $this->block($type);
+        if ($entry === null) {
+            return ['all'];
+        }
+        $orgTypes = $entry['orgTypes'] ?? ['all'];
+        if (! is_array($orgTypes) || $orgTypes === []) {
+            return ['all'];
+        }
+
+        return array_values(array_filter($orgTypes, 'is_string'));
+    }
+
+    public function blockAllowsOrgType(string $type, string $orgType): bool
+    {
+        $allowed = $this->orgTypesFor($type);
+        if (in_array('all', $allowed, true)) {
+            return true;
+        }
+
+        return in_array($orgType, $allowed, true);
+    }
+
+    /**
      * @return array<int, string> list of do-not-author prop names for this block (server-owned)
      */
     public function doNotAuthorProps(string $type): array

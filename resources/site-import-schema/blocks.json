@@ -297,6 +297,273 @@
       "doNotAuthor": []
     },
 
+    "Grid": {
+      "description": "2-4 column layout with drop zones for nested blocks.",
+      "category": "Layout",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": ["column1", "column2", "column3", "column4"],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "columns": {"type": "enum", "enum": ["2", "3", "4"]},
+          "columnWeights": {"type": "string"},
+          "gap": {"type": "number", "minimum": 0, "maximum": 96},
+          "background": {"type": "string"},
+          "backgroundImage": {"type": "string"},
+          "backgroundOpacity": {"type": "number", "minimum": 0, "maximum": 100},
+          "column1": {"type": "slot"},
+          "column1Align": {"type": "enum", "enum": ["stretch", "left", "center", "right"]},
+          "column2": {"type": "slot"},
+          "column2Align": {"type": "enum", "enum": ["stretch", "left", "center", "right"]},
+          "column3": {"type": "slot"},
+          "column3Align": {"type": "enum", "enum": ["stretch", "left", "center", "right"]},
+          "column4": {"type": "slot"},
+          "column4Align": {"type": "enum", "enum": ["stretch", "left", "center", "right"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "columns": "3",
+        "columnWeights": "",
+        "gap": 24,
+        "background": "transparent",
+        "backgroundImage": "",
+        "backgroundOpacity": 100,
+        "column1": [],
+        "column1Align": "stretch",
+        "column2": [],
+        "column2Align": "stretch",
+        "column3": [],
+        "column3Align": "stretch",
+        "column4": [],
+        "column4Align": "stretch",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48
+      },
+      "doNotAuthor": []
+    },
+
+    "Sponsors": {
+      "description": "Sponsor logos in a responsive carousel. Widget — data lives in TeamLinkt.",
+      "category": "TeamLinkt Widgets",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "heading": {"type": "string"},
+          "autoplay": {"type": "enum", "enum": [true, false]},
+          "slidesToShow": {"type": "number", "minimum": 2, "maximum": 6}
+        }
+      },
+      "defaults": {
+        "heading": "Our Sponsors",
+        "autoplay": true,
+        "slidesToShow": 4
+      },
+      "doNotAuthor": ["resolvedSponsors"]
+    },
+
+    "NewsList": {
+      "description": "Vertical list of recent news articles. Widget — data lives in TeamLinkt.",
+      "category": "TeamLinkt Widgets",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "maxItems": {"type": "number", "minimum": 1, "maximum": 20},
+          "showImages": {"type": "enum", "enum": [true, false]},
+          "showSummary": {"type": "enum", "enum": [true, false]},
+          "preheading": {"type": "string"},
+          "heading": {"type": "string"},
+          "subheading": {"type": "string"},
+          "preheadingColor": {"type": "string"},
+          "headingColor": {"type": "string"},
+          "subheadingColor": {"type": "string"},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "preheading": "",
+        "heading": "Latest news",
+        "subheading": "",
+        "preheadingColor": "#000000",
+        "headingColor": "#1c2024",
+        "subheadingColor": "#60646c",
+        "alignment": "center",
+        "background": "transparent",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48,
+        "maxItems": 6,
+        "showImages": true,
+        "showSummary": true,
+        "resolvedItems": null
+      },
+      "doNotAuthor": ["resolvedItems"]
+    },
+
+    "Locations": {
+      "description": "Venue cards with name, address, embedded Google Maps iframe, hours, and phone.",
+      "category": "TeamLinkt Widgets",
+      "zones": ["page-content"],
+      "orgTypes": ["all"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "keys": {
+                "name": {"type": "string"},
+                "address": {"type": "string"},
+                "lat": {"type": "number"},
+                "lng": {"type": "number"},
+                "environment": {"type": "enum", "enum": [null, "indoor", "outdoor"]},
+                "surfaceType": {"type": "string"},
+                "capacity": {"type": "number", "minimum": 0},
+                "description": {"type": "string"}
+              }
+            }
+          },
+          "columns": {"type": "enum", "enum": [1, 2, 3]},
+          "showMap": {"type": "enum", "enum": [true, false]},
+          "preheading": {"type": "string"},
+          "heading": {"type": "string"},
+          "subheading": {"type": "string"},
+          "preheadingColor": {"type": "string"},
+          "headingColor": {"type": "string"},
+          "subheadingColor": {"type": "string"},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]},
+          "maxWidth": {"type": "number", "minimum": 480, "maximum": 1920},
+          "horizontalPadding": {"type": "number", "minimum": 0, "maximum": 120},
+          "verticalPadding": {"type": "number", "minimum": 0, "maximum": 120}
+        }
+      },
+      "defaults": {
+        "items": [],
+        "columns": 2,
+        "showMap": true,
+        "preheading": "Where to Find Us",
+        "heading": "Our Venues",
+        "subheading": "",
+        "preheadingColor": "#000000",
+        "headingColor": "#1c2024",
+        "subheadingColor": "#60646c",
+        "alignment": "center",
+        "background": "transparent",
+        "maxWidth": 1920,
+        "horizontalPadding": 24,
+        "verticalPadding": 48
+      },
+      "doNotAuthor": []
+    },
+
+    "Standings": {
+      "description": "League standings table. Widget — data lives in TeamLinkt.",
+      "category": "TeamLinkt Widgets",
+      "zones": ["page-content"],
+      "orgTypes": ["league", "high_school", "association"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "showLogos": {"type": "enum", "enum": [true, false]},
+          "showStreak": {"type": "enum", "enum": [true, false]},
+          "highlightTop": {"type": "number", "minimum": 0, "maximum": 5},
+          "accentColor": {"type": "string"},
+          "preheading": {"type": "string"},
+          "heading": {"type": "string"},
+          "subheading": {"type": "string"},
+          "alignment": {"type": "enum", "enum": ["left", "center", "right"]},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]}
+        }
+      },
+      "defaults": {
+        "showLogos": true,
+        "showStreak": true,
+        "highlightTop": 3,
+        "accentColor": "var(--accent-9)",
+        "heading": "Standings",
+        "alignment": "center",
+        "background": "transparent"
+      },
+      "doNotAuthor": []
+    },
+
+    "Scores": {
+      "description": "Recent results only. Widget — data lives in TeamLinkt.",
+      "category": "TeamLinkt Widgets",
+      "zones": ["page-content"],
+      "orgTypes": ["league", "high_school", "association"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "mode": {"type": "enum", "enum": ["recent", "upcoming", "all"]},
+          "layout": {"type": "enum", "enum": ["cards", "list"]},
+          "maxGames": {"type": "number", "minimum": 1, "maximum": 24},
+          "heading": {"type": "string"},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]}
+        }
+      },
+      "defaults": {
+        "mode": "recent",
+        "layout": "list",
+        "maxGames": 6,
+        "heading": "Recent scores",
+        "background": "transparent"
+      },
+      "doNotAuthor": []
+    },
+
+    "Schedule": {
+      "description": "Date-grouped game list. Widget — data lives in TeamLinkt.",
+      "category": "TeamLinkt Widgets",
+      "zones": ["page-content"],
+      "orgTypes": ["league", "high_school", "association"],
+      "slots": [],
+      "chromeOnly": false,
+      "richtextProps": [],
+      "props": {
+        "properties": {
+          "mode": {"type": "enum", "enum": ["recent", "upcoming", "all"]},
+          "layout": {"type": "enum", "enum": ["cards", "list"]},
+          "maxGames": {"type": "number", "minimum": 1, "maximum": 24},
+          "heading": {"type": "string"},
+          "background": {"type": "enum", "enum": ["transparent", "subtle", "accent", "inverse"]}
+        }
+      },
+      "defaults": {
+        "mode": "upcoming",
+        "layout": "list",
+        "maxGames": 15,
+        "heading": "Schedule",
+        "background": "transparent"
+      },
+      "doNotAuthor": []
+    },
+
     "IntakeForm": {
       "description": "Configurable intake form — OUT OF SCOPE for import.",
       "category": "Interactive",

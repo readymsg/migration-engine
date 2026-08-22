@@ -2,10 +2,11 @@
 
 **Status:** hand-encoded fallback. Awaiting `ai-website-builder-schema.json` from TeamLinkt engineering.
 
-`blocks.json` is a hand-encoding of the six blocks needed through Slice 13
-(`Text`, `Hero`, `Image`, `Gallery`, `Button`, `TeamMembers`) plus the six blocks
-that must be REFUSED (`IntakeForm`, `NavMenu`, `SiteNotice`, `FooterColumns`,
-`FooterLogo`, `FooterSocial`).
+`blocks.json` is a hand-encoding of the 13 blocks needed through Slice 15 —
+content: `Text`, `Hero`, `Image`, `Gallery`, `Button`, `TeamMembers`; layout:
+`Grid`; TeamLinkt Widgets: `Sponsors`, `NewsList`, `Locations`, `Standings`,
+`Scores`, `Schedule` — plus the six blocks that must be REFUSED (`IntakeForm`,
+`NavMenu`, `SiteNotice`, `FooterColumns`, `FooterLogo`, `FooterSocial`).
 
 When engineering delivers `ai-website-builder-schema.json`, `ContractSchema::load()` should
 switch to reading it directly. This file becomes a diff target — anything below that
@@ -49,6 +50,19 @@ turned out wrong is a validator hole worth fixing before the swap.
 | `TeamMembers.columns` enum `[2, 3, 4]` are NUMBERS not strings | Part III |
 | `TeamMembers.showImage` enum `[true, false]` are BOOLEANS | Part III |
 | `TeamMembers` defaults (heading="Meet the team", columns=3, showImage=true, etc.) | Part III complete-defaults blob |
+| `Grid.columns` enum: `"2" | "3" | "4"` are STRINGS (Grid columns are strings, FeatureGrid columns are numbers — deliberate divergence in the contract) | Part III `Grid` prop table |
+| `Grid.column<N>` and `.column<N>Align` slot/enum shapes | Part III |
+| `Sponsors.slidesToShow` range 2-6, default 4 | Part III |
+| `Sponsors.resolvedSponsors` 🚫 do-not-author | Part III |
+| `NewsList.resolvedItems` 🚫 do-not-author | Part III |
+| `NewsList.maxItems` range 1-20, default 6 | Part III |
+| `Locations.items[]` shape `{name, address, lat, lng, environment, surfaceType, capacity, description}` | Part III `Locations` sub-table |
+| `Locations.items[].environment` enum incl. `null` alongside `"indoor"|"outdoor"` (unusual — enum with null member) | Part III |
+| `Locations.columns` enum `[1, 2, 3]` NUMBERS | Part III |
+| `Standings / Scores / Schedule` orgType gate: `league`, `high_school`, `association` only | Part II "Org types" |
+| `Standings.highlightTop` range 0-5, default 3 | Part III |
+| `Scores.mode` / `Schedule.mode` enum: `recent | upcoming | all` | Part III |
+| `Schedule.dateGrouping` enum: `none | day | week` | Part III
 | every numeric prop's declared range (min/max) | Part III — but contract Part III also notes "Ranges are editor slider bounds, not validation — they are not enforced on save" so the validator should treat range violations as WARNINGS, not errors |
 | every prop's default value | Part III complete-defaults blob per block |
 
