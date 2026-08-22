@@ -241,6 +241,25 @@ final class PuckToContractMapper
     {
         $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
 
+        // IR concept `file_download`: a Text block whose body is
+        // exactly ONE heading-styled or bulleted document-link line
+        // (URL ends in .pdf/.doc/.docx/.xls/.xlsx/.ppt/.pptx). Fold
+        // to a FileDownload block. Checked BEFORE FeatureGrid because
+        // a single doc-link heading isn't grid-shaped. Multiple
+        // doc-link headings (langdon For Coaches with 9) still fold
+        // to FeatureGrid via the ≥3-item gate below.
+        $fileFold = $this->tryFoldToFileDownload($rawBody);
+        if ($fileFold !== null) {
+            return new MappedContent(
+                blocks: [$fileFold],
+                diagnostics: [new Diagnostic(
+                    severity: 'info',
+                    code: 'text_body_folded_to_file_download',
+                    message: 'Detected single heading-styled document link. Folded to a FileDownload block.',
+                )],
+            );
+        }
+
         // IR concept `feature_grid`: block-fill emitted a Text block
         // whose body is exclusively link-only lines (bulleted `- [T](u)`,
         // heading `### [T](u)`, or bare `[T](u)`), ≥3 items. cjfl Awards
@@ -1175,6 +1194,75 @@ final class PuckToContractMapper
         $hash = substr(sha1(implode('|', $parts)), 0, 6);
 
         return "{$prefix}-{$hash}";
+    }
+
+    // IR concept `file_download` — fold detection.
+    //
+    // Detection gate:
+    //   - Body has exactly ONE non-blank line.
+    //   - That line is a heading/bulleted/bare link (same shapes
+    //     FeatureGrid accepts, but a single one).
+    //   - The link URL ends in a document extension: .pdf, .doc,
+    //     .docx, .xls, .xlsx, .ppt, .pptx.
+    //
+    // Adjacent patterns that MUST NOT fold:
+    //   - Inline doc links inside prose (URL mentioned mid-sentence):
+    //     the body has more than one non-blank line.
+    //   - Multi-doc-link pages (langdon For Coaches, cjfl Rules): ≥3
+    //     doc links fold to FeatureGrid instead (this method returns
+    //     null because it requires exactly one line).
+    //   - Non-document URL as a single heading link: stays Text
+    //     (heading-with-URL isn't automatically a "download").
+    private const FILE_DOWNLOAD_EXTENSIONS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+
+    private function tryFoldToFileDownload(string $rawBody): ?Block
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $nonBlank = array_values(array_filter(
+            array_map('trim', $lines),
+            static fn (string $l): bool => $l !== '',
+        ));
+        if (count($nonBlank) !== 1) {
+            return null;
+        }
+        $line = $nonBlank[0];
+
+        $patterns = [
+            '/^(?:[-*]|\d+\.)\s+\[([^\]]+)\]\(([^)]+)\)\s*$/',
+            '/^#+\s+\[([^\]]+)\]\(([^)]+)\)\s*$/',
+            '/^\[([^\]]+)\]\(([^)]+)\)\s*$/',
+        ];
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $line, $m) === 1) {
+                $label = trim($m[1]);
+                $href = trim($m[2]);
+                if (! $this->looksLikeDocumentUrl($href) || $label === '') {
+                    return null;
+                }
+
+                return new Block(type: 'FileDownload', props: [
+                    'id' => $this->id('file-download', $label, $href),
+                    'fileUrl' => $href,
+                    'label' => $label,
+                ]);
+            }
+        }
+
+        return null;
+    }
+
+    private function looksLikeDocumentUrl(string $url): bool
+    {
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        if ($path === '') {
+            return false;
+        }
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return in_array($ext, self::FILE_DOWNLOAD_EXTENSIONS, true);
     }
 
     // IR concept `feature_grid` — fold detection.

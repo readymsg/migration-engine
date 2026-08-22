@@ -93,6 +93,25 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
               - 'list'                                         → Text (use a
                                                                   bulleted
                                                                   markdown body)
+              - 'file_download' / 'document_link' /             → Text with a
+                'pdf_link'                                         body that is
+                                                                  EXACTLY ONE
+                                                                  heading-styled
+                                                                  or bulleted
+                                                                  link where the
+                                                                  URL ends in
+                                                                  .pdf / .doc /
+                                                                  .docx / .xls /
+                                                                  .xlsx / .ppt /
+                                                                  .pptx. The
+                                                                  mapper folds
+                                                                  to a
+                                                                  FileDownload
+                                                                  block. Two or
+                                                                  more doc-link
+                                                                  headings fold
+                                                                  to FeatureGrid
+                                                                  instead (below).
               - 'feature_grid' / 'link_grid' /                  → Text with a
                 'resource_grid'                                    body of
                                                                   link-only

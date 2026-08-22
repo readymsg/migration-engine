@@ -780,6 +780,100 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── file_download fold ─────────────────────────────────────────────
+
+    #[Test]
+    public function single_heading_pdf_link_folds_to_file_download(): void
+    {
+        // cjfl Rules & Regulations includes one-doc-heading pages; the
+        // "CJFL Records" page has 2 doc-link headings + no other content.
+        // A single-doc-heading text body folds to FileDownload; the
+        // multi-doc-heading page still folds to FeatureGrid (≥3 rule).
+        $body = '### [CJFL Rules and Regulations](https://cdn3.sportngin.com/attachments/document/0068/6004/CJFL_Rules_Regs_April_2014.pdf)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('FileDownload', $out->blocks[0]->type);
+        $this->assertSame('CJFL Rules and Regulations', $out->blocks[0]->props['label']);
+        $this->assertStringEndsWith('.pdf', $out->blocks[0]->props['fileUrl']);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_body_folded_to_file_download', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function single_bulleted_pptx_link_folds_to_file_download(): void
+    {
+        // langdon For Coaches uses .pptx and .docx extensions too.
+        $body = '- [Coach Clinic Training](https://cdn3.sportngin.com/attachments/document/0d5e-2802916/Coach_s_Clinc_Slide_Deck_2023.pptx)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('FileDownload', $out->blocks[0]->type);
+        $this->assertStringEndsWith('.pptx', $out->blocks[0]->props['fileUrl']);
+    }
+
+    // ─── file_download NEGATIVE tests ───────────────────────────────────
+
+    #[Test]
+    public function multi_document_link_body_still_folds_to_feature_grid(): void
+    {
+        // The langdon For Coaches shape (9 doc-link headings) MUST fold
+        // to FeatureGrid, not become 9 FileDownload blocks. The ≥3
+        // items gate is what protects this — FileDownload only fires
+        // on exactly-one-line bodies.
+        $body = '### [Coach Clinic Training](https://x.example/clinic.pptx)'."\n".
+                '### [T-Ball Coaches Handbook](https://x.example/tball.pdf)'."\n".
+                '### [Coach Pitch Program](https://x.example/cp.pdf)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('FeatureGrid', $out->blocks[0]->type);
+        $this->assertNotSame('FileDownload', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function heading_link_to_html_page_stays_as_text_not_file_download(): void
+    {
+        // The URL doesn't end in a document extension — this is a
+        // regular navigation link, not a download.
+        $body = '### [About Us](https://x.example/about)';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
+    #[Test]
+    public function inline_pdf_reference_in_prose_stays_as_text(): void
+    {
+        // Prose that references a PDF mid-sentence — not a download
+        // block. The exactly-one-line gate keeps this out.
+        $body = 'Please review the rules PDF at [this link](https://x.example/rules.pdf) '.
+                'before signing up. All players must comply.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Text', $out->blocks[0]->type);
+    }
+
     // ─── feature_grid fold ──────────────────────────────────────────────
 
     #[Test]
