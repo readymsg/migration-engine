@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Demo\ContractPreviewController;
 use App\Http\Controllers\Demo\LandingController;
 use App\Http\Controllers\Demo\PreviewAssetController;
 use App\Http\Controllers\Demo\PreviewController;
@@ -18,6 +19,13 @@ Route::get('/', [LandingController::class, 'show'])->name('landing');
 // The React bundle consumes the same JSON shape from either path.
 Route::get('/preview/{slug}', [PreviewController::class, 'show'])->name('preview.show');
 Route::get('/api/preview/{slug}/site', [PreviewController::class, 'site'])->name('preview.site');
+
+// Slice 10 (M1): contract-shaped preview. Renders the Site Import
+// Contract v1 Envelope emitted by engine:emit-contract-fixture.
+// The old /preview/{slug} above stays alive for regression
+// comparison; Slice 18 retires it once M1 stabilises.
+Route::get('/preview-contract/{slug}', [ContractPreviewController::class, 'show'])->name('preview.contract.show');
+Route::get('/api/preview-contract/{slug}/envelope', [ContractPreviewController::class, 'envelope'])->name('preview.contract.envelope');
 
 // THROWAWAY: preview-only asset resolver. Serves s3://-shaped keys
 // out of query params (?p={s3-key}&f={optional-source-url}) — local

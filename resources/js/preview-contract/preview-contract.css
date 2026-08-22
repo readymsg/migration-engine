@@ -1,0 +1,280 @@
+/* Contract preview stylesheet. M1 minimum viable — clean, readable,
+   uses --cp-primary + --cp-neutral set from the envelope's
+   siteSettings so the preview reflects measured brand colour. */
+
+:root {
+    --cp-primary: #1a1a1a;
+    --cp-neutral: #333333;
+    --cp-page-bg: #ffffff;
+    --cp-body-fg: #1a1a1a;
+    --cp-muted: #666666;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: var(--cp-body-fg);
+    background: var(--cp-page-bg);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+.cp-root {
+    max-width: 1440px;
+    margin: 0 auto;
+    background: var(--cp-page-bg);
+}
+
+.cp-loading, .cp-error {
+    padding: 40px;
+    font-size: 14px;
+    color: var(--cp-muted);
+}
+.cp-error { color: #b00020; }
+
+/* Reviewer-facing status ribbon — sticky under the fake header so a
+   reviewer sees payload health as they scroll. */
+.cp-ribbon {
+    display: flex;
+    gap: 20px;
+    padding: 8px 20px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #eee;
+    font-size: 11px;
+    color: var(--cp-muted);
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+}
+.cp-ribbon strong { color: var(--cp-body-fg); font-weight: 600; }
+
+/* Fake site header — preview chrome; NOT emitted into the payload's
+   zones (contract Part II: zones are template-owned). Renders here
+   only so the reviewer sees pages in context. */
+.cp-header {
+    background: var(--cp-primary);
+    color: #ffffff;
+}
+.cp-header__inner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 24px;
+    max-width: 1440px;
+    margin: 0 auto;
+}
+.cp-header__logo {
+    max-height: 42px;
+    width: auto;
+}
+.cp-header__brand {
+    font-size: 18px;
+    font-weight: 600;
+}
+.cp-header__nav {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.cp-header__navitem {
+    background: transparent;
+    border: 0;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.cp-header__navitem:hover { background: rgba(255, 255, 255, 0.12); }
+.cp-header__navitem--active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Main page content — every block is a section, padding matches
+   contract's Shared sizing vocabulary. */
+.cp-main {
+    padding: 0;
+}
+
+/* Hero — contract default is `layout: overlay`, `height: 480`. */
+.cp-hero {
+    position: relative;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    padding: 60px 24px;
+}
+.cp-hero__overlay {
+    max-width: 1120px;
+    margin: 0 auto;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 32px;
+    border-radius: 6px;
+    width: 100%;
+}
+.cp-hero__preheading {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+.cp-hero__heading {
+    margin: 0 0 12px;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.cp-hero__subheading {
+    margin: 0 0 20px;
+    font-size: 16px;
+    opacity: 0.9;
+}
+.cp-hero__ctas {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.cp-hero__cta {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+.cp-hero__cta--primary {
+    background: #ffffff;
+    color: var(--cp-primary);
+}
+.cp-hero__cta--secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Text — respects `as` (p, h1, h2, h3). */
+.cp-text {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    line-height: 1.5;
+}
+.cp-text--h1 { font-size: 32px; font-weight: 700; color: var(--cp-primary); padding-top: 32px; }
+.cp-text--h2 { font-size: 24px; font-weight: 700; color: var(--cp-primary); padding-top: 24px; }
+.cp-text--h3 { font-size: 18px; font-weight: 600; color: var(--cp-primary); padding-top: 16px; }
+.cp-text--p  { font-size: 16px; }
+.cp-text a { color: var(--cp-primary); }
+
+/* Image */
+.cp-image {
+    max-width: 1120px;
+    margin: 24px auto;
+    padding: 0 24px;
+    text-align: center;
+}
+.cp-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+.cp-image figcaption {
+    color: var(--cp-muted);
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Gallery */
+.cp-gallery {
+    max-width: 1120px;
+    margin: 32px auto;
+    padding: 0 24px;
+}
+.cp-gallery__heading {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--cp-primary);
+    margin-bottom: 16px;
+    text-align: center;
+}
+.cp-gallery__grid {
+    display: grid;
+    gap: 12px;
+}
+.cp-gallery__item {
+    margin: 0;
+}
+.cp-gallery__item img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.cp-gallery__item figcaption {
+    font-size: 12px;
+    color: var(--cp-muted);
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* Button — standalone (not inside a ButtonGroup) */
+.cp-button-row {
+    max-width: 1120px;
+    margin: 16px auto;
+    padding: 0 24px;
+}
+.cp-button-row--center { text-align: center; }
+.cp-button-row--right { text-align: right; }
+.cp-button {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+.cp-button--solid {
+    background: var(--cp-primary);
+    color: #ffffff;
+}
+.cp-button--outline {
+    border: 1px solid var(--cp-primary);
+    color: var(--cp-primary);
+}
+.cp-button--soft {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--cp-primary);
+}
+.cp-button--ghost {
+    color: var(--cp-primary);
+}
+
+/* Unknown block-type placeholder — mostly renders as a visible gap
+   so a reviewer notices the coverage hole. */
+.cp-unknown {
+    max-width: 1120px;
+    margin: 16px auto;
+    padding: 16px 24px;
+    background: #fff8e1;
+    border-left: 3px solid #f5b900;
+    font-size: 13px;
+    color: var(--cp-muted);
+}
+.cp-unknown code { background: rgba(0, 0, 0, 0.06); padding: 1px 6px; border-radius: 3px; }
+
+/* Fake footer */
+.cp-footer {
+    background: #1a1a1a;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 20px 24px;
+    margin-top: 40px;
+    font-size: 13px;
+}
+.cp-footer__inner {
+    max-width: 1440px;
+    margin: 0 auto;
+}
+.cp-footer__note {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}

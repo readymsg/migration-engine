@@ -13,6 +13,8 @@ export default defineConfig({
                 // THROWAWAY: preview bundle (build step 7 in BUILD.md). Deleted
                 // at graduation when the product builder/preview takes over.
                 'resources/js/preview/main.tsx',
+                // Slice 10 (M1): contract-shaped preview.
+                'resources/js/preview-contract/main.tsx',
             ],
             refresh: true,
             fonts: [
