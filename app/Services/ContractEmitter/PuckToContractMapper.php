@@ -191,6 +191,11 @@ final class PuckToContractMapper
             'ButtonGroup' => $this->mapButtonGroup($props),
             'Card' => $this->mapCard($props, $assetContext, $ledger, $sourcePageUrl),
             'Columns' => $this->mapColumns($props, $assetContext, $ledger, $sourcePageUrl, $audit),
+            'PlatformTeams' => $this->mapPlatformTeams(),
+            'PlatformTeam' => $this->mapPlatformTeam(),
+            'PlatformDivisions' => $this->mapPlatformDivisions(),
+            'PlatformNews' => $this->mapPlatformNews(),
+            'PlatformContacts' => $this->mapPlatformContacts(),
             default => new MappedContent(
                 blocks: [],
                 diagnostics: [new Diagnostic(
@@ -762,6 +767,115 @@ final class PuckToContractMapper
         $audit?->record('columns_wrap_grid', 0, 1);
 
         return $result;
+    }
+
+    // ── Platform block placeholders (Finding 2 fix) ──────────────────
+    //
+    // PlatformBlockRenderer emits {type: 'Platform<X>', props: {org_id}}
+    // shells from PlatformDynamic ledger entries. These are engine-
+    // emitted placeholders — the product's runtime React component
+    // fills real data (rosters, news, divisions, contacts) at render
+    // time from the org's own database via `org_id`.
+    //
+    // The mapper turns each shell into a SPARSE contract block:
+    // just `id`, omit `selection` / `resolvedItems` / `items` etc.
+    // Hard rule #1 ("send sparse props; omitting takes the default")
+    // + hard rule #6 ("never emit a prop beginning with `resolved`,
+    // nor formUuid") lock this shape.
+    //
+    // Mapping table (from x-teamlinkt.orgTypeGating + inspection of
+    // the 45-block schema):
+    //
+    //   PlatformTeams (Teams directory)   → Teams               (league-gated)
+    //   PlatformTeam (single team page)   → TeamRoster          (league-gated) [see docblock]
+    //   PlatformDivisions (conferences)   → SubOrganizations    (all orgTypes)
+    //   PlatformNews (news feed)          → NewsList            (all orgTypes)
+    //   PlatformContacts (contact list)   → TeamMembers         (all orgTypes)
+    //
+    // OrgTypeGate (post-mapping in ContractPayloadEmitter) gates the
+    // league-restricted targets. Under orgType=club, Teams and
+    // TeamRoster get dropped with `org_type_gate_dropped` — CORRECT
+    // visible behavior (was silent `unmappable_block_type` before).
+    //
+    // Contract-doc gap flag: BUILD.md's v1 scope cut says "we NOT
+    // extract or provision TeamLinkt data — no teams, divisions,
+    // admins, or team logos", and the contract prose document
+    // (site-import-contract.md, not in this repo) is documented to
+    // have a "Pages you should not create" section. If that section
+    // forbids per-team pages via import, the PlatformTeam → TeamRoster
+    // mapping below should be revised to drop-with-diagnostic. Today
+    // the mapping keeps the page tree consistent with what
+    // PageTreeBuilder already produced — the page shell exists either
+    // way; the emit-placeholder path avoids leaving 19 empty pages.
+
+    private function mapPlatformTeams(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'Teams', props: [
+                'id' => $this->id('teams', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_teams',
+                message: 'PlatformTeams (Teams directory) → Teams block (sparse; runtime component fills data via org_id).',
+            )],
+        );
+    }
+
+    private function mapPlatformTeam(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'TeamRoster', props: [
+                'id' => $this->id('team-roster', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_team_roster',
+                message: 'PlatformTeam (single team page) → TeamRoster block (sparse; empty selection = placeholder; runtime component fills roster via org_id + team context).',
+            )],
+        );
+    }
+
+    private function mapPlatformDivisions(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'SubOrganizations', props: [
+                'id' => $this->id('sub-organizations', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_sub_organizations',
+                message: 'PlatformDivisions (league conferences / sub-orgs) → SubOrganizations block (sparse; runtime resolves org members).',
+            )],
+        );
+    }
+
+    private function mapPlatformNews(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'NewsList', props: [
+                'id' => $this->id('news-list', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_news_list',
+                message: 'PlatformNews (news feed) → NewsList block (sparse; resolvedItems is server-owned and never authored — runtime resolver fills).',
+            )],
+        );
+    }
+
+    private function mapPlatformContacts(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'TeamMembers', props: [
+                'id' => $this->id('team-members', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_team_members',
+                message: 'PlatformContacts (contact directory) → TeamMembers block (sparse; runtime component fills people cards from admin roster).',
+            )],
+        );
     }
 
     /**
