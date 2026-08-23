@@ -350,6 +350,16 @@ final class PuckToContractMapper
             );
         }
 
+        // No fold matched — check for near-miss patterns before falling
+        // through to plain Text. Slice A closes the silent-loss surface
+        // where a body ALMOST matches a fold gate: a code-with-example
+        // in the envelope's diagnostics list turns "invisible near-miss"
+        // into a reviewable signal and a tuning-feedback loop for
+        // future sites. Specific codes per cause so Metabase can
+        // histogram them independently (different causes imply
+        // different tuning actions).
+        $nearMissDiagnostics = $this->collectNearMissDiagnostics($rawBody, $sourcePageUrl);
+
         $body = $this->sanitiser->sanitize($rawBody);
         if ($body === '') {
             // Silent-loss guard: source had a Text block. If pre-
@@ -357,7 +367,7 @@ final class PuckToContractMapper
             // pre-sanitize was NON-empty (had markup) but sanitize
             // reduced it to '', the TipTap-subset stripper devoured
             // the whole thing — reviewer should see.
-            $diagnostics = [];
+            $diagnostics = $nearMissDiagnostics;
             if (trim($rawBody) !== '') {
                 $diagnostics[] = new Diagnostic(
                     severity: 'warning',
@@ -381,7 +391,10 @@ final class PuckToContractMapper
             $out['align'] = $align;
         }
 
-        return new MappedContent(blocks: [new Block(type: 'Text', props: $out)], diagnostics: []);
+        return new MappedContent(
+            blocks: [new Block(type: 'Text', props: $out)],
+            diagnostics: $nearMissDiagnostics,
+        );
     }
 
     /** @param array<string, mixed> $props */
@@ -1222,6 +1235,367 @@ final class PuckToContractMapper
         $hash = substr(sha1(implode('|', $parts)), 0, 6);
 
         return "{$prefix}-{$hash}";
+    }
+
+    // ── near-miss diagnostics — visible signal when a fold ALMOST fired ──
+    //
+    // Each near-miss detector emits an info-severity diagnostic with:
+    //   - a SPECIFIC code (per near-miss cause, not per fold) so
+    //     Metabase can histogram tuning actions separately
+    //   - the source page URL when known
+    //   - a truncated body snippet (≤ NEAR_MISS_SNIPPET_MAX chars),
+    //     because a code without an example is not actionable
+    //
+    // Called from mapText AFTER every fold attempt returned null, and
+    // BEFORE the body sanitises to Text. False positives are worse
+    // than no diagnostic — an ignored diagnostic is worse than none.
+    // Every detector has explicit false-positive tests that pin the
+    // gate against ordinary prose (mid-paragraph links, sentences
+    // ending in `?`, narrative with occasional bold emphasis, etc.).
+    private const NEAR_MISS_SNIPPET_MAX = 240;
+
+    /**
+     * @return array<int, Diagnostic>
+     */
+    private function collectNearMissDiagnostics(string $rawBody, ?string $sourcePageUrl): array
+    {
+        $out = [];
+        foreach ([
+            $this->detectStatTableNearMissInconsistentColumns($rawBody, $sourcePageUrl),
+            $this->detectStatTableNearMissNoColumnSeparator($rawBody, $sourcePageUrl),
+            $this->detectQaSectionNearMissInlineQuestions($rawBody, $sourcePageUrl),
+            $this->detectQaSectionNearMissHeadingSingleQuestion($rawBody, $sourcePageUrl),
+            $this->detectFeatureGridNearMissInterstitialProse($rawBody, $sourcePageUrl),
+            $this->detectFileDownloadNearMissBelowGridThreshold($rawBody, $sourcePageUrl),
+            $this->detectVideoNearMissBodyTooLong($rawBody, $sourcePageUrl),
+        ] as $diagnostic) {
+            if ($diagnostic !== null) {
+                $out[] = $diagnostic;
+            }
+        }
+
+        return $out;
+    }
+
+    private function nearMissDiagnostic(string $code, string $message, string $rawBody, ?string $sourcePageUrl): Diagnostic
+    {
+        $snippet = $this->truncateSnippet($rawBody);
+        $withExample = $message.' Snippet: '.$snippet;
+
+        return new Diagnostic(
+            severity: 'info',
+            code: $code,
+            message: $withExample,
+            sourceUrl: $sourcePageUrl !== null && $sourcePageUrl !== '' ? $sourcePageUrl : new Optional,
+        );
+    }
+
+    private function truncateSnippet(string $body): string
+    {
+        $flat = trim(preg_replace('/\s+/', ' ', $body) ?? $body);
+        if (mb_strlen($flat) <= self::NEAR_MISS_SNIPPET_MAX) {
+            return $flat;
+        }
+
+        return mb_substr($flat, 0, self::NEAR_MISS_SNIPPET_MAX - 1).'…';
+    }
+
+    // — stat_table near-misses ————————————————————————————————————————
+
+    // Fires when: bullet list with ≥ STAT_TABLE_MIN_ROWS items, at
+    // least one row has ≥2 dash-separated columns, BUT the rows have
+    // DIFFERENT column counts across the list.
+    // Tuning action: widen the fold to accept modal column count with
+    // padding (Slice B).
+    private function detectStatTableNearMissInconsistentColumns(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        $items = $this->extractListItems($rawBody);
+        if (count($items) < self::STAT_TABLE_MIN_ROWS) {
+            return null;
+        }
+        foreach ([' — ', ' - ', ' – ', ' | '] as $sep) {
+            $counts = [];
+            foreach ($items as $item) {
+                $cells = array_map('trim', explode($sep, $item));
+                $cells = array_values(array_filter($cells, static fn (string $c): bool => $c !== ''));
+                if (count($cells) < self::STAT_TABLE_MIN_COLUMNS) {
+                    continue 2;
+                }
+                $counts[] = count($cells);
+            }
+            $unique = array_unique($counts);
+            if (count($unique) > 1) {
+                return $this->nearMissDiagnostic(
+                    code: 'stat_table_near_miss_inconsistent_columns',
+                    message: sprintf(
+                        'Bullet list with %d items has consistent `%s` separator but MIXED column counts %s — fold rejected. Consider tuning to modal-count-with-padding.',
+                        count($items),
+                        trim($sep),
+                        json_encode(array_count_values($counts)),
+                    ),
+                    rawBody: $rawBody,
+                    sourcePageUrl: $sourcePageUrl,
+                );
+            }
+        }
+
+        return null;
+    }
+
+    // Fires when: bullet list with ≥ STAT_TABLE_MIN_ROWS items, but NO
+    // consistent column separator was found — the items are plain bullets.
+    // Tuning action: probably NOT a stat_table candidate; may signal
+    // reviewer should add a column-separator to source or leave as list.
+    private function detectStatTableNearMissNoColumnSeparator(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        $items = $this->extractListItems($rawBody);
+        if (count($items) < self::STAT_TABLE_MIN_ROWS) {
+            return null;
+        }
+        // If any separator matched (some cells with ≥ MIN_COLUMNS), the
+        // inconsistent-columns detector would have fired instead. This
+        // one is for the plain-bullet-list case.
+        foreach ([' — ', ' - ', ' – ', ' | '] as $sep) {
+            foreach ($items as $item) {
+                $cells = array_map('trim', explode($sep, $item));
+                $cells = array_values(array_filter($cells, static fn (string $c): bool => $c !== ''));
+                if (count($cells) >= self::STAT_TABLE_MIN_COLUMNS) {
+                    return null; // some column shape present — not this near-miss
+                }
+            }
+        }
+
+        return $this->nearMissDiagnostic(
+            code: 'stat_table_near_miss_no_column_separator',
+            message: sprintf(
+                'Bullet list with %d items but no consistent column separator between fields — plain single-column list, not tabular.',
+                count($items),
+            ),
+            rawBody: $rawBody,
+            sourcePageUrl: $sourcePageUrl,
+        );
+    }
+
+    // — qa_section near-misses ————————————————————————————————————————
+
+    // Fires when: body contains ≥ QA_MIN_ITEMS_STANDALONE `**...?**`
+    // occurrences, but NONE are whole-line. Suggests block-fill emitted
+    // inline emphasis when it should have emitted line-standalone
+    // questions, or that source uses a different Q-marker convention.
+    // Tuning action: block-fill prompt guidance may need reinforcement.
+    private function detectQaSectionNearMissInlineQuestions(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $inlineCount = 0;
+        $wholeLineCount = 0;
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (preg_match('/^\*\*[^*]+\?\s*\*\*\s*$/', $trimmed) === 1) {
+                $wholeLineCount++;
+
+                continue;
+            }
+            // Inline `**anything?**` fragments mid-line.
+            $matches = preg_match_all('/\*\*[^*]+\?\*\*/', $trimmed);
+            if ($matches !== false && $matches > 0) {
+                $inlineCount += $matches;
+            }
+        }
+        if ($wholeLineCount > 0 || $inlineCount < self::QA_MIN_ITEMS_STANDALONE) {
+            return null;
+        }
+
+        return $this->nearMissDiagnostic(
+            code: 'qa_section_near_miss_inline_questions',
+            message: sprintf(
+                'Body contains %d `**...?**` fragments but NONE are whole-line — fold requires standalone question lines to fire.',
+                $inlineCount,
+            ),
+            rawBody: $rawBody,
+            sourcePageUrl: $sourcePageUrl,
+        );
+    }
+
+    // Fires when: explicit "Frequently Asked Questions" heading is
+    // present but ONLY 1 whole-line `**?**` follows (below the with-
+    // heading threshold of 2).
+    // Tuning action: source may have Q-content phrased differently
+    // (e.g. plain question sentences, not bold-wrapped).
+    private function detectQaSectionNearMissHeadingSingleQuestion(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $hasFaqHeading = false;
+        $wholeLineCount = 0;
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (preg_match('/^#+\s+(frequently\s+asked\s+questions|faq)\s*$/i', $trimmed) === 1) {
+                $hasFaqHeading = true;
+
+                continue;
+            }
+            if (preg_match('/^\*\*[^*]+\?\s*\*\*\s*$/', $trimmed) === 1) {
+                $wholeLineCount++;
+            }
+        }
+        if (! $hasFaqHeading || $wholeLineCount !== 1) {
+            return null;
+        }
+
+        return $this->nearMissDiagnostic(
+            code: 'qa_section_near_miss_heading_single_question',
+            message: 'FAQ heading present but only 1 whole-line question — need ≥2 with heading (or ≥3 without) for Accordion/FAQ fold.',
+            rawBody: $rawBody,
+            sourcePageUrl: $sourcePageUrl,
+        );
+    }
+
+    // — feature_grid near-miss ————————————————————————————————————————
+
+    // Fires when: body has ≥ FEATURE_GRID_MIN_ITEMS link-only lines
+    // BUT interstitial non-link, non-heading prose disqualified the
+    // fold. Suggests block-fill added narrative around the link grid
+    // that could be moved to a separate Text block above/below.
+    private function detectFeatureGridNearMissInterstitialProse(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $linkOnlyCount = 0;
+        $interstitialProseCount = 0;
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (preg_match('/^(?:[-*]|\d+\.)\s+\[[^\]]+\]\([^)]+\)\s*$/', $trimmed) === 1
+                || preg_match('/^#+\s+\[[^\]]+\]\([^)]+\)\s*$/', $trimmed) === 1
+                || preg_match('/^\[[^\]]+\]\([^)]+\)\s*$/', $trimmed) === 1) {
+                $linkOnlyCount++;
+
+                continue;
+            }
+            // Non-link, non-blank prose. Section headings (no link inside)
+            // count too since the fold allows one leading heading.
+            if (preg_match('/^#+\s+[^\[]/', $trimmed) === 1 && $linkOnlyCount === 0) {
+                // Leading section heading — allowed by the fold.
+                continue;
+            }
+            $interstitialProseCount++;
+        }
+        if ($linkOnlyCount < self::FEATURE_GRID_MIN_ITEMS || $interstitialProseCount === 0) {
+            return null;
+        }
+
+        return $this->nearMissDiagnostic(
+            code: 'feature_grid_near_miss_interstitial_prose',
+            message: sprintf(
+                'Body has %d link-only lines that would fold to FeatureGrid, but %d interstitial prose line(s) disqualified the fold.',
+                $linkOnlyCount,
+                $interstitialProseCount,
+            ),
+            rawBody: $rawBody,
+            sourcePageUrl: $sourcePageUrl,
+        );
+    }
+
+    // — file_download near-miss ————————————————————————————————————————
+
+    // Fires when: body has 2 doc-link headings (below FeatureGrid's ≥3
+    // and above FileDownload's exact 1). Falls through to Text today.
+    // Tuning action: either widen FileDownload to allow 2 or lower
+    // FeatureGrid's threshold to 2 for pure-doc grids.
+    private function detectFileDownloadNearMissBelowGridThreshold(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $docLinkCount = 0;
+        $nonDocContentSeen = false;
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            $matched = false;
+            foreach ([
+                '/^(?:[-*]|\d+\.)\s+\[([^\]]+)\]\(([^)]+)\)\s*$/',
+                '/^#+\s+\[([^\]]+)\]\(([^)]+)\)\s*$/',
+                '/^\[([^\]]+)\]\(([^)]+)\)\s*$/',
+            ] as $pattern) {
+                if (preg_match($pattern, $trimmed, $m) === 1) {
+                    $matched = true;
+                    if ($this->looksLikeDocumentUrl($m[2])) {
+                        $docLinkCount++;
+                    } else {
+                        $nonDocContentSeen = true;
+                    }
+                    break;
+                }
+            }
+            if (! $matched) {
+                $nonDocContentSeen = true;
+            }
+        }
+        if ($docLinkCount !== 2 || $nonDocContentSeen) {
+            return null;
+        }
+
+        return $this->nearMissDiagnostic(
+            code: 'file_download_near_miss_below_grid_threshold',
+            message: 'Body has 2 document-link headings — below FeatureGrid\'s ≥3 threshold and above FileDownload\'s exact 1. Landed as Text.',
+            rawBody: $rawBody,
+            sourcePageUrl: $sourcePageUrl,
+        );
+    }
+
+    // — video near-miss ————————————————————————————————————————————————
+
+    // Fires when: body contains a YouTube/Vimeo URL but exceeds
+    // VIDEO_MAX_LINES non-blank lines. Video fold requires a compact
+    // body — anything longer means a video URL is mentioned inline
+    // (which we'd rather not spuriously fold) or block-fill wrapped
+    // the URL in more prose than the fold accepts.
+    private function detectVideoNearMissBodyTooLong(string $rawBody, ?string $sourcePageUrl): ?Diagnostic
+    {
+        if (preg_match(self::VIDEO_URL_PATTERN, $rawBody) !== 1) {
+            return null;
+        }
+        $lines = preg_split('/\r?\n/', $rawBody);
+        if ($lines === false) {
+            return null;
+        }
+        $nonBlank = array_values(array_filter(
+            array_map('trim', $lines),
+            static fn (string $l): bool => $l !== '',
+        ));
+        if (count($nonBlank) <= self::VIDEO_MAX_LINES) {
+            return null;
+        }
+
+        return $this->nearMissDiagnostic(
+            code: 'video_near_miss_body_too_long',
+            message: sprintf(
+                'Body contains a YouTube/Vimeo URL but has %d non-blank lines (fold requires ≤%d).',
+                count($nonBlank),
+                self::VIDEO_MAX_LINES,
+            ),
+            rawBody: $rawBody,
+            sourcePageUrl: $sourcePageUrl,
+        );
     }
 
     // IR concept `video` — fold detection.
