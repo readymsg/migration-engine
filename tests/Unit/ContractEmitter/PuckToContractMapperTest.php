@@ -1137,14 +1137,16 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertSame('Text', $out->blocks[0]->type);
     }
 
-    // ─── faq fold ───────────────────────────────────────────────────────
+    // ─── qa_section fold — FAQ vs Accordion branch by page context ──────
 
     #[Test]
-    public function langdon_for_parents_shape_folds_to_faq(): void
+    public function langdon_for_parents_qa_section_folds_to_accordion(): void
     {
-        // langdon For Parents. Block-fill emits the FAQ section as one
-        // Text block: heading + N `**Question?**\n\nAnswer` pairs. The
-        // mapper folds to an FAQ block with items[].
+        // langdon For Parents — Q&A section INSIDE a broader page. Slug
+        // /forparents doesn't indicate FAQ, so the mapper folds to
+        // Accordion, NOT FAQ. Contract guidance: "FAQ for a dedicated
+        // FAQ page; Accordion for expandable sections inside another
+        // page."
         $body = "## Frequently Asked Questions\n\n".
                 "**What dates and times do each Division play and where?**\n\n".
                 "- Blast Ball: Tuesday & Thursday from 6-6:45pm\n".
@@ -1162,10 +1164,11 @@ final class PuckToContractMapperTest extends TestCase
             [['type' => 'Text', 'props' => ['body' => $body]]],
             $this->assetContext(),
             new AssetLedger,
+            sourcePageUrl: 'https://www.langdondiamonds.ca/forparents',
         );
 
         $this->assertCount(1, $out->blocks);
-        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $this->assertSame('Accordion', $out->blocks[0]->type);
         $items = $out->blocks[0]->props['items'];
         $this->assertCount(4, $items);
         $this->assertSame('What dates and times do each Division play and where?', $items[0]['title']);
@@ -1173,15 +1176,67 @@ final class PuckToContractMapperTest extends TestCase
         $this->assertSame('What is the Cost per division?', $items[3]['title']);
 
         $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('text_body_folded_to_accordion', $codes);
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function dedicated_faq_page_folds_to_faq(): void
+    {
+        // Synthetic pin — no site in the corpus has a dedicated FAQ
+        // page today, but the branch is real and reachable. Slug
+        // /faq is the signal.
+        $body = "## Frequently Asked Questions\n\n".
+                "**How do I register?**\n\n".
+                "Registration opens each spring on the Registration page.\n\n".
+                "**Are there refunds?**\n\n".
+                "Refunds are available up to two weeks before season start.\n\n".
+                "**When does the season start?**\n\n".
+                'Season starts in early May.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+            sourcePageUrl: 'https://example.org/faq',
+        );
+
+        $this->assertCount(1, $out->blocks);
+        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $this->assertCount(3, $out->blocks[0]->props['items']);
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
         $this->assertContains('text_body_folded_to_faq', $codes);
         $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function frequently_asked_questions_slug_variant_also_maps_to_faq(): void
+    {
+        // Also accept /frequently-asked-questions and /faqs slug forms.
+        $body = "**Do you have refunds?**\n\n".
+                "Yes.\n\n".
+                "**Can I transfer to another team?**\n\n".
+                "Yes, contact your coordinator.\n\n".
+                "**Do you offer coaching clinics?**\n\n".
+                'Yes, twice a season.';
+
+        foreach (['https://example.org/frequently-asked-questions', 'https://example.org/faqs'] as $url) {
+            $out = $this->mapper->mapContent(
+                [['type' => 'Text', 'props' => ['body' => $body]]],
+                $this->assetContext(),
+                new AssetLedger,
+                sourcePageUrl: $url,
+            );
+            $this->assertSame('FAQ', $out->blocks[0]->type, "url {$url} must map to FAQ");
+        }
     }
 
     #[Test]
     public function three_question_markers_alone_are_enough_without_heading(): void
     {
         // Body-level detection: no explicit "Frequently Asked Questions"
-        // heading, but 3+ bold-question markers still trigger.
+        // heading, but 3+ bold-question markers still trigger. Slug
+        // isn't FAQ, so Accordion.
         $body = "**Do I need my own equipment?**\n\n".
                 "Yes, players supply their own bat, glove, and cleats.\n\n".
                 "**What age divisions do you offer?**\n\n".
@@ -1193,8 +1248,9 @@ final class PuckToContractMapperTest extends TestCase
             [['type' => 'Text', 'props' => ['body' => $body]]],
             $this->assetContext(),
             new AssetLedger,
+            sourcePageUrl: 'https://example.org/parents',
         );
-        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $this->assertSame('Accordion', $out->blocks[0]->type);
         $this->assertCount(3, $out->blocks[0]->props['items']);
     }
 
@@ -1202,6 +1258,7 @@ final class PuckToContractMapperTest extends TestCase
     public function two_question_markers_with_heading_is_enough(): void
     {
         // Lower threshold (2 items) when an explicit FAQ heading is present.
+        // Non-FAQ slug → Accordion.
         $body = "## FAQ\n\n".
                 "**When are practices?**\n\n".
                 "Tuesdays and Thursdays.\n\n".
@@ -1212,12 +1269,40 @@ final class PuckToContractMapperTest extends TestCase
             [['type' => 'Text', 'props' => ['body' => $body]]],
             $this->assetContext(),
             new AssetLedger,
+            sourcePageUrl: 'https://example.org/parents',
         );
-        $this->assertSame('FAQ', $out->blocks[0]->type);
+        $this->assertSame('Accordion', $out->blocks[0]->type);
         $this->assertCount(2, $out->blocks[0]->props['items']);
     }
 
-    // ─── faq NEGATIVE tests ─────────────────────────────────────────────
+    #[Test]
+    public function accordion_body_is_richtext_sanitised(): void
+    {
+        // Both Accordion.items[].body and FAQ.items[].body are in the
+        // x-teamlinkt.vocabularies.richtext.props list — the sanitiser
+        // applies uniformly. HTML in the answer must be TipTap-vocab
+        // clean when it lands.
+        $body = "**Do I need registration?**\n\n".
+                "<p>Yes. <script>alert(1)</script>Please sign up early.</p>\n\n".
+                "**What are the fees?**\n\n".
+                "See the <table><tr><td>fee</td></tr></table> table below.\n\n".
+                "**When is the season?**\n\n".
+                'Summer.';
+
+        $out = $this->mapper->mapContent(
+            [['type' => 'Text', 'props' => ['body' => $body]]],
+            $this->assetContext(),
+            new AssetLedger,
+            sourcePageUrl: 'https://example.org/info',
+        );
+        $this->assertSame('Accordion', $out->blocks[0]->type);
+        foreach ($out->blocks[0]->props['items'] as $item) {
+            $this->assertStringNotContainsString('<script', $item['body']);
+            $this->assertStringNotContainsString('<table', $item['body']);
+        }
+    }
+
+    // ─── qa_section NEGATIVE tests ──────────────────────────────────────
 
     #[Test]
     public function two_questions_without_heading_stays_as_text(): void

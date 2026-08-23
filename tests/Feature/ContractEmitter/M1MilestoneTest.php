@@ -85,7 +85,7 @@ final class M1MilestoneTest extends TestCase
             'TeamMembers',
             'Grid', 'Sponsors', 'NewsList', 'Locations',
             'Standings', 'Scores', 'Schedule',
-            'Table', 'FAQ', 'FeatureGrid', 'FileDownload', 'Video',
+            'Table', 'FAQ', 'Accordion', 'FeatureGrid', 'FileDownload', 'Video',
         ];
         foreach (array_keys($emittedTypes) as $type) {
             $this->assertContains(

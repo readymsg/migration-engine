@@ -183,7 +183,7 @@ final class PuckToContractMapper
         $props = is_array($entry['props'] ?? null) ? $entry['props'] : [];
 
         $result = match ($type) {
-            'Text' => $this->mapText($props),
+            'Text' => $this->mapText($props, $sourcePageUrl),
             'Heading' => $this->mapHeading($props),
             'Hero' => $this->mapHero($props, $assetContext, $ledger, $sourcePageUrl),
             'Image' => $this->mapImage($props, $assetContext, $ledger, $sourcePageUrl),
@@ -237,7 +237,7 @@ final class PuckToContractMapper
     }
 
     /** @param array<string, mixed> $props */
-    private function mapText(array $props): MappedContent
+    private function mapText(array $props, ?string $sourcePageUrl = null): MappedContent
     {
         $rawBody = is_string($props['body'] ?? null) ? $props['body'] : '';
 
@@ -298,22 +298,34 @@ final class PuckToContractMapper
             );
         }
 
-        // IR concept `faq`: block-fill emitted a Text block whose body
-        // contains ≥3 `**Question?**` bold-question markers, or is
-        // preceded by a "Frequently Asked Questions" heading with ≥2
-        // questions. Fold to an FAQ block. Answer bodies pass through
-        // the sanitiser since FAQ.items[].body is a richtext prop.
-        // Checked BEFORE stat_table because FAQ answers can contain
+        // IR concept `qa_section`: block-fill emitted a Text block
+        // whose body contains ≥3 `**Question?**` bold-question markers,
+        // or is preceded by a "Frequently Asked Questions" heading
+        // with ≥2 questions. Mapper picks target block from PAGE
+        // CONTEXT — contract guidance is:
+        //   "FAQ for a dedicated FAQ page; Accordion for expandable
+        //    sections inside another page."
+        // Detection is one, target is contextual:
+        //   - Source URL slug indicates FAQ  → FAQ block
+        //   - Otherwise (section within a broader page) → Accordion
+        // Both blocks' items[].body are richtext props (per
+        // x-teamlinkt.vocabularies.richtext.props), so the sanitiser
+        // applies uniformly across the branch.
+        // Checked BEFORE stat_table because Q&A answers can contain
         // bullet lists (see "What Division would my child be based on
         // Age?" on langdon For Parents).
-        $faqFold = $this->tryFoldToFaq($rawBody);
-        if ($faqFold !== null) {
+        $qaFold = $this->tryFoldToQaSection($rawBody, $sourcePageUrl);
+        if ($qaFold !== null) {
             return new MappedContent(
-                blocks: [$faqFold],
+                blocks: [$qaFold->block],
                 diagnostics: [new Diagnostic(
                     severity: 'info',
-                    code: 'text_body_folded_to_faq',
-                    message: 'Detected FAQ pattern (≥3 bold-question markers or "Frequently Asked Questions" heading + question shapes). Folded to an FAQ block.',
+                    code: $qaFold->block->type === 'FAQ'
+                        ? 'text_body_folded_to_faq'
+                        : 'text_body_folded_to_accordion',
+                    message: $qaFold->block->type === 'FAQ'
+                        ? 'Detected Q&A pattern on a dedicated FAQ page (slug indicates FAQ). Folded to an FAQ block.'
+                        : 'Detected Q&A pattern within a broader page (slug does not indicate FAQ). Folded to an Accordion block.',
                 )],
             );
         }
@@ -1448,35 +1460,41 @@ final class PuckToContractMapper
         return new Block(type: 'FeatureGrid', props: $props);
     }
 
-    // IR concept `faq` — fold detection.
+    // IR concept `qa_section` — fold detection.
     //
     // Detection gate (either A or B):
-    //   A. Body contains ≥ FAQ_MIN_ITEMS `**Question?**` bold-question
-    //      markers on their own lines, each followed by non-empty
-    //      answer prose (answer runs until the next question or end
-    //      of body).
+    //   A. Body contains ≥ QA_MIN_ITEMS_STANDALONE `**Question?**`
+    //      bold-question markers on their own lines, each followed by
+    //      non-empty answer prose (answer runs until the next question
+    //      or end of body).
     //   B. Body contains a "Frequently Asked Questions" / "FAQ" heading
-    //      (level ≥ 2) AND ≥ 2 bold-question markers.
+    //      (level ≥ 2) AND ≥ QA_MIN_ITEMS_WITH_HEADING bold-question
+    //      markers.
+    //
+    // Target block (chosen from PAGE CONTEXT):
+    //   - Source URL slug matches /(^|/)(faq|frequently-asked-questions)/
+    //     → FAQ block (dedicated FAQ page)
+    //   - Otherwise → Accordion block (Q&A section within a broader page)
     //
     // Question line pattern: `^\s*\*\*[^*]+\?\s*\*\*\s*$` (a whole-line
     // bold-wrapped text ending in `?`). This won't false-match
     // inline `**Bold**` emphasis mid-paragraph (which lacks the `?`
     // AND isn't on its own line).
     //
-    // Answer body is RICHTEXT (FAQ.items[].body is one of the five
-    // richtext-permitted props per contract). Sanitised via the shared
-    // RichTextSanitizer so richtext-vocabulary rules apply.
+    // Answer body is RICHTEXT for BOTH targets — Accordion.items[].body
+    // and FAQ.items[].body are both in x-teamlinkt.vocabularies.richtext.props.
+    // The sanitiser applies uniformly.
     //
     // Adjacent patterns that MUST NOT fold:
     //   - stat_table (bulleted record rows): no `**?**` questions.
     //   - FeatureGrid (link-heading grid): no `?` in the headings.
     //   - Prose with occasional bold emphasis: bold isn't line-only
     //     and doesn't end with `?`.
-    private const FAQ_MIN_ITEMS_STANDALONE = 3;
+    private const QA_MIN_ITEMS_STANDALONE = 3;
 
-    private const FAQ_MIN_ITEMS_WITH_HEADING = 2;
+    private const QA_MIN_ITEMS_WITH_HEADING = 2;
 
-    private function tryFoldToFaq(string $rawBody): ?Block
+    private function tryFoldToQaSection(string $rawBody, ?string $sourcePageUrl): ?QaSectionFold
     {
         // Split into lines; look for the boundary markers.
         $lines = preg_split('/\r?\n/', $rawBody);
@@ -1504,7 +1522,7 @@ final class PuckToContractMapper
             }
         }
 
-        $threshold = $hasFaqHeading ? self::FAQ_MIN_ITEMS_WITH_HEADING : self::FAQ_MIN_ITEMS_STANDALONE;
+        $threshold = $hasFaqHeading ? self::QA_MIN_ITEMS_WITH_HEADING : self::QA_MIN_ITEMS_STANDALONE;
         if (count($questionLineIdx) < $threshold) {
             return null;
         }
@@ -1535,10 +1553,30 @@ final class PuckToContractMapper
             return null;
         }
 
-        return new Block(type: 'FAQ', props: [
-            'id' => $this->id('faq', ...array_column($items, 'title')),
+        // Target block from page context. FAQ = dedicated FAQ page
+        // (slug indicates FAQ); Accordion = section-within-page (default).
+        $isDedicatedFaqPage = $this->urlIndicatesFaqPage($sourcePageUrl);
+        $type = $isDedicatedFaqPage ? 'FAQ' : 'Accordion';
+        $idPrefix = $isDedicatedFaqPage ? 'faq' : 'accordion';
+        $block = new Block(type: $type, props: [
+            'id' => $this->id($idPrefix, ...array_column($items, 'title')),
             'items' => $items,
         ]);
+
+        return new QaSectionFold($block);
+    }
+
+    private function urlIndicatesFaqPage(?string $url): bool
+    {
+        if ($url === null || $url === '') {
+            return false;
+        }
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        if ($path === '') {
+            return false;
+        }
+
+        return preg_match('#(?:^|/)(faq|frequently-asked-questions|faqs)(?:/|$)#i', $path) === 1;
     }
 
     // IR concept `stat_table` — fold detection.

@@ -158,7 +158,7 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
                                                                   TeamMembers or
                                                                   Sponsors, not
                                                                   FeatureGrid.
-              - 'faq' / 'faq_list' /                            → Text with a
+              - 'qa_section' / 'faq' /                          → Text with a
                 'frequently_asked_questions'                       body containing
                                                                   ≥3 whole-line
                                                                   `**Question?**`
@@ -176,11 +176,19 @@ final class AnthropicBlockFillAgent implements Agent, BlockFillAgent, HasStructu
                                                                   `## Frequently
                                                                   Asked Questions`
                                                                   heading. The
-                                                                  mapper folds
-                                                                  the whole
-                                                                  block to an FAQ
-                                                                  block — do NOT
-                                                                  try to emit FAQ
+                                                                  mapper picks
+                                                                  FAQ (for a
+                                                                  dedicated FAQ
+                                                                  page — slug
+                                                                  ends in
+                                                                  /faq) or
+                                                                  Accordion (for
+                                                                  a section
+                                                                  inside a
+                                                                  broader page).
+                                                                  Do NOT emit
+                                                                  FAQ or
+                                                                  Accordion
                                                                   yourself.
               - 'stat_table' / 'record_list' /                 → Text with a
                 'award_history' / 'year_by_year'                  BULLETED markdown
