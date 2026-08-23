@@ -132,6 +132,11 @@ final class DraftLanding
             // run (or ran and found nothing to scrub); populated when
             // blocks were removed post-assembly. See ScrubIssue docblock.
             scrub_issues_by_slug: $assembly->scrub_issues_by_slug,
+            // PlatformBlockRenderer's info diagnostics — reserved-route
+            // entity-page skips (contract "Entity detail pages" rule).
+            // ContractPayloadEmitter surfaces these in the envelope
+            // diagnostics list.
+            platform_diagnostics: $platform->diagnostics,
         );
     }
 

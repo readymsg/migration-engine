@@ -118,7 +118,11 @@ final class PlatformBlockRendererTest extends TestCase
         yield 'contacts' => [PlatformBlockType::Contacts, 'PlatformContacts'];
         yield 'calendar' => [PlatformBlockType::Calendar, 'PlatformCalendar'];
         yield 'news' => [PlatformBlockType::News, 'PlatformNews'];
-        yield 'team' => [PlatformBlockType::Team, 'PlatformTeam'];
+        // NB: PlatformBlockType::Team is NOT here — reserved-route
+        // entity pages are skipped at the renderer per the contract's
+        // "Entity detail pages" rule. See
+        // team_platform_type_is_skipped_as_reserved_route below for
+        // its dedicated test.
     }
 
     /**
@@ -188,6 +192,41 @@ final class PlatformBlockRendererTest extends TestCase
         $this->assertSame($expectedPuckType, $puck->content[0]['type']);
         $this->assertSame(['org_id' => 'ngin-42'], $puck->content[0]['props']);
         $this->assertSame([], $puck->zones);
+    }
+
+    #[Test]
+    public function team_platform_type_is_skipped_as_reserved_route(): void
+    {
+        // Correction 2 (post-cjfl-live): PlatformBlockType::Team maps to
+        // TeamLinkt's `/view/team/{id}` reserved route, which renders
+        // from live data. Contract prose: "Entity detail pages. Team,
+        // game, news-article and player pages already exist at their
+        // reserved routes... Never scrape or recreate them." The
+        // renderer skips these entries entirely — no PuckOutput
+        // (would have been a near-empty page), no failure (skip is
+        // intentional, not an error). Info diagnostic surfaces the
+        // skip so a reviewer sees exactly which pages were dropped.
+        $page = $this->page('Calgary Colts', '/teams/calgary-colts', 200);
+        $entry = new DecisionEntry(
+            target: $this->targetFor($page),
+            action: DecisionAction::PlatformDynamic,
+            reason: 'rebuilt by TeamLinkt Team block',
+            confidence: 1.0,
+            platform_block_type: PlatformBlockType::Team,
+        );
+        $plan = $this->plan([$page], [$entry]);
+
+        $result = $this->renderer()->run($plan, $this->manifest('ngin-cjfl'));
+
+        $this->assertSame(PlatformRenderStatus::Complete, $result->status);
+        $this->assertCount(0, $result->pages, 'reserved-route entity page must NOT emit a PuckOutput');
+        $this->assertCount(0, $result->failures, 'skip is intentional, not a failure');
+        $this->assertCount(1, $result->diagnostics);
+        $diagnostic = $result->diagnostics->items()[0];
+        $this->assertSame('platform_entity_page_skipped_reserved_route', $diagnostic->code);
+        $this->assertSame('info', $diagnostic->severity);
+        $this->assertStringContainsString('Calgary Colts', $diagnostic->message);
+        $this->assertStringContainsString('/view/team/{id}', $diagnostic->message);
     }
 
     #[Test]

@@ -13,10 +13,12 @@ use App\Data\PlatformRenderFailure;
 use App\Data\PlatformRenderResult;
 use App\Data\PlatformRenderStatus;
 use App\Data\PuckOutput;
+use App\Data\SiteImport\Diagnostic;
 use App\Data\SitePlan;
 use App\Services\Schema\ComponentSchema;
 use Illuminate\Support\Str;
 use Spatie\LaravelData\DataCollection;
+use Spatie\LaravelData\Optional;
 
 // GENERATE stage 3 slice 2e — deterministic renderer for platform_dynamic
 // pages. NO LLM. Pure code over a closed table.
@@ -61,6 +63,8 @@ final class PlatformBlockRenderer
         $pages = [];
         /** @var array<int, PlatformRenderFailure> $failures */
         $failures = [];
+        /** @var array<int, Diagnostic> $diagnostics */
+        $diagnostics = [];
 
         /** @var array<int, DecisionEntry> $entries */
         $entries = $plan->ledger->entries->items();
@@ -69,7 +73,12 @@ final class PlatformBlockRenderer
                 continue;
             }
 
-            [$puck, $failure] = $this->renderEntry($entry, $pagesByTarget, $manifest->org_id);
+            [$puck, $failure, $diagnostic] = $this->renderEntry($entry, $pagesByTarget, $manifest->org_id);
+            if ($diagnostic !== null) {
+                $diagnostics[] = $diagnostic;
+
+                continue;
+            }
             if ($failure !== null) {
                 $failures[] = $failure;
 
@@ -84,12 +93,13 @@ final class PlatformBlockRenderer
             pages: new DataCollection(PuckOutput::class, $pages),
             failures: new DataCollection(PlatformRenderFailure::class, $failures),
             status: $failures === [] ? PlatformRenderStatus::Complete : PlatformRenderStatus::Partial,
+            diagnostics: new DataCollection(Diagnostic::class, $diagnostics),
         );
     }
 
     /**
      * @param  array<string, InventoryPage>  $pagesByTarget
-     * @return array{0: ?PuckOutput, 1: ?PlatformRenderFailure}
+     * @return array{0: ?PuckOutput, 1: ?PlatformRenderFailure, 2: ?Diagnostic}
      */
     private function renderEntry(DecisionEntry $entry, array $pagesByTarget, string $orgId): array
     {
@@ -109,6 +119,7 @@ final class PlatformBlockRenderer
                     page_node_id: null,
                     reason: "no kept_pages entry matches ledger target '{$entry->target}'",
                 ),
+                null,
             ];
         }
 
@@ -126,6 +137,34 @@ final class PlatformBlockRenderer
                     page_title: $page->label,
                     page_node_id: $page->page_node_id,
                     reason: 'ledger entry action=platform_dynamic but platform_block_type is null',
+                ),
+                null,
+            ];
+        }
+
+        // Intentional-skip: reserved-route entity page. Contract prose:
+        //   "Entity detail pages. Team, game, news-article and player
+        //    pages already exist at their reserved routes, rendered from
+        //    live TeamLinkt data. Never scrape or recreate them."
+        // Skip the ENTIRE page — no PuckOutput, no page shell downstream.
+        // The parent's Teams / Divisions block already carries the
+        // directory context for these entities. Emit an info diagnostic
+        // so a reviewer sees exactly which pages were dropped.
+        if ($entry->platform_block_type->isReservedRoutePage()) {
+            return [
+                null,
+                null,
+                new Diagnostic(
+                    severity: 'info',
+                    code: 'platform_entity_page_skipped_reserved_route',
+                    message: sprintf(
+                        'Page `%s` (%s) skipped — %s is an entity-detail page rendered by TeamLinkt at its reserved /view/%s/{id} route (contract "Entity detail pages" rule).',
+                        $slug,
+                        $page->label,
+                        $entry->platform_block_type->value,
+                        $entry->platform_block_type->value,
+                    ),
+                    sourceUrl: $page->url ?? new Optional,
                 ),
             ];
         }
@@ -148,6 +187,7 @@ final class PlatformBlockRenderer
                     page_node_id: $page->page_node_id,
                     reason: "no platformBlocks() definition for type '{$enumValue}'",
                 ),
+                null,
             ];
         }
 
@@ -161,7 +201,7 @@ final class PlatformBlockRenderer
             zones: [],
         );
 
-        return [$puck, null];
+        return [$puck, null, null];
     }
 
     /**

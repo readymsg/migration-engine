@@ -81,6 +81,13 @@ final class ContractPayloadEmitter
             $extraDiagnostics[] = $d;
         }
 
+        // Step 2b: PlatformBlockRenderer's info diagnostics — reserved-
+        // route entity-page skips (contract "Entity detail pages" rule).
+        // Threaded through DraftLanding on ConversionResult.
+        foreach ($result->platform_diagnostics as $d) {
+            $extraDiagnostics[] = $d;
+        }
+
         // Step 3: Per-page content mapping.
         $filledPages = [];
         foreach ($tree->pages as $page) {

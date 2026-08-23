@@ -824,14 +824,23 @@ final class PuckToContractMapper
 
     private function mapPlatformTeam(): MappedContent
     {
+        // Reserved-route entity page — should NEVER reach the mapper.
+        // PlatformBlockRenderer::renderEntry checks
+        // PlatformBlockType::isReservedRoutePage() and skips these
+        // entries upstream; they don't become PuckOutputs, they don't
+        // enter page_map, they don't reach here. This defensive drop
+        // covers the regression case (renderer filter changes) —
+        // emits a WARNING diagnostic (not info) because reaching this
+        // arm means an invariant was broken upstream. Contract prose:
+        // "Entity detail pages. Team, game, news-article and player
+        //  pages already exist at their reserved routes... Never
+        //  scrape or recreate them."
         return new MappedContent(
-            blocks: [new Block(type: 'TeamRoster', props: [
-                'id' => $this->id('team-roster', 'platform'),
-            ])],
+            blocks: [],
             diagnostics: [new Diagnostic(
-                severity: 'info',
-                code: 'platform_block_mapped_to_team_roster',
-                message: 'PlatformTeam (single team page) → TeamRoster block (sparse; empty selection = placeholder; runtime component fills roster via org_id + team context).',
+                severity: 'warning',
+                code: 'platform_team_block_reached_mapper',
+                message: 'PlatformTeam block reached the mapper — should have been filtered by PlatformBlockRenderer (isReservedRoutePage). Block dropped per contract "Entity detail pages" rule; investigate the upstream regression.',
             )],
         );
     }

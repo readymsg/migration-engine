@@ -69,4 +69,35 @@ enum PlatformBlockType: string
             default => false,
         };
     }
+
+    /**
+     * Does this block correspond to a page that TeamLinkt renders at a
+     * RESERVED ROUTE from live data (`/view/team/{id}`, `/view/game/{id}`,
+     * news article permalinks, player pages)? Contract prose (v1) —
+     * "Entity detail pages":
+     *
+     *   "Team, game, news-article and player pages already exist at
+     *    their reserved routes, rendered from live TeamLinkt data.
+     *    Never scrape or recreate them."
+     *
+     * When this returns true, PlatformBlockRenderer SKIPS the page
+     * entirely — no PuckOutput, no page shell, no near-empty page in
+     * the payload. The skip surfaces as an info diagnostic naming
+     * `/view/{entity}/{id}` as the destination.
+     *
+     * Today: only Team returns true. TeamInstance nodes are what SE
+     * exposes as per-team subpages; TeamLinkt owns the equivalent
+     * pages via `/view/team/{id}` reserved routes. Other cases
+     * (game pages, news articles, player pages) aren't in the nav
+     * tree we walk today — SE surfaces them via news feed URLs and
+     * schedule links, not as NavNode entries. Add cases here if a
+     * future PLAN slice starts classifying them.
+     */
+    public function isReservedRoutePage(): bool
+    {
+        return match ($this) {
+            self::Team => true,
+            default => false,
+        };
+    }
 }

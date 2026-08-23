@@ -7,6 +7,7 @@ namespace Tests\Unit\ContractEmitter;
 use App\Data\AssetRef;
 use App\Data\OrgType;
 use App\Data\SiteImport\Block;
+use App\Data\SiteImport\Diagnostic;
 use App\Services\ContractEmitter\AssetContext;
 use App\Services\ContractEmitter\AssetLedger;
 use App\Services\ContractEmitter\ContractSchema;
@@ -71,20 +72,26 @@ final class PlatformBlockMappingTest extends TestCase
     }
 
     #[Test]
-    public function platform_team_maps_to_team_roster_sparse(): void
+    public function platform_team_defensive_drop_at_mapper_if_renderer_filter_regresses(): void
     {
+        // Correction 2 (post-cjfl-live): PlatformTeam should NEVER reach
+        // the mapper — PlatformBlockRenderer's isReservedRoutePage()
+        // check drops the whole page upstream (contract "Entity
+        // detail pages" rule). This test covers the REGRESSION case:
+        // if the renderer filter breaks and a PlatformTeam block
+        // slips through, the mapper's defensive arm drops the block
+        // with a WARNING diagnostic (not info — reaching this arm
+        // means an invariant broke upstream).
         $out = $this->mapper->mapContent(
             [['type' => 'PlatformTeam', 'props' => ['org_id' => 'ngin-5765']]],
             $this->assetContext(),
             new AssetLedger,
         );
-        $this->assertSame('TeamRoster', $out->blocks[0]->type);
-        $this->assertSame(['id'], array_keys($out->blocks[0]->props));
-        $this->assertContains(
-            'platform_block_mapped_to_team_roster',
-            array_map(fn ($d) => $d->code, $out->diagnostics),
-        );
-        $this->assertValidates($out->blocks);
+        $this->assertCount(0, $out->blocks, 'PlatformTeam must never produce a contract block');
+        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
+        $this->assertContains('platform_team_block_reached_mapper', $codes);
+        $entry = $this->findByCode($out->diagnostics, 'platform_team_block_reached_mapper');
+        $this->assertSame('warning', $entry->severity);
     }
 
     #[Test]
@@ -144,49 +151,42 @@ final class PlatformBlockMappingTest extends TestCase
     // ─── OrgTypeGate interaction — league-restricted targets ────────────
 
     #[Test]
-    public function teams_and_team_roster_pass_gate_under_league_orgtype(): void
+    public function teams_passes_gate_under_league_orgtype(): void
     {
-        // Under orgType=league (the cjfl case), Teams + TeamRoster
-        // are permitted. This was the whole reason the bug surfaced —
-        // OrgTypeGate would have caught them under club as a visible
-        // `org_type_gate_dropped`; under league they pass through
-        // and the (now-fixed) mapper produces the sparse contract block.
+        // Under orgType=league (the cjfl case), Teams is permitted.
+        // (TeamRoster is no longer produced — PlatformTeam is skipped
+        // at the renderer per contract "Entity detail pages" rule.
+        // The mapper's PlatformTeams → Teams mapping is what remains
+        // for league-hierarchy directory pages.)
         $out = $this->mapper->mapContent(
-            [
-                ['type' => 'PlatformTeams', 'props' => ['org_id' => 'ngin-5765']],
-                ['type' => 'PlatformTeam', 'props' => ['org_id' => 'ngin-5765']],
-            ],
+            [['type' => 'PlatformTeams', 'props' => ['org_id' => 'ngin-5765']]],
             $this->assetContext(),
             new AssetLedger,
         );
         [$gatedBlocks, $gatedDiagnostics] = $this->gate->apply($out->blocks, OrgType::League, 'cjfl');
 
-        $this->assertCount(2, $gatedBlocks, 'Teams + TeamRoster must pass under orgType=league');
+        $this->assertCount(1, $gatedBlocks, 'Teams must pass under orgType=league');
         $this->assertSame([], $gatedDiagnostics);
     }
 
     #[Test]
-    public function teams_and_team_roster_dropped_under_club_orgtype_with_visible_diagnostic(): void
+    public function teams_dropped_under_club_orgtype_with_visible_diagnostic(): void
     {
-        // Under orgType=club, Teams + TeamRoster are league-restricted
-        // per x-teamlinkt.orgTypeGating.restrictedBlocks. The
-        // OrgTypeGate produces a visible `org_type_gate_dropped`
-        // diagnostic (was silent `unmappable_block_type` before the
-        // Finding 2 fix).
+        // Under orgType=club, Teams is league-restricted per
+        // x-teamlinkt.orgTypeGating.restrictedBlocks. The OrgTypeGate
+        // produces a visible `org_type_gate_dropped_block` diagnostic
+        // (was silent `unmappable_block_type` before Finding 2's fix).
         $out = $this->mapper->mapContent(
-            [
-                ['type' => 'PlatformTeams', 'props' => ['org_id' => 'ngin-63620']],
-                ['type' => 'PlatformTeam', 'props' => ['org_id' => 'ngin-63620']],
-            ],
+            [['type' => 'PlatformTeams', 'props' => ['org_id' => 'ngin-63620']]],
             $this->assetContext(),
             new AssetLedger,
         );
         [$gatedBlocks, $gatedDiagnostics] = $this->gate->apply($out->blocks, OrgType::Club, 'tbirdhoops');
 
-        $this->assertSame([], $gatedBlocks, 'Teams + TeamRoster must be dropped under orgType=club');
+        $this->assertSame([], $gatedBlocks, 'Teams must be dropped under orgType=club');
         $codes = array_map(fn ($d) => $d->code, $gatedDiagnostics);
         $this->assertContains('org_type_gate_dropped_block', $codes);
-        $this->assertCount(2, $gatedDiagnostics);
+        $this->assertCount(1, $gatedDiagnostics);
     }
 
     #[Test]
@@ -235,6 +235,19 @@ final class PlatformBlockMappingTest extends TestCase
     private function assetContext(): AssetContext
     {
         return new AssetContext(new DataCollection(AssetRef::class, []));
+    }
+
+    /**
+     * @param  array<int, Diagnostic>  $diagnostics
+     */
+    private function findByCode(array $diagnostics, string $code): Diagnostic
+    {
+        foreach ($diagnostics as $d) {
+            if ($d->code === $code) {
+                return $d;
+            }
+        }
+        $this->fail("Expected diagnostic with code `{$code}`, got: ".implode(', ', array_map(fn ($x) => $x->code, $diagnostics)));
     }
 
     /**

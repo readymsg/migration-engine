@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data;
 
+use App\Data\SiteImport\Diagnostic;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\DataCollection;
@@ -75,5 +76,17 @@ final class ConversionResult extends Data
         public ?string $draft_id = null,
         public ?string $draft_url = null,
         public array $scrub_issues_by_slug = [],
+        /**
+         * PlatformBlockRenderer's info-severity diagnostics — intentional
+         * skips of reserved-route entity pages (contract "Entity detail
+         * pages" rule: `/view/team/{id}` etc. render from live TeamLinkt
+         * data, don't recreate). Threaded through by DraftLanding so
+         * ContractPayloadEmitter can surface them in the envelope
+         * diagnostics list.
+         *
+         * @var DataCollection<int, Diagnostic>
+         */
+        #[DataCollectionOf(Diagnostic::class)]
+        public DataCollection $platform_diagnostics = new DataCollection(Diagnostic::class, []),
     ) {}
 }

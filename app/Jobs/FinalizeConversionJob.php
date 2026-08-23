@@ -315,6 +315,7 @@ final class FinalizeConversionJob implements ShouldQueue
             draft_id: $conversion->draft_id,
             draft_url: $conversion->draft_url,
             scrub_issues_by_slug: $conversion->scrub_issues_by_slug,
+            platform_diagnostics: $conversion->platform_diagnostics,
         );
     }
 

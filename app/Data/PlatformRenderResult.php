@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Data;
 
+use App\Data\SiteImport\Diagnostic;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\DataCollection;
@@ -28,6 +29,9 @@ final class PlatformRenderResult extends Data
     /**
      * @param  DataCollection<int, PuckOutput>  $pages
      * @param  DataCollection<int, PlatformRenderFailure>  $failures
+     * @param  DataCollection<int, Diagnostic>  $diagnostics  info-severity signals from intentional skips
+     *                                                        (reserved-route entity pages, etc.). NOT failures
+     *                                                        — the page was deliberately not emitted per contract.
      */
     public function __construct(
         #[DataCollectionOf(PuckOutput::class)]
@@ -35,5 +39,7 @@ final class PlatformRenderResult extends Data
         #[DataCollectionOf(PlatformRenderFailure::class)]
         public DataCollection $failures,
         public PlatformRenderStatus $status,
+        #[DataCollectionOf(Diagnostic::class)]
+        public DataCollection $diagnostics = new DataCollection(Diagnostic::class, []),
     ) {}
 }
