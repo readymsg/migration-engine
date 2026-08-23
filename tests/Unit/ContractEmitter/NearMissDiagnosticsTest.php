@@ -39,39 +39,15 @@ final class NearMissDiagnosticsTest extends TestCase
     // ─── stat_table_near_miss_inconsistent_columns ─────────────────────
 
     #[Test]
-    public function inconsistent_columns_near_miss_fires_on_larry_wruck_shape(): void
-    {
-        // The actual Larry Wruck body — some rows 4 cols, some rows 3.
-        // Fold gate rejects; the near-miss surfaces the fact.
-        $body = "- 2025 - Jaylin Burnett - St. Clair Saints - DL\n".
-                "- 2024 - Stephen Smith - Regina Thunder - LB\n".
-                "- 2023 - Stephen Smith - Regina Thunder - LB\n".
-                "- 2022 - Konner Johnson - Saskatoon Hilltops - LB\n".
-                "- 2021 - Austin Daisy - Calgary Colts - LB\n".
-                "- 2013 - Mason Beekhus - Windsor AKO Fratmen\n".
-                "- 2012 - Wilguens Deriveaux - St Leonard Cougars\n".
-                '- 2010 - Aram Eisho - Hamilton Hurricanes';
-
-        $out = $this->mapper->mapContent(
-            [['type' => 'Text', 'props' => ['body' => $body]]],
-            $this->assetContext(),
-            new AssetLedger,
-            sourcePageUrl: 'https://www.cjfl.org/awards/larry-wruck',
-        );
-
-        $this->assertSame('Text', $out->blocks[0]->type);
-        $codes = array_map(fn ($d) => $d->code, $out->diagnostics);
-        $this->assertContains('stat_table_near_miss_inconsistent_columns', $codes);
-        $entry = $this->findByCode($out->diagnostics, 'stat_table_near_miss_inconsistent_columns');
-        $this->assertNotEmpty($entry->sourceUrl);
-        $this->assertStringContainsString('Snippet:', $entry->message);
-        $this->assertStringContainsString('Jaylin Burnett', $entry->message);
-    }
-
-    #[Test]
     public function short_bullet_list_below_min_rows_does_not_fire_inconsistent_columns(): void
     {
         // < 5 rows: the near-miss requires the stat_table min-rows too.
+        // (Slice B tuned the fold to be ragged-tolerant, so the
+        // inconsistent-columns near-miss is now unreachable on
+        // real award-history data — the fold fires instead.
+        // Kept as a stability guard: whichever detector logic the
+        // future re-tightens, short lists must never fire the
+        // near-miss.)
         $body = "- 2025 - Jaylin\n".
                 "- 2024 - Stephen\n".
                 '- 2023 - Stephen';

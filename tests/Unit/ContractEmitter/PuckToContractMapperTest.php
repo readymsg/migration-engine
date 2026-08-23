@@ -1462,13 +1462,14 @@ final class PuckToContractMapperTest extends TestCase
     }
 
     #[Test]
-    public function inconsistent_column_counts_stays_as_text(): void
+    public function ragged_row_widths_fold_with_end_padding(): void
     {
-        // If items have different column counts, the pattern isn't
-        // tabular. Adjacent shape: mixed content notes with some
-        // dashes but not the same shape per row.
+        // Slice B tuned the fold to be ragged-tolerant. cjfl Larry Wruck
+        // and 6 other award pages ship rows where older years lack the
+        // position column. Fold now pads shorter rows with empty cells
+        // to the MAX column count found across rows. No data lost.
         $body = "- 2025 - Jaylin Burnett - St. Clair Saints - DL\n".
-                "- 2024 - Stephen Smith\n". // only 2 cols
+                "- 2024 - Stephen Smith\n". // 2 cols
                 "- 2023 - Stephen Smith - Regina Thunder - LB\n".
                 "- 2022 - Konner Johnson - Saskatoon Hilltops - LB - MVP\n". // 5 cols
                 "- 2021 - Austin Daisy - Calgary Colts - LB\n".
@@ -1479,7 +1480,15 @@ final class PuckToContractMapperTest extends TestCase
             $this->assetContext(),
             new AssetLedger,
         );
-        $this->assertSame('Text', $out->blocks[0]->type);
+        $this->assertSame('Table', $out->blocks[0]->type);
+        // Max cols = 5 (from the 2022 row). Every row padded to 5 cells.
+        $this->assertCount(5, $out->blocks[0]->props['rows'][0]['cells']);
+        $this->assertCount(5, $out->blocks[0]->props['rows'][1]['cells']);
+        // The short row (2024) padded — first two cells have content, last three empty.
+        $this->assertSame('2024', $out->blocks[0]->props['rows'][1]['cells'][0]['content'][0]['props']['body']);
+        $this->assertSame('Stephen Smith', $out->blocks[0]->props['rows'][1]['cells'][1]['content'][0]['props']['body']);
+        $this->assertSame('', $out->blocks[0]->props['rows'][1]['cells'][2]['content'][0]['props']['body']);
+        $this->assertValidates($out->blocks);
     }
 
     // ─── helpers ────────────────────────────────────────────────────────

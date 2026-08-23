@@ -2026,23 +2026,23 @@ final class PuckToContractMapper
     }
 
     /**
+     * Slice B: gate accepts variable column counts across rows. Each
+     * row must have ≥ MIN_COLUMNS cells; padding to max happens in
+     * buildTableBlock. This ragged-tolerant behavior handles cjfl's
+     * award-history pages where older rows are missing the tail
+     * position column (post-Larry-Wruck-hedge finding).
+     *
      * @param  array<int, string>  $items
      * @param  non-empty-string  $sep
-     * @return array<int, array<int, string>>|null N rows × C cells, or null if the separator doesn't split cleanly
+     * @return array<int, array<int, string>>|null N rows × variable cells, or null if any row has fewer than MIN_COLUMNS
      */
     private function splitRowsOn(array $items, string $sep): ?array
     {
         $rows = [];
-        $columnCount = null;
         foreach ($items as $item) {
             $cells = array_map('trim', explode($sep, $item));
             $cells = array_values(array_filter($cells, static fn (string $c): bool => $c !== ''));
             if (count($cells) < self::STAT_TABLE_MIN_COLUMNS) {
-                return null;
-            }
-            if ($columnCount === null) {
-                $columnCount = count($cells);
-            } elseif (count($cells) !== $columnCount) {
                 return null;
             }
             $rows[] = $cells;
@@ -2052,14 +2052,30 @@ final class PuckToContractMapper
     }
 
     /**
+     * Pad every row to MAX column count with empty-content cells at
+     * the end. Contract's Table cells[] is length-unconstrained by
+     * schema (ragged rows are structurally valid), but a UI-rendered
+     * table looks cleaner uniform. Padding at the END matches record
+     * data's natural shape (missing tail-column data — like older
+     * award rows without a position column).
+     *
+     * Never truncate: rows longer than max don't exist by construction
+     * (max is derived from rows themselves) and no data is dropped.
+     *
      * @param  array<int, array<int, string>>  $rows
      */
     private function buildTableBlock(array $rows): Block
     {
+        $maxCols = 0;
+        foreach ($rows as $cells) {
+            $maxCols = max($maxCols, count($cells));
+        }
+
         $rowsOut = [];
         foreach ($rows as $r => $cells) {
             $cellsOut = [];
-            foreach ($cells as $c => $cellText) {
+            for ($c = 0; $c < $maxCols; $c++) {
+                $cellText = $cells[$c] ?? '';
                 $cellsOut[] = [
                     'content' => [[
                         'type' => 'Text',
