@@ -36,10 +36,26 @@ use Throwable;
 // orchestrator's reconciliation step is the authority — Bus::batch's
 // success flag is not.
 //
-// $tries = 1 for v1 — no automatic retry. Transient errors land in
-// BlockFillFailure with the underlying exception message; a reviewer
-// can re-dispatch the conversion. Wiring retries into Horizon is a
-// step-6 concern (trigger endpoint + queue wiring).
+// Retry policy: $tries = 3 with staggered backoff. Targets the exact
+// cjfl page-1254223 loss shape — "silently absent from result store
+// after batch (job never wrote)" — which happens when the process is
+// killed OUTSIDE handle()'s try/catch: worker OOM, worker-timeout
+// SIGKILL, Redis eviction of a queued job. Those don't reach the
+// catch inside handle() — they kill the process before or during it.
+// Laravel's queue-level retry (job not acked → returned to queue by
+// the driver) is what survives them.
+//
+// The catch inside handle() is KEPT for Sonnet-reachable exceptions
+// (malformed structured output, agent throw). Those write the
+// BlockFillFailure directly and return normally, so Laravel considers
+// the job complete — no retry burned. Cost of retrying a genuinely
+// terminal Sonnet exception would be ~$0.15 × 2 additional attempts
+// per broken page; the catch keeps that budget bounded.
+//
+// failed() is the safety net: it fires when Laravel exhausts $tries
+// without handle() completing — i.e., every attempt process-killed.
+// It writes the BlockFillFailure so reconciliation still sees a
+// visible failure, never a silent absence.
 final class GeneratePageJob implements ShouldQueue
 {
     use Batchable;
@@ -48,7 +64,14 @@ final class GeneratePageJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $tries = 1;
+    public int $tries = 3;
+
+    // Backoff between attempts (s): 30s then 60s. Longer than the
+    // block-fill call duration itself (~30-90s per BUILD.md) so a
+    // slow Sonnet response doesn't cause consecutive attempts to
+    // stack on the same worker's timeout window.
+    /** @var array<int, int> */
+    public array $backoff = [30, 60];
 
     // Generous job timeout matches AnthropicBlockFillAgent's HTTP timeout.
     // Sonnet 4.6 + structured output + a long body + revision pass can
@@ -101,10 +124,14 @@ final class GeneratePageJob implements ShouldQueue
 
             $resultStore->putFilledPage($this->conversion_id, $filled);
         } catch (Throwable $e) {
-            // Terminal failure — record so reconciliation surfaces this
-            // page as a BlockFillFailure, NEVER a stub. Catching here
-            // (rather than relying on failed()) ensures the batch isn't
-            // cancelled by the exception propagating up.
+            // Terminal Sonnet-reachable failure — record and return
+            // NORMALLY so Bus::batch's sync-queue path doesn't
+            // propagate (allowFailures() suppresses the RECORDED
+            // batch failure counter, not the sync exception itself).
+            // Under async, this ALSO prevents unnecessary retries
+            // for exceptions that Sonnet reproducibly threw on
+            // attempt 1 — the cost of retrying a malformed-response
+            // is real budget and the response won't change.
             $resultStore->putFailure(
                 $this->conversion_id,
                 new BlockFillFailure(
@@ -115,5 +142,33 @@ final class GeneratePageJob implements ShouldQueue
                 ),
             );
         }
+    }
+
+    /**
+     * Safety net for process-kill retries. Fires when Laravel's
+     * queue driver retries the job $tries times WITHOUT handle()
+     * completing — worker OOM, timeout SIGKILL, Redis eviction.
+     * The catch inside handle() would have written a failure if
+     * the exception was Sonnet-reachable; failed() covers the
+     * exceptions that killed the process before handle() finished.
+     *
+     * Container-resolved because Laravel's failed() hook doesn't
+     * do constructor-DI the way handle() does.
+     */
+    public function failed(?Throwable $e): void
+    {
+        $resultStore = app(BlockFillResultStore::class);
+        $reason = $e !== null
+            ? sprintf('block-fill failed after %d attempts: %s', $this->tries, $e->getMessage())
+            : sprintf('block-fill failed after %d attempts (no exception recorded — worker likely killed mid-job)', $this->tries);
+        $resultStore->putFailure(
+            $this->conversion_id,
+            new BlockFillFailure(
+                page_slug: $this->page_slug,
+                page_title: $this->ir->page_title,
+                page_node_id: null,
+                reason: $reason,
+            ),
+        );
     }
 }

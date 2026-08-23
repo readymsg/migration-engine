@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Extract;
 
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 // Real Firecrawl v2 client. Endpoint shape verified against the live docs
 // at https://docs.firecrawl.dev/api-reference/endpoint/scrape on
@@ -65,17 +67,139 @@ final class HttpFirecrawlClient implements FirecrawlClient
         '#lightbox',
     ];
 
+    /**
+     * Base backoff (ms) between retry attempts for non-429 transient
+     * failures (5xx, network). Actual wait doubles per attempt:
+     * 1s, 2s, 4s under the default 3-attempt budget.
+     */
+    private const BASE_BACKOFF_MS = 1000;
+
+    /**
+     * Backoff (ms) when a 429 arrives WITHOUT a Retry-After header.
+     * Deliberately longer than base — rate-limit windows are typically
+     * measured in seconds. Multiplied by attempt number: 5s, 10s, 15s.
+     */
+    private const RATE_LIMIT_BASE_BACKOFF_MS = 5000;
+
+    /**
+     * Last-call end timestamp for the inter-request throttle. Instance
+     * state; HttpFirecrawlClient is bound as a singleton so this
+     * persists across scrape() calls within a request.
+     */
+    private ?float $lastCallEndedAt = null;
+
     public function __construct(
         private readonly string $apiKey,
         private readonly string $baseUrl = 'https://api.firecrawl.dev/v2',
+        private readonly int $minIntervalMs = 4000,
+        private readonly int $maxAttempts = 3,
     ) {}
 
+    /**
+     * Scrape one URL with retry + throttle.
+     *
+     * Retry policy:
+     *   - 429 → wait Retry-After (if present) OR (attempt × RATE_LIMIT_BASE_BACKOFF_MS)
+     *   - 5xx OR network → wait (2^(attempt-1) × BASE_BACKOFF_MS)
+     *   - other 4xx → throw immediately (terminal; no retry)
+     *
+     * On exhaustion (all $maxAttempts failed), throws RuntimeException
+     * with the attempt count and last error — the extractor's catch
+     * turns it into a visible ContentExtractionFailure. Never silent.
+     */
     public function scrape(string $url): ?ScrapedPage
     {
         if ($this->apiKey === '') {
             throw new RuntimeException('Firecrawl API key not configured (services.firecrawl.api_key)');
         }
 
+        $this->throttle();
+
+        $lastError = null;
+        $lastStatus = null;
+        for ($attempt = 1; $attempt <= $this->maxAttempts; $attempt++) {
+            try {
+                $result = $this->doScrape($url);
+                $this->lastCallEndedAt = microtime(true);
+
+                return $result;
+            } catch (RequestException $e) {
+                $status = $e->response->status();
+                $lastError = $e;
+                $lastStatus = $status;
+
+                if ($status === 429) {
+                    $waitMs = $this->rateLimitBackoffMs($e, $attempt);
+                } elseif ($status >= 500 && $status <= 599) {
+                    $waitMs = self::BASE_BACKOFF_MS * (2 ** ($attempt - 1));
+                } else {
+                    // Other 4xx — terminal. Throw with the attempt count
+                    // so the extractor's failure reason names what happened.
+                    throw new RuntimeException(
+                        "Firecrawl returned HTTP {$status} (non-retryable) on attempt {$attempt} for {$url}: {$e->getMessage()}",
+                        previous: $e,
+                    );
+                }
+
+                if ($attempt < $this->maxAttempts) {
+                    usleep($waitMs * 1000);
+                }
+            } catch (Throwable $e) {
+                // Network / connection / timeout — transient by default.
+                $lastError = $e;
+                $waitMs = self::BASE_BACKOFF_MS * (2 ** ($attempt - 1));
+                if ($attempt < $this->maxAttempts) {
+                    usleep($waitMs * 1000);
+                }
+            }
+        }
+
+        $this->lastCallEndedAt = microtime(true);
+
+        $lastStatusText = $lastStatus !== null ? "HTTP {$lastStatus}" : 'exception';
+        $lastMessage = $lastError !== null ? $lastError->getMessage() : 'unknown';
+
+        throw new RuntimeException(
+            "Firecrawl failed after {$this->maxAttempts} attempts (last: {$lastStatusText}) for {$url}: {$lastMessage}",
+            previous: $lastError,
+        );
+    }
+
+    /**
+     * Inter-request throttle. Sleeps until at least $minIntervalMs has
+     * elapsed since the last call ended. Prevents bursting into the
+     * per-plan rate limit that produced the cjfl 429 wall.
+     */
+    private function throttle(): void
+    {
+        if ($this->lastCallEndedAt === null || $this->minIntervalMs <= 0) {
+            return;
+        }
+        $elapsedMs = (microtime(true) - $this->lastCallEndedAt) * 1000;
+        $remaining = $this->minIntervalMs - $elapsedMs;
+        if ($remaining > 0) {
+            usleep((int) ($remaining * 1000));
+        }
+    }
+
+    /**
+     * Compute the 429 backoff. Prefer Retry-After header (Firecrawl
+     * documents it and per RFC 6585 it's either seconds or an HTTP
+     * date). Fall back to (attempt × RATE_LIMIT_BASE_BACKOFF_MS) when
+     * the header is absent.
+     */
+    private function rateLimitBackoffMs(RequestException $e, int $attempt): int
+    {
+        $retryAfter = $e->response->header('Retry-After');
+        if ($retryAfter !== '' && is_numeric($retryAfter)) {
+            return max(1, (int) $retryAfter) * 1000;
+        }
+
+        return self::RATE_LIMIT_BASE_BACKOFF_MS * $attempt;
+    }
+
+    private function doScrape(string $url): ?ScrapedPage
+    {
         $response = Http::withToken($this->apiKey)
             ->acceptJson()
             ->asJson()

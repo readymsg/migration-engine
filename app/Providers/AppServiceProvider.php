@@ -81,6 +81,8 @@ class AppServiceProvider extends ServiceProvider
             return new HttpFirecrawlClient(
                 apiKey: (string) config('services.firecrawl.api_key', ''),
                 baseUrl: (string) config('services.firecrawl.url', 'https://api.firecrawl.dev/v2'),
+                minIntervalMs: (int) config('services.firecrawl.min_interval_ms', 4000),
+                maxAttempts: (int) config('services.firecrawl.max_attempts', 3),
             );
         });
         $this->app->singleton(AssetUploader::class, function (Application $app): AssetUploader {

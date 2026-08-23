@@ -37,6 +37,22 @@ return [
     'firecrawl' => [
         'api_key' => env('FIRECRAWL_API_KEY'),
         'url' => env('FIRECRAWL_URL', 'https://api.firecrawl.dev/v2'),
+        // Inter-request throttle. Firecrawl's rate limit is plan-scoped.
+        // Documented limits (verify against your plan's dashboard):
+        //   - Free:     3 rpm  → 20000ms
+        //   - Hobby:   20 rpm  →  3000ms
+        //   - Standard: 100 rpm →   600ms
+        //   - Growth:   500 rpm →   120ms
+        // Default 4000ms = 15 rpm, safe under Hobby. Set explicitly for
+        // your plan to reduce wall-clock on large sites. Tuning target:
+        // 34-page cjfl site at Hobby = 34 × 3s = ~100s scrape wall clock;
+        // at Free = 34 × 20s = ~11min (probably where the 429 wall hit
+        // during the first live cjfl run).
+        'min_interval_ms' => (int) env('FIRECRAWL_MIN_INTERVAL_MS', 4000),
+        // Retry budget for transient failures (429, 5xx, network). 4xx
+        // other than 429 don't retry — those are terminal. On 429, we
+        // respect Retry-After if present; otherwise use RATE_LIMIT_BACKOFF.
+        'max_attempts' => (int) env('FIRECRAWL_MAX_ATTEMPTS', 3),
     ],
 
     // Filesystem disk (from config/filesystems.php) the S3AssetUploader
