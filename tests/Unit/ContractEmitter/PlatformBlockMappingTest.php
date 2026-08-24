@@ -153,6 +153,83 @@ final class PlatformBlockMappingTest extends TestCase
         $this->assertValidates($out->blocks);
     }
 
+    // ─── Follow-up 2: latent Platform mappings (widget targets) ────────
+
+    #[Test]
+    public function platform_schedule_maps_to_schedule_sparse(): void
+    {
+        $out = $this->mapper->mapContent(
+            [['type' => 'PlatformSchedule', 'props' => ['org_id' => 'ngin-5765']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Schedule', $out->blocks[0]->type);
+        $this->assertSame(['id'], array_keys($out->blocks[0]->props));
+        $this->assertContains('platform_block_mapped_to_schedule', array_map(fn ($d) => $d->code, $out->diagnostics));
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function platform_scores_maps_to_scores_sparse(): void
+    {
+        $out = $this->mapper->mapContent(
+            [['type' => 'PlatformScores', 'props' => ['org_id' => 'ngin-5765']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Scores', $out->blocks[0]->type);
+        $this->assertSame(['id'], array_keys($out->blocks[0]->props));
+        $this->assertContains('platform_block_mapped_to_scores', array_map(fn ($d) => $d->code, $out->diagnostics));
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function platform_standings_maps_to_standings_sparse(): void
+    {
+        $out = $this->mapper->mapContent(
+            [['type' => 'PlatformStandings', 'props' => ['org_id' => 'ngin-5765']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('Standings', $out->blocks[0]->type);
+        $this->assertSame(['id'], array_keys($out->blocks[0]->props));
+        $this->assertContains('platform_block_mapped_to_standings', array_map(fn ($d) => $d->code, $out->diagnostics));
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function platform_roster_maps_to_team_roster_sparse(): void
+    {
+        // Distinct from per-team reserved-route pages (PlatformTeam
+        // is skipped upstream). PlatformRoster is a dedicated Roster
+        // nav page classified via PLAN's `roster(s)` name-match.
+        $out = $this->mapper->mapContent(
+            [['type' => 'PlatformRoster', 'props' => ['org_id' => 'ngin-5765']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('TeamRoster', $out->blocks[0]->type);
+        $this->assertSame(['id'], array_keys($out->blocks[0]->props));
+        $this->assertContains('platform_block_mapped_to_team_roster', array_map(fn ($d) => $d->code, $out->diagnostics));
+        $this->assertValidates($out->blocks);
+    }
+
+    #[Test]
+    public function platform_calendar_maps_to_event_marquee_sparse(): void
+    {
+        // Contract has no dedicated "Calendar" block; EventMarquee
+        // is the widget-table target for "Upcoming events strip".
+        $out = $this->mapper->mapContent(
+            [['type' => 'PlatformCalendar', 'props' => ['org_id' => 'ngin-5765']]],
+            $this->assetContext(),
+            new AssetLedger,
+        );
+        $this->assertSame('EventMarquee', $out->blocks[0]->type);
+        $this->assertSame(['id'], array_keys($out->blocks[0]->props));
+        $this->assertContains('platform_block_mapped_to_event_marquee', array_map(fn ($d) => $d->code, $out->diagnostics));
+        $this->assertValidates($out->blocks);
+    }
+
     // ─── OrgTypeGate interaction — league-restricted targets ────────────
 
     #[Test]

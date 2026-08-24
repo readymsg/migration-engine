@@ -196,12 +196,17 @@ final class PuckToContractMapper
             'PlatformDivisions' => $this->mapPlatformDivisions(),
             'PlatformNews' => $this->mapPlatformNews(),
             'PlatformContacts' => $this->mapPlatformContacts(),
+            'PlatformSchedule' => $this->mapPlatformSchedule(),
+            'PlatformScores' => $this->mapPlatformScores(),
+            'PlatformStandings' => $this->mapPlatformStandings(),
+            'PlatformRoster' => $this->mapPlatformRoster(),
+            'PlatformCalendar' => $this->mapPlatformCalendar(),
             default => new MappedContent(
                 blocks: [],
                 diagnostics: [new Diagnostic(
                     severity: 'warning',
                     code: 'unmappable_block_type',
-                    message: "Old-schema block `{$type}` has no contract equivalent in the M1 palette. Dropped.",
+                    message: "Old-schema block `{$type}` has no contract mapping. Dropped — this is silent-loss unless a reviewer sees this diagnostic. If this fires on a live run, add a mapper arm (see the Platform* arms above for the pattern).",
                     sourceUrl: $sourcePageUrl !== null ? $sourcePageUrl : new Optional,
                 )],
             ),
@@ -900,6 +905,103 @@ final class PuckToContractMapper
                 severity: 'info',
                 code: 'platform_block_mapped_to_executives',
                 message: 'PlatformContacts (contact/board widget) → Executives block (sparse; runtime component fills live board data from TeamLinkt).',
+            )],
+        );
+    }
+
+    // ── Follow-up 2: latent Platform mappings ────────────────────────
+    //
+    // Five widgets contract enumerates (Part III "Blocks to place but
+    // never populate — the TeamLinkt Widgets") that PLAN can produce
+    // via node_type routing or name-match, but the mapper had no arm
+    // for. cjfl's live run didn't hit them (its rootnav classified
+    // no page as any of these five), but any future site whose
+    // classifier fires will drop them as `unmappable_block_type`
+    // silent-loss otherwise. Same bug class as Finding 2's original
+    // 5 mappings — fixing the whole widget surface once.
+    //
+    // All five follow the same sparse widget-shape (id-only, per
+    // contract's "You may place a widget. You may not fill it" rule).
+    // All five are league/high_school/association orgType-gated per
+    // x-teamlinkt.orgTypeGating.restrictedBlocks except EventMarquee
+    // which also permits club per contract line 814 ("+ club").
+
+    private function mapPlatformSchedule(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'Schedule', props: [
+                'id' => $this->id('schedule', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_schedule',
+                message: 'PlatformSchedule (schedule widget) → Schedule block (sparse; runtime component fills game schedule from TeamLinkt).',
+            )],
+        );
+    }
+
+    private function mapPlatformScores(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'Scores', props: [
+                'id' => $this->id('scores', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_scores',
+                message: 'PlatformScores (recent-results widget) → Scores block (sparse; runtime component fills scores from TeamLinkt).',
+            )],
+        );
+    }
+
+    private function mapPlatformStandings(): MappedContent
+    {
+        return new MappedContent(
+            blocks: [new Block(type: 'Standings', props: [
+                'id' => $this->id('standings', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_standings',
+                message: 'PlatformStandings (league-table widget) → Standings block (sparse; runtime component fills standings from TeamLinkt).',
+            )],
+        );
+    }
+
+    private function mapPlatformRoster(): MappedContent
+    {
+        // Contract widget table line 811: "Roster page → TeamRoster
+        // (league / high_school / association)". Distinct from per-team
+        // reserved-route pages (PlatformTeam), which are skipped
+        // upstream. A dedicated "Roster" nav page — not a team
+        // detail page — maps here.
+        return new MappedContent(
+            blocks: [new Block(type: 'TeamRoster', props: [
+                'id' => $this->id('team-roster', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_team_roster',
+                message: 'PlatformRoster (dedicated roster page widget) → TeamRoster block (sparse; runtime resolves roster from TeamLinkt).',
+            )],
+        );
+    }
+
+    private function mapPlatformCalendar(): MappedContent
+    {
+        // Contract widget table line 814: "Upcoming events strip →
+        // EventMarquee (+ club)". Contract has no dedicated
+        // "Calendar" block; EventMarquee is the closest listed
+        // widget target for an events feed. Widest orgType coverage
+        // in the widget list (league/high_school/association + club).
+        return new MappedContent(
+            blocks: [new Block(type: 'EventMarquee', props: [
+                'id' => $this->id('event-marquee', 'platform'),
+            ])],
+            diagnostics: [new Diagnostic(
+                severity: 'info',
+                code: 'platform_block_mapped_to_event_marquee',
+                message: 'PlatformCalendar (events widget) → EventMarquee block (sparse; runtime resolves upcoming events from TeamLinkt).',
             )],
         );
     }
