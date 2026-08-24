@@ -376,6 +376,25 @@ final class RootNavPlanner implements Planner
             );
         }
 
+        // 1.5. Paginated duplicate — `/news/page/2`, `/news/p/3`, etc.
+        //      Contract Part II "Pages you should not create": "Paginated
+        //      duplicates. Map the first page only." The base (un-paginated)
+        //      page carries the full content on the rebuilt site; the
+        //      paginated variants are noise that would ship as duplicate
+        //      pages. Parked with a `paginated_duplicate:` reason prefix
+        //      so DraftLanding can surface an info diagnostic per drop.
+        if ($this->isPaginatedDuplicate($page)) {
+            return new DecisionEntry(
+                target: $this->targetOf($page),
+                action: DecisionAction::Park,
+                reason: sprintf(
+                    'paginated_duplicate: %s — contract "Pages you should not create": map the first page only',
+                    $page->url ?? $page->label,
+                ),
+                confidence: 1.0,
+            );
+        }
+
         // 2. SE PLATFORM / tool / help link — removed in the rebuild.
         //    NB: this is for SE platform PAGES (Dibs, /sportsengine, SE login),
         //    NOT for sportngin.com CDN asset URLs (banner / logo / content
@@ -506,6 +525,32 @@ final class RootNavPlanner implements Planner
      * asset URLs (those are brand + content assets that GENERATE re-hosts;
      * see CLAUDE.md "SE platform links vs SE CDN assets").
      */
+    /**
+     * Contract Part II "Pages you should not create":
+     *
+     *   "Paginated duplicates (`/news/page/2`). Map the first page only."
+     *
+     * Match any URL path ending in `/page/<int>` or `/p/<int>` (case-
+     * insensitive; optional trailing slash). Aggressive by design — a
+     * paginated page IS the enumerated case the contract calls out.
+     * Edge case: if a site's canonical page is /news/page/1 (with no
+     * un-paginated /news at all), we'd lose it. Rare in practice —
+     * SE-shaped sites all use un-paginated bases + numbered pagination.
+     * Note here so the next reader knows the trade-off before widening.
+     */
+    private function isPaginatedDuplicate(InventoryPage $page): bool
+    {
+        if ($page->url === null) {
+            return false;
+        }
+        $path = (string) parse_url($page->url, PHP_URL_PATH);
+        if ($path === '') {
+            return false;
+        }
+
+        return preg_match('#/(page|p)/\d+/?$#i', $path) === 1;
+    }
+
     private function isSePlatformLink(InventoryPage $page): bool
     {
         if ($page->external_subtype === 'se_tool') {

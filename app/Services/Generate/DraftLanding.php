@@ -11,6 +11,7 @@ use App\Data\ConversionFailure;
 use App\Data\ConversionResult;
 use App\Data\ConversionStage;
 use App\Data\ConversionStatus;
+use App\Data\DecisionAction;
 use App\Data\InventoryPage;
 use App\Data\Manifest;
 use App\Data\NavItem;
@@ -20,6 +21,7 @@ use App\Data\PlatformRenderStatus;
 use App\Data\PuckOutput;
 use App\Data\ResolvedNavItem;
 use App\Data\ResolvedNavStatus;
+use App\Data\SiteImport\Diagnostic;
 use App\Data\SitePlan;
 use App\Services\Product\ProductClient;
 use Spatie\LaravelData\DataCollection;
@@ -132,12 +134,51 @@ final class DraftLanding
             // run (or ran and found nothing to scrub); populated when
             // blocks were removed post-assembly. See ScrubIssue docblock.
             scrub_issues_by_slug: $assembly->scrub_issues_by_slug,
-            // PlatformBlockRenderer's info diagnostics — reserved-route
-            // entity-page skips (contract "Entity detail pages" rule).
-            // ContractPayloadEmitter surfaces these in the envelope
-            // diagnostics list.
-            platform_diagnostics: $platform->diagnostics,
+            // Info-severity diagnostics from downstream stages that
+            // don't fit ConversionFailure semantics. Union of:
+            //   - PlatformBlockRenderer's reserved-route entity-page
+            //     skips (contract "Entity detail pages" rule)
+            //   - PLAN's paginated-duplicate parks (contract "Paginated
+            //     duplicates. Map the first page only") — surfaced from
+            //     the SitePlan ledger's Park entries whose reason is
+            //     prefixed `paginated_duplicate:`
+            // ContractPayloadEmitter surfaces these into
+            // envelope.diagnostics[].
+            platform_diagnostics: $this->mergePlatformAndPlanDiagnostics($plan, $platform),
         );
+    }
+
+    /**
+     * Walk the SitePlan ledger for Park entries with the
+     * `paginated_duplicate:` reason prefix and emit an info diagnostic
+     * per drop. Contract Part II "Pages you should not create" rule.
+     * Union with the PlatformRenderResult's own diagnostics.
+     *
+     * @return DataCollection<int, Diagnostic>
+     */
+    private function mergePlatformAndPlanDiagnostics(SitePlan $plan, PlatformRenderResult $platform): DataCollection
+    {
+        /** @var array<int, Diagnostic> $diagnostics */
+        $diagnostics = $platform->diagnostics->items();
+
+        foreach ($plan->ledger->entries as $entry) {
+            if ($entry->action !== DecisionAction::Park) {
+                continue;
+            }
+            if (! str_starts_with($entry->reason, 'paginated_duplicate:')) {
+                continue;
+            }
+            $diagnostics[] = new Diagnostic(
+                severity: 'info',
+                code: 'page_dropped_paginated_duplicate',
+                message: sprintf(
+                    'Page dropped as paginated duplicate: %s. Contract Part II "Pages you should not create": map the first (canonical, un-paginated) page only.',
+                    $entry->target,
+                ),
+            );
+        }
+
+        return new DataCollection(Diagnostic::class, $diagnostics);
     }
 
     /**
