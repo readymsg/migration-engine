@@ -875,14 +875,31 @@ final class PuckToContractMapper
 
     private function mapPlatformContacts(): MappedContent
     {
+        // CONTENT-BLOCK vs WIDGET lesson (learned the hard way — first
+        // cjfl live run + contract prose audit): TeamMembers is a
+        // CONTENT block for STATIC scraped people (`items[]` populated).
+        // Executives is a WIDGET for LIVE TeamLinkt board data (sparse,
+        // runtime-resolved). PlatformContacts is a PlatformDynamic entry
+        // — the whole platform-dynamic path is for LIVE-DATA widgets.
+        // Contract's mapping table (widgets, line 818): "Board of
+        // directors (live) → Executives. All orgs." Contract's advisory
+        // table (line 778) explicitly warns: "Not Executives — that
+        // pulls live TeamLinkt data" as the CAVEAT for TeamMembers.
+        //
+        // A sparse TeamMembers renders an empty container (weird — a
+        // people directory with no people). A sparse Executives is
+        // exactly what the widget-place-but-never-populate rule
+        // expects. If a future refactor is tempted to swap this back,
+        // read Contract Part III "Blocks to place but never populate —
+        // the TeamLinkt Widgets" first.
         return new MappedContent(
-            blocks: [new Block(type: 'TeamMembers', props: [
-                'id' => $this->id('team-members', 'platform'),
+            blocks: [new Block(type: 'Executives', props: [
+                'id' => $this->id('executives', 'platform'),
             ])],
             diagnostics: [new Diagnostic(
                 severity: 'info',
-                code: 'platform_block_mapped_to_team_members',
-                message: 'PlatformContacts (contact directory) → TeamMembers block (sparse; runtime component fills people cards from admin roster).',
+                code: 'platform_block_mapped_to_executives',
+                message: 'PlatformContacts (contact/board widget) → Executives block (sparse; runtime component fills live board data from TeamLinkt).',
             )],
         );
     }

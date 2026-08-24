@@ -132,17 +132,22 @@ final class PlatformBlockMappingTest extends TestCase
     }
 
     #[Test]
-    public function platform_contacts_maps_to_team_members_sparse(): void
+    public function platform_contacts_maps_to_executives_sparse(): void
     {
+        // Follow-up 1 (post-cjfl audit): PlatformContacts is a
+        // PlatformDynamic entry — the LIVE-DATA path — so its target
+        // is a WIDGET (Executives), not the STATIC-content
+        // TeamMembers block. Contract widget table line 818:
+        // "Board of directors (live) → Executives (all)".
         $out = $this->mapper->mapContent(
             [['type' => 'PlatformContacts', 'props' => ['org_id' => 'ngin-5765']]],
             $this->assetContext(),
             new AssetLedger,
         );
-        $this->assertSame('TeamMembers', $out->blocks[0]->type);
+        $this->assertSame('Executives', $out->blocks[0]->type);
         $this->assertSame(['id'], array_keys($out->blocks[0]->props));
         $this->assertContains(
-            'platform_block_mapped_to_team_members',
+            'platform_block_mapped_to_executives',
             array_map(fn ($d) => $d->code, $out->diagnostics),
         );
         $this->assertValidates($out->blocks);
