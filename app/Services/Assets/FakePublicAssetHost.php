@@ -45,6 +45,7 @@ final class FakePublicAssetHost implements PublicAssetHost
             width: $w,
             height: $h,
             mimeType: $mimeType,
+            filename: $filename,
         );
     }
 

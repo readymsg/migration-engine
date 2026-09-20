@@ -174,22 +174,71 @@ final class AssetLedgerTest extends TestCase
         $this->assertSame('hero', $asset->usage);
     }
 
-    // ─── SVG — v2 §9 (deferred; see CLAUDE.md Known Gaps) ────────────────
+    // ─── SVG rasterization — v2 §9 (slice B) ─────────────────────────────
 
     #[Test]
-    public function svg_is_skipped_with_rasterizer_missing_diagnostic(): void
+    public function svg_is_rasterised_to_png_and_accepted_when_binary_present(): void
     {
-        // v2 §9 rejects raw SVG as a stored-XSS vector. Rasterisation
-        // is deferred to a follow-up slice — for now, SVG is skipped
-        // with a visible `svg_rasterizer_missing` sidecar diagnostic
-        // rather than silently dropped or emitted as-is.
+        // Contract v2 §9: raw SVG rejected as stored-XSS vector, but
+        // the AssetPublisher rasterises to PNG ≥ 512 px long edge
+        // BEFORE handing to the host. SyntheticAssetPublisher
+        // exercises the real librsvg path — this test is skipped only
+        // when the binary isn't available (CI without librsvg).
+        $binary = (string) config('services.svg_rasterizer.path', '/opt/homebrew/bin/rsvg-convert');
+        if (! is_file($binary) || ! is_executable($binary)) {
+            $this->markTestSkipped("librsvg's rsvg-convert not found at {$binary} — SVG rasterization path can't be tested without it.");
+        }
+
         $ledger = new AssetLedger;
         $r = $ledger->register('https://x.com/logo.svg', 'logo.svg', 'image/svg+xml', usage: 'logo');
+        $this->assertFalse($r->rejected, 'SVG should be rasterised, not rejected');
+        $this->assertSame(1, $ledger->count());
+
+        /** @var Asset $asset */
+        $asset = $ledger->all()->items()[0];
+        $this->assertSame('image/png', $asset->mimeType, 'SVG bytes should be rasterised to PNG');
+        $this->assertSame('logo.png', $asset->filename, 'filename should reflect the rasterised PNG');
+        $this->assertIsInt($asset->width);
+        $this->assertIsInt($asset->height);
+        $this->assertTrue(
+            $asset->width >= 512 || $asset->height >= 512,
+            'rasterised PNG long edge must be >= 512 px per v2 §9'
+        );
+        // No skip diagnostic — SVG succeeded.
+        $this->assertCount(0, $ledger->skipDiagnostics());
+    }
+
+    #[Test]
+    public function svg_falls_back_to_unavailable_diagnostic_when_binary_missing(): void
+    {
+        // When the binary IS missing on a deploy (Forge without
+        // librsvg2-bin installed), the publisher catches
+        // SvgRasterizerUnavailable and skips with a distinct
+        // `svg_rasterizer_unavailable` diagnostic — visible in sidecar,
+        // never a hard fail. Distinct from `svg_rasterizer_missing`
+        // (infra-not-wired) so a reviewer can tell an infra problem
+        // from a wiring problem.
+        $cacheDir = sys_get_temp_dir().'/ml-test-svg-'.uniqid();
+        @mkdir($cacheDir, 0775, true);
+        $sourceUrl = 'https://x.com/logo.svg';
+        @file_put_contents(
+            $cacheDir.'/'.sha1($sourceUrl),
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect fill="#000" width="10" height="10"/></svg>'
+        );
+        $ledger = new AssetLedger(
+            new \App\Services\Assets\AssetPublisher(
+                host: new \App\Services\Assets\FakePublicAssetHost,
+                cacheDir: $cacheDir,
+                svgRasterizer: new \App\Services\Assets\SvgRasterizer('/does/not/exist/rsvg-convert'),
+            )
+        );
+
+        $r = $ledger->register($sourceUrl, 'logo.svg', 'image/svg+xml');
         $this->assertTrue($r->rejected);
-        $this->assertStringContainsString('svg_rasterizer_missing', (string) $r->reason);
+        $this->assertStringContainsString('svg_rasterizer_unavailable', (string) $r->reason);
         $diagnostics = $ledger->skipDiagnostics();
         $this->assertCount(1, $diagnostics);
-        $this->assertSame('svg_rasterizer_missing', $diagnostics[0]->code);
+        $this->assertSame('svg_rasterizer_unavailable', $diagnostics[0]->code);
     }
 
     // ─── other rejection / skip cases — each becomes a sidecar diagnostic ─
@@ -226,7 +275,9 @@ final class AssetLedgerTest extends TestCase
     #[Test]
     public function token_for_returns_null_on_skip(): void
     {
-        // The property we're pinning: skipped ⇒ tokenFor returns null.
+        // Skip must come from an ACTUAL skip case (empty sourceUrl —
+        // not SVG, which now succeeds through rasterization). The
+        // property we're pinning: skipped ⇒ tokenFor returns null.
         $ledger = new AssetLedger;
         $token = $ledger->tokenFor('', 'x.png', 'image/png');
         $this->assertNull($token, 'token must be null when the asset is skipped');

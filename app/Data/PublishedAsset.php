@@ -21,6 +21,11 @@ use Spatie\LaravelData\Data;
 // image (PDFs, or an unreadable image). The host does NOT reject on
 // missing dimensions — it just declares them absent. AssetLedger
 // makes the final decision on whether to emit an assets[] entry.
+//
+// `filename` is the user-visible name the publisher chose for these
+// bytes (may differ from the caller's input — e.g. SVG rasterization
+// rewrites `logo.svg` → `logo.png` so the declared name matches the
+// actual PNG bytes).
 final class PublishedAsset extends Data
 {
     public function __construct(
@@ -30,5 +35,6 @@ final class PublishedAsset extends Data
         public ?int $width,
         public ?int $height,
         public string $mimeType,
+        public string $filename = '',
     ) {}
 }

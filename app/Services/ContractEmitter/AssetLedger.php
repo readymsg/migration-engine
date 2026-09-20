@@ -99,11 +99,15 @@ final class AssetLedger
 
         $ref = $this->mintRef($sourceUrl, $usage);
         $this->refs[$ref] = true;
+        // Prefer the publisher-declared filename when the publisher
+        // rewrote it (e.g. SVG → PNG on rasterization). Falls back to
+        // the caller-supplied name.
+        $declaredFilename = $published->filename !== '' ? $published->filename : $filename;
 
         $this->bySource[$sourceUrl] = new Asset(
             ref: $ref,
             url: $published->url,
-            filename: $filename,
+            filename: $declaredFilename,
             mimeType: $published->mimeType,
             sourceUrl: $sourceUrl,
             sha256: $published->sha256,
@@ -195,6 +199,12 @@ final class AssetLedger
     {
         if (str_starts_with($reason, 'svg_rasterizer_missing')) {
             return 'svg_rasterizer_missing';
+        }
+        if (str_starts_with($reason, 'svg_rasterizer_unavailable')) {
+            return 'svg_rasterizer_unavailable';
+        }
+        if (str_starts_with($reason, 'svg_rasterization_failed')) {
+            return 'svg_rasterization_failed';
         }
         if (str_starts_with($reason, 'mime_not_accepted')) {
             return 'asset_mime_rejected';

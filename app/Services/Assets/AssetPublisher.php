@@ -6,6 +6,8 @@ namespace App\Services\Assets;
 
 use App\Contracts\PublicAssetHost;
 use App\Data\PublishedAsset;
+use App\Services\Assets\Exceptions\SvgRasterizationFailed;
+use App\Services\Assets\Exceptions\SvgRasterizerUnavailable;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
@@ -20,8 +22,12 @@ use Throwable;
 //      fixture emissions don't re-fetch the same CDN URL every run.
 //   2. Byte-sniff mimeType via finfo (v2 §9 verbatim: "verified
 //      against what the URL actually serves, not trusted").
-//   3. If SVG: skip with `svg_rasterizer_missing` (rasterization
-//      deferred to a follow-up slice — see CLAUDE.md Known Gaps).
+//   3. If SVG: rasterize to PNG ≥ 512 px long edge via SvgRasterizer
+//      (librsvg shell-out). PNG bytes then replace the SVG bytes and
+//      continue through the normal pipeline; filename gets `.svg` →
+//      `.png`. If the rasterizer binary is missing (Forge without
+//      librsvg), skip with `svg_rasterizer_missing`. If it fails on
+//      this specific SVG, skip with `svg_rasterization_failed:<msg>`.
 //   4. Measure width/height via getimagesizefromstring. Missing dims
 //      are legit (PDFs).
 //   5. Hand bytes to PublicAssetHost::put(), return PublishedAsset
@@ -40,10 +46,9 @@ class AssetPublisher
 {
     /**
      * Contract Part II "Accepted types" — the only mimes that
-     * survive as-is. SVG is skipped at ingest with
-     * `svg_rasterizer_missing` (v2 §9 rejects raw SVG as a
-     * stored-XSS vector; rasterization is deferred to a follow-up
-     * slice).
+     * survive as-is. SVG is handled UPSTREAM of this list via
+     * rasterization to PNG (v2 §9 still rejects raw SVG as a
+     * stored-XSS vector).
      *
      * @var array<int, string>
      */
@@ -54,6 +59,7 @@ class AssetPublisher
     public function __construct(
         protected readonly PublicAssetHost $host,
         protected readonly ?string $cacheDir = null,
+        protected readonly ?SvgRasterizer $svgRasterizer = null,
     ) {}
 
     /**
@@ -86,10 +92,26 @@ class AssetPublisher
             return PublishResult::skip("mime_sniff_failed for {$provenance}");
         }
         if ($mime === 'image/svg+xml') {
-            // v2 §9 rejects raw SVG as stored-XSS. Rasterization is
-            // deferred to a follow-up slice (see CLAUDE.md Known
-            // Gaps). Skip visibly so the reviewer sees the drop.
-            return PublishResult::skip("svg_rasterizer_missing for {$provenance}");
+            // v2 §9 rejects raw SVG as stored-XSS. Rasterize to PNG
+            // ≥ 512 px long edge via librsvg. Three distinct failure
+            // classes, each with its own sidecar code so a reviewer
+            // can tell infra-not-wired from infra-wired-but-broken
+            // from this-specific-SVG-is-malformed:
+            //   svg_rasterizer_missing      — no rasterizer injected
+            //   svg_rasterizer_unavailable  — binary not on PATH
+            //   svg_rasterization_failed    — rsvg-convert threw
+            if ($this->svgRasterizer === null) {
+                return PublishResult::skip("svg_rasterizer_missing for {$provenance}");
+            }
+            try {
+                $bytes = $this->svgRasterizer->rasterize($bytes);
+            } catch (SvgRasterizerUnavailable $e) {
+                return PublishResult::skip("svg_rasterizer_unavailable for {$provenance}: {$e->getMessage()}");
+            } catch (SvgRasterizationFailed $e) {
+                return PublishResult::skip("svg_rasterization_failed for {$provenance}: {$e->getMessage()}");
+            }
+            $mime = 'image/png';
+            $filename = self::svgFilenameToPng($filename);
         }
         if (! in_array($mime, self::ACCEPTED_MIMES, true)) {
             return PublishResult::skip("mime_not_accepted `{$mime}` for {$provenance}");
@@ -102,6 +124,24 @@ class AssetPublisher
         }
 
         return PublishResult::ok($published, $bytes);
+    }
+
+    /**
+     * `Remuda_Building_Supplies_Logo.svg` → `Remuda_Building_Supplies_Logo.png`.
+     * The URL's on-host name is content-addressed by sha256, but the
+     * declared `filename` in the Asset DTO is user-visible — keep it
+     * accurate to the rasterized bytes.
+     */
+    private static function svgFilenameToPng(string $filename): string
+    {
+        if ($filename === '') {
+            return 'rasterized.png';
+        }
+        if (preg_match('/\.svg$/i', $filename) === 1) {
+            return preg_replace('/\.svg$/i', '.png', $filename) ?? ($filename.'.png');
+        }
+
+        return $filename.'.png';
     }
 
     /**

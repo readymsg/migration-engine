@@ -35,6 +35,7 @@ If any of the three is skipped, the demo is broken in a way that isn't obvious f
 1. **Server** — new small droplet (2GB RAM sufficient for the ~$3 conversions we've measured). Ubuntu 22.04+, Nginx, PHP 8.4. Forge provisions this in a few clicks.
 2. **Redis** — Forge's install-Redis toggle. Then the `noeviction` fix in item 1 above.
 3. **PHP extensions** — `phpredis` (Forge ships it), `intl`, `mbstring`, `curl`, `zip`. Standard Laravel prerequisites.
+4. **librsvg** — needed for SVG asset rasterization (v2 §9). `sudo apt-get install librsvg2-bin` on Ubuntu; then `SVG_RASTERIZER_PATH=/usr/bin/rsvg-convert` in the site env. Missing binary is a soft-fail (SVG assets skipped with `svg_rasterizer_missing` sidecar diagnostic; the app doesn't crash), but the langdondiamonds sponsor logo won't survive to preview without it.
 4. **Site** — create a new site pointing at the target subdomain (e.g., `demo.migration-engine.example`). Point DNS at Forge's IP.
 5. **Repository** — connect the Forge site to this repo. Set the default branch (main).
 6. **SSL** — Forge's one-click Let's Encrypt.
@@ -77,6 +78,10 @@ DEMO_CONCURRENT_CONVERSIONS=1
 # other than "1" is treated as false so leaving it blank is safe, but
 # be explicit.
 BLOCKFILL_FIXTURE_REPLAY=
+
+# librsvg path for SVG rasterization. `/opt/homebrew/bin/rsvg-convert`
+# on macOS Homebrew (dev), `/usr/bin/rsvg-convert` on Ubuntu/Forge.
+SVG_RASTERIZER_PATH=/usr/bin/rsvg-convert
 ```
 
 The **DEMO_TOKEN** is client-visible (embedded in landing HTML). Not a real secret. Cost is bounded by DEMO_URL_ALLOWLIST + DEMO_DAILY_BUDGET_USD, not by token secrecy. If the token leaks (assume it will), the worst an attacker can do is trigger conversions of ALLOWLISTED URLs up to the daily budget, then get 429s until midnight. Bounded to $30/day.

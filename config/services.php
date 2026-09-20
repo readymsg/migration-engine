@@ -73,6 +73,16 @@ return [
         'fixture_replay' => env('BLOCKFILL_FIXTURE_REPLAY') === '1',
     ],
 
+    // v2 §9 SVG rasterization — librsvg's `rsvg-convert` binary path.
+    // macOS Homebrew defaults to `/opt/homebrew/bin/rsvg-convert`;
+    // Forge/Ubuntu is typically `/usr/bin/rsvg-convert` (via
+    // `apt-get install librsvg2-bin`). Missing/non-executable binary
+    // → asset skipped with `svg_rasterizer_missing` diagnostic (safe
+    // fallback; the deploy is broken but the app keeps running).
+    'svg_rasterizer' => [
+        'path' => env('SVG_RASTERIZER_PATH', '/opt/homebrew/bin/rsvg-convert'),
+    ],
+
     // Trigger-endpoint demo config. `demo_token` is the shared secret
     // callers must send as `X-Demo-Token`. Unset → trigger endpoint
     // returns 503 (prevents accidental prod exposure).

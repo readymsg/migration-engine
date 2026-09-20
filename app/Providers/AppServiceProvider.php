@@ -172,10 +172,16 @@ class AppServiceProvider extends ServiceProvider
         // the interface, so swapping in the real impl is a one-line
         // container binding change with no call-site churn.
         $this->app->singleton(PublicAssetHost::class, FakePublicAssetHost::class);
+        $this->app->singleton(\App\Services\Assets\SvgRasterizer::class, function (Application $app): \App\Services\Assets\SvgRasterizer {
+            return new \App\Services\Assets\SvgRasterizer(
+                binaryPath: (string) config('services.svg_rasterizer.path', ''),
+            );
+        });
         $this->app->singleton(AssetPublisher::class, function (Application $app): AssetPublisher {
             return new AssetPublisher(
                 host: $app->make(PublicAssetHost::class),
                 cacheDir: null,
+                svgRasterizer: $app->make(\App\Services\Assets\SvgRasterizer::class),
             );
         });
 

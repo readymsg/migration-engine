@@ -6,6 +6,8 @@ namespace App\Services\Assets;
 
 use App\Contracts\PublicAssetHost;
 use App\Data\PublishedAsset;
+use App\Services\Assets\Exceptions\SvgRasterizationFailed;
+use App\Services\Assets\Exceptions\SvgRasterizerUnavailable;
 use Throwable;
 
 // Network-free publisher used as the default for unit tests. Trusts
@@ -16,9 +18,11 @@ use Throwable;
 // FakePublicAssetHost still produces a valid URL + sha256 + byteSize
 // + measurable width/height (for the tiny PNG we generate).
 //
-// SVG is skipped at publish time with `svg_rasterizer_missing` —
-// rasterization is deferred to a follow-up slice (see CLAUDE.md
-// Known Gaps).
+// SVG is DIFFERENT: unit tests actually want to exercise the real
+// librsvg rasterization path (see SvgRasterizationTest). So SVG bytes
+// synthesised here are a real two-colour SVG string and the rasterizer
+// runs against them. When librsvg is missing (CI without the binary),
+// the SVG path degrades to `svg_rasterizer_missing` — same as prod.
 //
 // The production fixture-emission path uses `AssetPublisher` (the
 // fetching variant) instead — the container binds `AssetPublisher`
@@ -27,14 +31,14 @@ use Throwable;
 // constructed WITHOUT an explicit publisher — i.e., in tests.
 final class SyntheticAssetPublisher extends AssetPublisher
 {
-    public function __construct(PublicAssetHost $host)
+    public function __construct(PublicAssetHost $host, ?SvgRasterizer $svgRasterizer = null)
     {
-        parent::__construct($host, null);
+        parent::__construct($host, null, $svgRasterizer);
     }
 
     public static function default(): self
     {
-        return new self(new FakePublicAssetHost);
+        return new self(new FakePublicAssetHost, new SvgRasterizer);
     }
 
     public function publishFromUrl(string $sourceUrl, string $filename): PublishResult
@@ -46,7 +50,9 @@ final class SyntheticAssetPublisher extends AssetPublisher
             return PublishResult::skip("synthetic_mime_unknown for {$filename}");
         }
         if ($mime === 'image/svg+xml') {
-            return PublishResult::skip("svg_rasterizer_missing for {$sourceUrl}");
+            // Route real synthetic SVG bytes through the rasterizer
+            // so the test path exercises what production does.
+            return $this->publishBytes(self::syntheticBytes('image/svg+xml'), $filename, $sourceUrl);
         }
         $bytes = self::syntheticBytes($mime);
 
@@ -90,6 +96,9 @@ final class SyntheticAssetPublisher extends AssetPublisher
             'image/gif' => base64_decode('R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='),
             // Minimal single-page PDF (invalid rendering but valid mime signature).
             'application/pdf' => "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\nxref\n0 1\n0000000000 65535 f\ntrailer<</Root 1 0 R>>\n%%EOF",
+            // Two-colour synthetic logo (red left 60%, grey right 40%).
+            // Real SVG bytes so the rasterizer exercises the whole path.
+            'image/svg+xml' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#AE292E" width="60" height="100"/><rect fill="#5C5151" x="60" width="40" height="100"/></svg>',
             default => str_repeat("\0", 8),
         };
     }
