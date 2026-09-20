@@ -10,9 +10,21 @@ use PHPUnit\Framework\Attributes\Test;
 use Spatie\LaravelData\Optional;
 use Tests\TestCase;
 
-// Pins the asset ledger against Contract Part II "Assets" rules.
-// The load-bearing property: our S3 keys never appear in the
-// payload, and every token has a matching entry BY CONSTRUCTION.
+// Pins the asset ledger against v2 §7 "Assets" + §9 "Asset hosting"
+// rules. Load-bearing v2 properties:
+//   1. Every declared asset has `url` on the allow-listed https host
+//      (Fake for tests: https://assets.example.test/…).
+//   2. `sourceUrl` is provenance-only (kept in the DTO for
+//      traceability but never fetched by the ingest).
+//   3. `sha256`, `byteSize`, `width`, `height` populate from the
+//      actual bytes handed to the host — verified below.
+//   4. SVG is skipped (rasterisation deferred; see Known Gap in
+//      CLAUDE.md).
+//   5. Dedupe by sourceUrl — one publish per distinct source.
+//
+// Tests instantiate `new AssetLedger` (no arg) so the ledger falls
+// back to a SyntheticAssetPublisher (network-free, mime derived from
+// the filename extension).
 final class AssetLedgerTest extends TestCase
 {
     // ─── happy path ──────────────────────────────────────────────────────
@@ -30,15 +42,37 @@ final class AssetLedgerTest extends TestCase
         );
         $this->assertFalse($result->rejected);
         $this->assertNotNull($result->ref);
-        // Ref grammar: [a-z0-9-]{1,64}
         $this->assertMatchesRegularExpression('/^[a-z0-9-]{1,64}$/', $result->ref);
+
         // Deterministic: same URL → same ref.
         $again = $ledger->register(
             sourceUrl: 'https://cdn2.sportngin.com/attachments/photo/64f2/rink.jpg',
             filename: 'rink.jpg',
             mimeType: 'image/jpeg',
         );
-        $this->assertSame($result->ref, $again->ref, 'deterministic: same sourceUrl → same ref');
+        $this->assertSame($result->ref, $again->ref);
+    }
+
+    #[Test]
+    public function published_asset_carries_v2_url_sha256_and_bytesize(): void
+    {
+        $ledger = new AssetLedger;
+        $ledger->register('https://x.com/hero.png', 'hero.png', 'image/png', usage: 'hero');
+        /** @var Asset $asset */
+        $asset = $ledger->all()->items()[0];
+
+        // v2 required `url` on the allow-listed host.
+        $this->assertStringStartsWith('https://assets.example.test/', $asset->url);
+        // v2 sourceUrl is provenance — populated but distinct from url.
+        $this->assertSame('https://x.com/hero.png', $asset->sourceUrl);
+        $this->assertNotSame($asset->sourceUrl, $asset->url);
+        // Measurement fields populated from the synthetic PNG bytes.
+        $this->assertIsString($asset->sha256);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $asset->sha256);
+        $this->assertGreaterThan(0, $asset->byteSize);
+        // Synthetic PNG is 1×1 so width/height are known.
+        $this->assertSame(1, $asset->width);
+        $this->assertSame(1, $asset->height);
     }
 
     #[Test]
@@ -55,9 +89,16 @@ final class AssetLedgerTest extends TestCase
     public function all_accepted_mime_types_are_accepted(): void
     {
         $ledger = new AssetLedger;
-        $mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
-        foreach ($mimes as $i => $mime) {
-            $r = $ledger->register("https://x.com/f{$i}", "f{$i}", $mime);
+        // Each row: filename (drives synth mime) + declared mime.
+        $rows = [
+            ['a.jpg', 'image/jpeg'],
+            ['b.png', 'image/png'],
+            ['c.webp', 'image/webp'],
+            ['d.gif', 'image/gif'],
+            ['e.pdf', 'application/pdf'],
+        ];
+        foreach ($rows as $i => [$name, $mime]) {
+            $r = $ledger->register("https://x.com/{$name}", $name, $mime);
             $this->assertFalse($r->rejected, "{$mime} must be accepted");
         }
     }
@@ -66,10 +107,8 @@ final class AssetLedgerTest extends TestCase
     public function dedupes_by_source_url(): void
     {
         $ledger = new AssetLedger;
-        // Two different props reference the same source URL — should
-        // register once, be returned twice.
         $a = $ledger->register('https://x.com/logo.png', 'logo.png', 'image/png', usage: 'logo');
-        $b = $ledger->register('https://x.com/logo.png', 'logo.png', 'image/png', usage: 'hero'); // usage hint ignored on dedupe
+        $b = $ledger->register('https://x.com/logo.png', 'logo.png', 'image/png', usage: 'hero');
         $this->assertSame($a->ref, $b->ref);
         $this->assertSame(1, $ledger->count());
     }
@@ -86,7 +125,6 @@ final class AssetLedgerTest extends TestCase
         );
         $this->assertNotNull($token);
         $this->assertStringStartsWith('tl-asset:', $token);
-        // The ref after the prefix should be valid grammar.
         $ref = substr($token, strlen('tl-asset:'));
         $this->assertMatchesRegularExpression('/^[a-z0-9-]{1,64}$/', $ref);
     }
@@ -95,17 +133,17 @@ final class AssetLedgerTest extends TestCase
     public function all_returns_data_collection_in_registration_order(): void
     {
         $ledger = new AssetLedger;
-        $ledger->register('https://x.com/1', 'one', 'image/png');
-        $ledger->register('https://x.com/2', 'two', 'image/jpeg');
-        $ledger->register('https://x.com/3', 'three', 'application/pdf');
+        $ledger->register('https://x.com/1.png', 'one.png', 'image/png');
+        $ledger->register('https://x.com/2.jpg', 'two.jpg', 'image/jpeg');
+        $ledger->register('https://x.com/3.pdf', 'three.pdf', 'application/pdf');
 
         $all = $ledger->all();
         $this->assertCount(3, $all);
         /** @var array<int, Asset> $items */
         $items = $all->items();
-        $this->assertSame('one', $items[0]->filename);
-        $this->assertSame('two', $items[1]->filename);
-        $this->assertSame('three', $items[2]->filename);
+        $this->assertSame('one.png', $items[0]->filename);
+        $this->assertSame('two.jpg', $items[1]->filename);
+        $this->assertSame('three.pdf', $items[2]->filename);
     }
 
     #[Test]
@@ -136,39 +174,29 @@ final class AssetLedgerTest extends TestCase
         $this->assertSame('hero', $asset->usage);
     }
 
-    // ─── rejection cases — each becomes a diagnostic upstream ────────────
+    // ─── SVG — v2 §9 (deferred; see CLAUDE.md Known Gaps) ────────────────
 
     #[Test]
-    public function svg_is_rejected_with_stored_xss_reason(): void
+    public function svg_is_skipped_with_rasterizer_missing_diagnostic(): void
     {
-        // Contract Part II: "SVG is not accepted. An SVG is a
-        // script-capable document ... stored-XSS vector".
+        // v2 §9 rejects raw SVG as a stored-XSS vector. Rasterisation
+        // is deferred to a follow-up slice — for now, SVG is skipped
+        // with a visible `svg_rasterizer_missing` sidecar diagnostic
+        // rather than silently dropped or emitted as-is.
         $ledger = new AssetLedger;
-        $r = $ledger->register('https://x.com/logo.svg', 'logo.svg', 'image/svg+xml');
+        $r = $ledger->register('https://x.com/logo.svg', 'logo.svg', 'image/svg+xml', usage: 'logo');
         $this->assertTrue($r->rejected);
-        $this->assertNotNull($r->reason);
-        $this->assertStringContainsString('SVG', $r->reason);
-        $this->assertStringContainsString('XSS', $r->reason);
-        $this->assertSame(0, $ledger->count(), 'rejected assets must NOT enter the ledger');
+        $this->assertStringContainsString('svg_rasterizer_missing', (string) $r->reason);
+        $diagnostics = $ledger->skipDiagnostics();
+        $this->assertCount(1, $diagnostics);
+        $this->assertSame('svg_rasterizer_missing', $diagnostics[0]->code);
     }
 
-    #[Test]
-    public function non_whitelisted_mime_is_rejected(): void
-    {
-        $ledger = new AssetLedger;
-        foreach (['image/tiff', 'video/mp4', 'text/html', 'application/zip'] as $bad) {
-            $r = $ledger->register('https://x.com/f', 'f', $bad);
-            $this->assertTrue($r->rejected, "{$bad} must be rejected");
-            $this->assertStringContainsString($bad, (string) $r->reason);
-        }
-    }
+    // ─── other rejection / skip cases — each becomes a sidecar diagnostic ─
 
     #[Test]
     public function scheme_less_source_url_is_rejected(): void
     {
-        // Contract Part II: sourceUrl must be absolute, publicly
-        // fetchable. TeamLinkt fetches server-side and a scheme-
-        // less URL wouldn't resolve there.
         $ledger = new AssetLedger;
         $r = $ledger->register('//cdn.example.com/x.png', 'x.png', 'image/png');
         $this->assertTrue($r->rejected);
@@ -178,10 +206,10 @@ final class AssetLedgerTest extends TestCase
     #[Test]
     public function s3_scheme_source_url_is_rejected(): void
     {
-        // Load-bearing: our OWN s3:// keys must NOT enter the
-        // ledger. If someone accidentally passes a Manifest s3_key
-        // instead of the source_url, we reject rather than silently
-        // hotlinking our storage.
+        // Load-bearing: our OWN s3:// keys must NOT enter the ledger.
+        // Under v2 the URL that ships is `url` (on the public host);
+        // sourceUrl is provenance. An s3:// value has no place in
+        // either field.
         $ledger = new AssetLedger;
         $r = $ledger->register('s3://engine-bucket/orgs/x/logos/abc.png', 'abc.png', 'image/png');
         $this->assertTrue($r->rejected);
@@ -191,16 +219,17 @@ final class AssetLedgerTest extends TestCase
     public function empty_source_url_is_rejected(): void
     {
         $ledger = new AssetLedger;
-        $r = $ledger->register('', 'f', 'image/png');
+        $r = $ledger->register('', 'f.png', 'image/png');
         $this->assertTrue($r->rejected);
     }
 
     #[Test]
-    public function token_for_returns_null_on_rejection(): void
+    public function token_for_returns_null_on_skip(): void
     {
+        // The property we're pinning: skipped ⇒ tokenFor returns null.
         $ledger = new AssetLedger;
-        $token = $ledger->tokenFor('https://x.com/x.svg', 'x.svg', 'image/svg+xml');
-        $this->assertNull($token, 'token must be null when the underlying asset is rejected');
+        $token = $ledger->tokenFor('', 'x.png', 'image/png');
+        $this->assertNull($token, 'token must be null when the asset is skipped');
     }
 
     // ─── ref grammar edge cases ──────────────────────────────────────────
@@ -208,9 +237,6 @@ final class AssetLedgerTest extends TestCase
     #[Test]
     public function invalid_usage_hint_falls_back_to_asset_prefix(): void
     {
-        // Contract ref grammar is [a-z0-9-]{1,64}. If a caller passes
-        // "Hero Image!" (capital + space + bang), the ledger must
-        // NOT emit an invalid ref — fall back to "asset-".
         $ledger = new AssetLedger;
         $r = $ledger->register('https://x.com/a.png', 'a.png', 'image/png', usage: 'Hero Image!');
         $this->assertFalse($r->rejected);

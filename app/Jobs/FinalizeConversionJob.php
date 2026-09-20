@@ -244,6 +244,12 @@ final class FinalizeConversionJob implements ShouldQueue
             $emitResult = $emitter->emit($conversion, $orgType);
             // Persist regardless of validation state.
             $envelopeStore->put($this->conversion_id, $emitResult->envelope);
+            // v2: diagnostics moved out of the envelope onto a
+            // per-conversion sidecar. Persist alongside the envelope
+            // in the sidecar store; the HTTP-endpoint story for
+            // serving it is deferred (Scott question).
+            app(\App\Services\Conversion\DiagnosticsSidecarStore::class)
+                ->put($this->conversion_id, $emitResult->sidecar);
 
             // Surface validation errors as ConversionFailures so
             // the /api/conversions/{id} response body carries them
@@ -263,7 +269,8 @@ final class FinalizeConversionJob implements ShouldQueue
                 'conversion_id' => $this->conversion_id,
                 'pages' => $emitResult->envelope->pages->count(),
                 'assets' => $emitResult->envelope->assets->count(),
-                'diagnostics' => $emitResult->envelope->diagnostics->count(),
+                'sidecar_diagnostics' => $emitResult->sidecar->diagnostics->count(),
+                'schema_sha256' => $emitResult->sidecar->schema_sha256,
                 'validation_errors' => count($emitResult->errors),
                 'validation_warnings' => count($emitResult->warnings),
             ]);

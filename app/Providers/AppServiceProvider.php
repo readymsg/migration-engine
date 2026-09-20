@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\PublicAssetHost;
+use App\Services\Assets\AssetPublisher;
+use App\Services\Assets\FakePublicAssetHost;
 use App\Services\ContractEmitter\BlockDeltaAuditor;
 use App\Services\ContractEmitter\CacheContractEnvelopeStore;
 use App\Services\ContractEmitter\ContractEnvelopeStore;
 use App\Services\ContractEmitter\ContractPayloadEmitter;
+use App\Services\ContractEmitter\ContractPayloadValidator;
 use App\Services\ContractEmitter\ContractSchema;
 use App\Services\ContractEmitter\ContractSchemaValidator;
 use App\Services\ContractEmitter\DiagnosticsCollector;
@@ -19,11 +23,13 @@ use App\Services\ContractEmitter\SiteSettingsEmitter;
 use App\Services\Conversion\CacheConversionContextStore;
 use App\Services\Conversion\CacheConversionResultStore;
 use App\Services\Conversion\CacheConversionStatusStore;
+use App\Services\Conversion\CacheDiagnosticsSidecarStore;
 use App\Services\Conversion\ConversionContextStore;
 use App\Services\Conversion\ConversionCostGuard;
 use App\Services\Conversion\ConversionDedupeStore;
 use App\Services\Conversion\ConversionResultStore;
 use App\Services\Conversion\ConversionStatusStore;
+use App\Services\Conversion\DiagnosticsSidecarStore;
 use App\Services\Extract\AssetUploader;
 use App\Services\Extract\BrandExtractor;
 use App\Services\Extract\Extractor;
@@ -90,15 +96,17 @@ class AppServiceProvider extends ServiceProvider
                 disk: (string) config('services.scrapes.disk', 's3'),
             );
         });
-        // BrandExtractor's paletteExtractor param is nullable-with-null-default;
+        // BrandExtractor's constructor params are nullable-with-null-default;
         // Laravel's autowiring would otherwise pass null (default beats
-        // autowiring on ?Class = null params), leaving Brand.palette empty
-        // on every live conversion and silently falling back to the LLM's
-        // GlobalStyleBrief.palette guess. Bind explicitly so the measured
-        // palette runs on live INGEST too.
+        // autowiring on ?Class = null params). Explicit binding gives:
+        //   - the measured palette on every live INGEST run.
+        //   - the AssetPublisher path for palette bytes, closing the v2 §9
+        //     SSRF surface (no second live `Http::get()` against the
+        //     scraped CDN URL — one fetch, one artifact).
         $this->app->singleton(BrandExtractor::class, function (Application $app): BrandExtractor {
             return new BrandExtractor(
                 paletteExtractor: $app->make(LogoPaletteExtractor::class),
+                assetPublisher: $app->make(\App\Services\Assets\AssetPublisher::class),
             );
         });
         $this->app->singleton(Extractor::class, SportNginExtractor::class);
@@ -157,6 +165,20 @@ class AppServiceProvider extends ServiceProvider
         // through DI consistently.
         $this->app->singleton(DraftLanding::class);
 
+        // Contract v2 §9 "Asset hosting" — WE host every asset on one
+        // allow-listed https origin. FakePublicAssetHost is the default
+        // for fixtures + tests + local dev; a Spaces implementation
+        // is a later slice (bucket doesn't exist yet). Wiring is at
+        // the interface, so swapping in the real impl is a one-line
+        // container binding change with no call-site churn.
+        $this->app->singleton(PublicAssetHost::class, FakePublicAssetHost::class);
+        $this->app->singleton(AssetPublisher::class, function (Application $app): AssetPublisher {
+            return new AssetPublisher(
+                host: $app->make(PublicAssetHost::class),
+                cacheDir: null,
+            );
+        });
+
         // Contract-payload emitter — TeamLinkt Site Import Contract v1.
         // Singletons across the collaborator graph so the payload
         // build is a cheap function of ConversionResult.
@@ -164,6 +186,7 @@ class AppServiceProvider extends ServiceProvider
             return ContractSchema::load();
         });
         $this->app->singleton(ContractSchemaValidator::class);
+        $this->app->singleton(ContractPayloadValidator::class);
         $this->app->singleton(RichTextSanitizer::class);
         $this->app->singleton(PuckToContractMapper::class);
         $this->app->singleton(PageTreeBuilder::class);
@@ -188,6 +211,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             ConversionResultStore::class,
             CacheConversionResultStore::class,
+        );
+        $this->app->singleton(
+            DiagnosticsSidecarStore::class,
+            CacheDiagnosticsSidecarStore::class,
         );
         $this->app->singleton(ConversionDedupeStore::class);
         $this->app->singleton(ConversionCostGuard::class);

@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Services\ContractEmitter;
 
 use App\Data\ConversionResult;
+use App\Data\DiagnosticsSidecar;
 use App\Data\OrgType;
 use App\Data\SiteImport\Asset;
 use App\Data\SiteImport\Block;
-use App\Data\SiteImport\Diagnostic;
 use App\Data\SiteImport\Envelope;
 use App\Data\SiteImport\Page;
 use App\Data\SiteImport\PageData;
 use App\Data\SiteImport\Source;
 use App\Data\SiteImport\ValidationIssue;
+use App\Services\Assets\AssetPublisher;
 use Spatie\LaravelData\DataCollection;
 
 // Top-level orchestrator. Composes Slice 4 (AssetLedger) + Slice 5
@@ -47,9 +48,11 @@ final class ContractPayloadEmitter
         private readonly SiteSettingsEmitter $siteSettingsEmitter,
         private readonly DiagnosticsCollector $diagnosticsCollector,
         private readonly ContractSchemaValidator $blockValidator,
+        private readonly ContractPayloadValidator $payloadValidator,
         private readonly OrgTypeGate $orgTypeGate,
         private readonly BlockDeltaAuditor $blockDeltaAuditor,
         private readonly ContractSchema $schema,
+        private readonly AssetPublisher $assetPublisher,
     ) {}
 
     public function emit(
@@ -57,7 +60,7 @@ final class ContractPayloadEmitter
         OrgType $orgType,
         ?string $scrapedAt = null,
     ): EmitResult {
-        $ledger = new AssetLedger;
+        $ledger = new AssetLedger($this->assetPublisher);
         $assetContext = new AssetContext($result->asset_refs);
         $extraDiagnostics = [];
         // Mapper transformations report to this audit; the block-
@@ -156,6 +159,12 @@ final class ContractPayloadEmitter
 
         // Step 4: Assets read from the (populated) ledger.
         $assets = $ledger->all();
+        // v2: AssetPublisher failures (fetch, SVG-skip, mime-reject,
+        // etc.) come back as sidecar diagnostics — nothing dropped
+        // silently.
+        foreach ($ledger->skipDiagnostics() as $d) {
+            $extraDiagnostics[] = $d;
+        }
 
         // Step 5: Diagnostics — combine extras + result-derived.
         $diagnostics = $this->diagnosticsCollector->collect($result, $extraDiagnostics);
@@ -166,18 +175,18 @@ final class ContractPayloadEmitter
         // documented drop diagnostic). If reconciliation fails,
         // an error diagnostic surfaces the gap. See BlockDeltaAuditor
         // for the delta rules per diagnostic code.
+        $source = new Source(
+            url: $result->source_url,
+            scrapedAt: $scrapedAt ?? gmdate('Y-m-d\TH:i:s\Z'),
+            pagesDiscovered: count($result->page_map),
+            pagesMapped: count($filledPages),
+        );
         $preAuditEnvelope = new Envelope(
             schemaVersion: Envelope::SCHEMA_VERSION,
-            source: new Source(
-                url: $result->source_url,
-                scrapedAt: $scrapedAt ?? gmdate('Y-m-d\TH:i:s\Z'),
-                pagesDiscovered: count($result->page_map),
-                pagesMapped: count($filledPages),
-            ),
+            source: $source,
             site: $site,
             pages: new DataCollection(Page::class, $filledPages),
             assets: $assets,
-            diagnostics: new DataCollection(Diagnostic::class, $diagnostics),
         );
         $auditReport = $this->blockDeltaAuditor->audit(
             $result->page_map,
@@ -188,25 +197,41 @@ final class ContractPayloadEmitter
             $diagnostics[] = $d;
         }
 
-        // Build the envelope.
+        // Build the envelope (v2: no diagnostics field).
         $envelope = new Envelope(
             schemaVersion: Envelope::SCHEMA_VERSION,
-            source: new Source(
-                url: $result->source_url,
-                scrapedAt: $scrapedAt ?? gmdate('Y-m-d\TH:i:s\Z'),
-                pagesDiscovered: count($result->page_map),
-                pagesMapped: count($filledPages),
-            ),
+            source: $source,
             site: $site,
             pages: new DataCollection(Page::class, $filledPages),
             assets: $assets,
-            diagnostics: new DataCollection(Diagnostic::class, $diagnostics),
+        );
+
+        // Diagnostics sidecar — v2 moved this channel out of the
+        // envelope but did NOT drop the content. Every entry that
+        // used to appear in envelope.diagnostics is here, in the
+        // same order, plus schema-hash + source metadata for
+        // traceability. Persisted alongside the envelope by the
+        // caller (fixture emitter → companion file; live pipeline →
+        // DiagnosticsSidecarStore).
+        $sidecar = DiagnosticsSidecar::build(
+            diagnostics: $diagnostics,
+            schemaSha256: $this->schema->sha256(),
+            schemaVersion: Envelope::SCHEMA_VERSION,
+            sourceUrl: $result->source_url,
+            pagesDiscovered: count($result->page_map),
+            pagesMapped: count($filledPages),
+            generatedAt: $scrapedAt,
         );
 
         // Step 6: Validate.
         [$errors, $warnings] = $this->validateEnvelope($envelope);
 
-        return new EmitResult(envelope: $envelope, errors: $errors, warnings: $warnings);
+        return new EmitResult(
+            envelope: $envelope,
+            sidecar: $sidecar,
+            errors: $errors,
+            warnings: $warnings,
+        );
     }
 
     /**
@@ -336,6 +361,16 @@ final class ContractPayloadEmitter
         $errors = [];
         $warnings = [];
 
+        // Schema-level (JSON-Schema draft 2020-12) validation via opis
+        // — the load-bearing move. Runs on a JSON round-trip through
+        // EnvelopeJson so what opis sees is byte-identical to what
+        // ships. Catches: `additionalProperties: false` at the envelope,
+        // asset.url required + https-only pattern, data.root/data.zones
+        // `maxProperties: 0`, block enum types, slug patterns, etc.
+        foreach ($this->payloadValidator->validate($envelope) as $issue) {
+            $errors[] = $issue;
+        }
+
         // Contract Part VI self-check rules 1-6: per-block validation.
         // Recurses into slot props (Grid.column<N>, Tabs.tab<N>,
         // Section.content) so nested blocks are validated too.
@@ -435,28 +470,10 @@ final class ContractPayloadEmitter
             }
         }
 
-        // Rule 11: data.root and data.zones empty per page.
-        $pi = 0;
-        foreach ($envelope->pages as $page) {
-            /** @var Page $page */
-            if ($page->data->root !== []) {
-                $errors[] = new ValidationIssue(
-                    severity: 'error',
-                    code: 'page_root_not_empty',
-                    message: 'data.root must be {} on every page; site chrome is spliced by the builder at load time.',
-                    path: "pages[{$pi}].data.root",
-                );
-            }
-            if ($page->data->zones !== []) {
-                $errors[] = new ValidationIssue(
-                    severity: 'error',
-                    code: 'page_zones_not_empty',
-                    message: 'data.zones must be {} on every page; nesting goes in slot props, not zones.',
-                    path: "pages[{$pi}].data.zones",
-                );
-            }
-            $pi++;
-        }
+        // Rule 11: data.root and data.zones empty per page — enforced
+        // by opis via the schema's `maxProperties: 0` (see
+        // ContractPayloadValidator + EnvelopeJson which normalises
+        // empty root/zones to JSON `{}` at encode time).
 
         // parentId hygiene: every non-null parentId must name an
         // existing page id in the same payload.

@@ -48,6 +48,9 @@ final class ContractSchema
     private function __construct(
         private readonly array $raw,
         private readonly array $normalizedBlocks,
+        private readonly string $rawJson,
+        private readonly string $path,
+        private readonly string $sha256,
     ) {}
 
     public static function load(?string $path = null): self
@@ -67,7 +70,27 @@ final class ContractSchema
 
         $normalized = self::normalizeBlocks($decoded);
 
-        return new self($decoded, $normalized);
+        return new self($decoded, $normalized, $raw, $resolvedPath, hash('sha256', $raw));
+    }
+
+    /**
+     * Lowercase-hex sha256 of the schema bytes as loaded. Stamped into
+     * every fixture emission + the sidecar so a payload can be traced
+     * back to the exact schema it was produced against.
+     */
+    public function sha256(): string
+    {
+        return $this->sha256;
+    }
+
+    public function rawJson(): string
+    {
+        return $this->rawJson;
+    }
+
+    public function path(): string
+    {
+        return $this->path;
     }
 
     public function schemaVersion(): int

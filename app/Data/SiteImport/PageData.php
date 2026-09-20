@@ -17,16 +17,20 @@ use Spatie\LaravelData\DataCollection;
 //     slot props (Grid.column1, Tabs.tab1, Section.content,
 //     Table.rows[].cells[].content) instead.
 //
-// root + zones are typed `array` so they serialise as JSON `{}` when
-// empty. The validator enforces both are actually empty; the DTO
-// doesn't refuse a value structurally so tests can prove the guard
-// works.
+// root + zones are typed `array` on this DTO so PHP code can compare
+// `$page->data->root === []` cheaply. The critical fact: spatie's
+// default transformer would serialise typed-empty-array as JSON `[]`,
+// which the schema rejects (`$defs/pageData` demands `type: object,
+// maxProperties: 0`). To close that shipped-payload bug (present in
+// v1 too), all envelope encoding routes through `EnvelopeJson::encode()`,
+// which rewrites empty root/zones to `\stdClass` at the encode seam so
+// json_encode emits `{}`. See EnvelopeJson for the single-source rule.
 final class PageData extends Data
 {
     /**
      * @param  DataCollection<int, Block>  $content
-     * @param  array<string, mixed>  $root  MUST be `[]` in a valid payload; overwritten at load time regardless.
-     * @param  array<string, mixed>  $zones  MUST be `[]` in a valid payload; nesting lives in slot props, not zones.
+     * @param  array<string, mixed>  $root  MUST be `[]` here; EnvelopeJson wraps as JSON `{}` at encode time
+     * @param  array<string, mixed>  $zones  MUST be `[]` here; EnvelopeJson wraps as JSON `{}` at encode time
      */
     public function __construct(
         #[DataCollectionOf(Block::class)]

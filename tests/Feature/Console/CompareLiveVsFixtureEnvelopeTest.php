@@ -137,7 +137,6 @@ final class CompareLiveVsFixtureEnvelopeTest extends TestCase
             site: new SiteSettings(primaryColor: $primaryColor),
             pages: new DataCollection(Page::class, $pages),
             assets: new DataCollection(Asset::class, []),
-            diagnostics: new DataCollection(Diagnostic::class, []),
         );
     }
 

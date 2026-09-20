@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Extract;
 
 use App\Data\Brand;
+use App\Services\Assets\AssetPublisher;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -17,18 +18,20 @@ use Throwable;
 // The chosen logo is persisted to S3 via the uploader so Brand only ever
 // carries the s3 ref — never bytes, never a third-party URL.
 //
-// PALETTE MEASUREMENT: when the ladder finds a logo AND a LogoPaletteExtractor
-// is available (constructor arg), we do a second HTTP fetch of the same URL
-// to feed the extractor. This resolves the historical "TODO: extract from
-// theme.css / inline <style>" comment via the image path instead — a
-// deterministic quantised histogram of the actual logo pixels, which returns
-// the real club identity (e.g. tbirdhoops = red + black + white). Failure to
-// fetch or extract leaves `Brand.palette` empty (current behaviour) and the
-// preview falls through to the LLM-inferred palette.
+// PALETTE MEASUREMENT (v2 §9 SSRF-closure):
+// When an AssetPublisher is bound (constructor arg), the palette bytes
+// come from a SINGLE fetch through it — the same fetch used to publish
+// the rehosted asset. No second `Http::get()` against the live CDN.
+// This closes the SSRF-surface v2 §9 flagged:
+//   "Fetching scraped URLs directly means making server-side requests
+//    to arbitrary attacker-influenceable hosts — the whole SSRF surface".
+// When no AssetPublisher is bound (legacy path), the second fetch
+// remains for backward compat — see the fallback in `measurePalette()`.
 final class BrandExtractor
 {
     public function __construct(
         private readonly ?LogoPaletteExtractor $paletteExtractor = null,
+        private readonly ?AssetPublisher $assetPublisher = null,
     ) {}
 
     public function extract(string $homepageHtml, string $orgId, AssetUploader $uploader): Brand
@@ -62,7 +65,7 @@ final class BrandExtractor
                     // diagnostic instead of silently falling through
                     // to GlobalStyleBrief.palette.
                     palette: $palette,
-                    voice_hint: null, // TODO: nothing on the homepage is a reliable voice signal
+                    voice_hint: null,
                     palette_error: $paletteError,
                 );
             }
@@ -73,17 +76,19 @@ final class BrandExtractor
             logo_asset_ref: null,
             palette: [],
             voice_hint: null,
-            // No logo URL to measure — this is a legitimate absence,
-            // NOT a measurement failure. Leave palette_error null; the
-            // downstream diagnostic will surface as
-            // 'palette_primary_missing' (no source at all) rather than
-            // 'palette_primary_from_llm_guess' (measured failed).
         );
     }
 
     /**
      * Returns [palette, error]. `error` is null on success or when no
      * palette extractor is configured to run.
+     *
+     * Fetch path (v2 posture): when an AssetPublisher is bound, we
+     * fetch bytes through it (disk-cached, one fetch per unique URL)
+     * and feed those bytes to the palette extractor. No live
+     * `Http::get()` against the source URL. When no publisher is
+     * bound, the legacy path is kept for backward compat — but a
+     * Known Gap in CLAUDE.md tracks eliminating it.
      *
      * @return array{0: array<string, string>, 1: ?string}
      */
@@ -92,24 +97,50 @@ final class BrandExtractor
         if ($this->paletteExtractor === null) {
             return [[], 'no_palette_extractor'];
         }
-        try {
-            $response = Http::timeout(10)->get($logoUrl);
-        } catch (Throwable $e) {
-            return [[], 'logo_fetch_failed: '.$e->getMessage()];
+
+        $bytes = null;
+        if ($this->assetPublisher !== null) {
+            $filename = self::filenameFromUrl($logoUrl);
+            $publishResult = $this->assetPublisher->publishFromUrl($logoUrl, $filename);
+            if ($publishResult->isOk() && $publishResult->bytes !== null) {
+                $bytes = $publishResult->bytes;
+            } else {
+                return [[], 'logo_publish_failed: '.($publishResult->skip_reason ?? 'unknown')];
+            }
+        } else {
+            // Legacy fallback — the second HTTP fetch v2 §9 wants gone.
+            // Kept for INGEST paths not yet migrated to AssetPublisher.
+            try {
+                $response = Http::timeout(10)->get($logoUrl);
+            } catch (Throwable $e) {
+                return [[], 'logo_fetch_failed: '.$e->getMessage()];
+            }
+            if (! $response->successful()) {
+                return [[], 'logo_fetch_failed: HTTP '.$response->status()];
+            }
+            $bytes = (string) $response->body();
+            if ($bytes === '') {
+                return [[], 'logo_body_empty'];
+            }
         }
-        if (! $response->successful()) {
-            return [[], 'logo_fetch_failed: HTTP '.$response->status()];
-        }
-        $bytes = (string) $response->body();
-        if ($bytes === '') {
-            return [[], 'logo_body_empty'];
-        }
+
         $palette = $this->paletteExtractor->extract($bytes) ?? [];
         if ($palette === []) {
             return [[], 'palette_extraction_empty'];
         }
 
         return [$palette, null];
+    }
+
+    private static function filenameFromUrl(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        if (! is_string($path) || $path === '') {
+            return 'logo';
+        }
+        $name = basename($path);
+
+        return $name !== '' ? $name : 'logo';
     }
 
     private function firstAttachment(string $html, string $kind): ?string

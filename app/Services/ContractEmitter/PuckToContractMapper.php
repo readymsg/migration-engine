@@ -495,7 +495,12 @@ final class PuckToContractMapper
         }
         $alt = $this->sanitiser->plainText(is_string($props['alt'] ?? null) ? $props['alt'] : '');
         $caption = $this->sanitiser->plainText(is_string($props['caption'] ?? null) ? $props['caption'] : '');
-        $token = $this->tokenise($src, $ctx, $ledger, 'image', $alt !== '' ? $alt : null);
+        // Schema's usage enum is [logo, favicon, hero, gallery,
+        // document, other] — no `image`. A plain Image block's
+        // asset is either gallery-shaped (multiple around) or
+        // one-off content; `other` is the closest legal fit and
+        // matches the schema's own catch-all.
+        $token = $this->tokenise($src, $ctx, $ledger, 'other', $alt !== '' ? $alt : null);
         if ($token === null) {
             return new MappedContent(
                 blocks: [],

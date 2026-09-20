@@ -4,29 +4,31 @@ declare(strict_types=1);
 
 namespace App\Services\ContractEmitter;
 
+use App\Data\DiagnosticsSidecar;
 use App\Data\SiteImport\Envelope;
 use App\Data\SiteImport\ValidationIssue;
 
 // Return type of ContractPayloadEmitter::emit(). Carries the built
-// envelope PLUS the validation verdict — envelope is always
+// envelope PLUS the validation verdict PLUS the diagnostics sidecar
+// (v2 moved diagnostics out of the envelope — the channel didn't
+// disappear, it moved to its own DTO). The envelope is always
 // produced (a partial payload is more useful for iteration than a
 // hard error), but callers can refuse to ship one that has errors.
 //
 // Two distinct issue channels are kept separate on purpose:
 //
-//   $errors + $warnings — ContractSchemaValidator's verdict about
-//     whether the envelope is ingest-legal. This is the pre-ship
-//     gate. If $errors is non-empty, the payload will be rejected
-//     by TeamLinkt's ingest validator.
+//   $errors + $warnings — ContractPayloadValidator (schema) +
+//     ContractSchemaValidator (per-block) verdict about whether the
+//     envelope is ingest-legal. This is the pre-ship gate. If $errors
+//     is non-empty, the payload will be rejected by TeamLinkt's ingest.
 //
-//   envelope.diagnostics — WHAT WAS LOST during translation
-//     (scrubs, unmappable blocks, hero drops, etc). This is the
-//     reviewer-visible channel that lives INSIDE the payload.
+//   $sidecar->diagnostics — WHAT WAS LOST during translation (scrubs,
+//     unmappable blocks, hero drops, palette fallbacks, etc). Now
+//     persisted alongside the envelope, NOT inside it.
 //
-// A payload can have zero validation errors AND many diagnostics —
-// the site translated cleanly but with visible drops. And a payload
-// can have many validation errors AND many diagnostics — inspect
-// both before deciding.
+// A payload can have zero validation errors AND many sidecar
+// diagnostics (site translated cleanly but with visible drops), or
+// many of each — inspect both before deciding.
 final class EmitResult
 {
     /**
@@ -35,6 +37,7 @@ final class EmitResult
      */
     public function __construct(
         public readonly Envelope $envelope,
+        public readonly DiagnosticsSidecar $sidecar,
         public readonly array $errors,
         public readonly array $warnings,
     ) {}

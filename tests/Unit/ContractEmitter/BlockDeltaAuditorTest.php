@@ -186,7 +186,6 @@ final class BlockDeltaAuditorTest extends TestCase
                 ),
             ]),
             assets: new DataCollection(Asset::class, []),
-            diagnostics: new DataCollection(Diagnostic::class, []),
         );
     }
 }

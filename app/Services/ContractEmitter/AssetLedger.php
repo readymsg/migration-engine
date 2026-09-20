@@ -5,71 +5,53 @@ declare(strict_types=1);
 namespace App\Services\ContractEmitter;
 
 use App\Data\SiteImport\Asset;
+use App\Data\SiteImport\Diagnostic;
+use App\Services\Assets\AssetPublisher;
 use Spatie\LaravelData\DataCollection;
 use Spatie\LaravelData\Optional;
 
 // Accumulator for tl-asset:<ref> declarations across the whole
-// emission. This is the inversion of our old AssetUrlRewriter:
+// emission. Contract v2 §9 "Asset hosting": WE host every asset on
+// one allow-listed https origin. The ledger owns the AssetPublisher
+// call — on register() it fetches (via disk-cached HTTP) → byte-
+// sniffs the mime → measures dimensions → publishes to the host →
+// declares the resulting Asset with both `url` (host-issued) AND
+// `sourceUrl` (provenance-only).
 //
-//   OLD PATH: rewrite prop URLs to our own s3:// keys, host the
-//             assets ourselves, serve via /preview-assets.
-//   NEW PATH: emit tl-asset:<ref> tokens in props + declare each
-//             asset's ORIGINAL third-party sourceUrl in assets[].
-//             TeamLinkt fetches server-side and rewrites tokens.
-//             Our S3 keys never appear in the payload.
+// SILENT-LOSS POLICY: an asset that can't be published (fetch failed,
+// SVG needs rasterisation, unknown mime) is NOT declared and is NOT
+// silently forgotten either — the ledger records a `Diagnostic` in
+// its own accumulator which the emitter drains into the sidecar.
 //
-// This class is the single place the emitter accumulates assets.
-// Contract Part II "Assets" rules enforced here:
-//   - Every token must have a matching assets[] entry (achieved
-//     by construction — register() is the only way to mint a
-//     token).
-//   - Every declared asset should be referenced. Not enforced here
-//     — the envelope-level validator (Slice 9) will spot orphans.
-//   - Deduplicate by sourceUrl (one ref per distinct source, reused
-//     across as many props as needed).
-//   - SVG rejected (stored-XSS vector). Non-image/PDF rejected.
-//     Callers get a RegistrationResult that says whether the asset
-//     was accepted; a rejection becomes a diagnostic upstream, not
-//     a hard failure.
-//
-// Ref grammar: `<usage>-<12 hex chars of sha1(sourceUrl)>`. Matches
-// the contract's `[a-z0-9-]{1,64}` requirement and is deterministic
-// (same source URL always produces the same ref — fixtures replay
-// reproducibly). Usage defaults to `asset` if not provided.
+// Ref grammar unchanged: `<usage>-<12 hex chars of sha1(sourceUrl)>`.
+// Deterministic — same source URL always produces the same ref, so
+// fixtures replay reproducibly. Usage defaults to `asset`.
 final class AssetLedger
 {
-    /**
-     * Contract Part II "Accepted types" — the only mimes an
-     * ingest will accept. Anything outside this list becomes a
-     * diagnostic instead of an assets[] entry.
-     *
-     * @var array<int, string>
-     */
-    private const ACCEPTED_MIME_TYPES = [
-        'image/jpeg',
-        'image/png',
-        'image/webp',
-        'image/gif',
-        'application/pdf',
-    ];
-
-    /**
-     * Mimes we explicitly reject with a specific rejection reason.
-     * SVG is the load-bearing one — Contract Part II calls it out
-     * as a stored-XSS vector; "rasterise to PNG ≥ 512 px on the
-     * long edge" is the workaround, which is deferred to Slice 20.
-     *
-     * @var array<string, string>
-     */
-    private const EXPLICITLY_REJECTED_MIME_TYPES = [
-        'image/svg+xml' => 'SVG rejected by contract (stored-XSS vector). Rasterise to PNG ≥ 512 px before declaring.',
-    ];
-
     /** @var array<string, Asset> keyed by sourceUrl (dedup key) */
     private array $bySource = [];
 
     /** @var array<string, true> ref uniqueness check */
     private array $refs = [];
+
+    /** @var array<int, Diagnostic> skip diagnostics — drained by emitter into the sidecar */
+    private array $skipDiagnostics = [];
+
+    private readonly AssetPublisher $publisher;
+
+    // `$publisher` defaults to a fresh AssetPublisher backed by a
+    // FakePublicAssetHost. That default is HERE (not on the ctor
+    // signature) so unit tests instantiating `new AssetLedger` from
+    // hundreds of places keep working — they don't care about the
+    // published URL, only about registration semantics. The live
+    // emission path (ContractPayloadEmitter) constructs a ledger with
+    // the container-bound AssetPublisher so production INGEST uses
+    // whichever PublicAssetHost is bound (FakePublicAssetHost for
+    // fixture emission today; SpacesPublicAssetHost when it lands).
+    public function __construct(?AssetPublisher $publisher = null)
+    {
+        $this->publisher = $publisher ?? \App\Services\Assets\SyntheticAssetPublisher::default();
+    }
 
     public function register(
         string $sourceUrl,
@@ -79,48 +61,55 @@ final class AssetLedger
         ?string $usage = null,
     ): RegistrationResult {
         $sourceUrl = trim($sourceUrl);
-        $mimeType = strtolower(trim($mimeType));
 
         if ($sourceUrl === '') {
             return RegistrationResult::rejected('empty sourceUrl');
         }
 
-        // Contract Part II "Assets": absolute, publicly fetchable, no
-        // auth. We can't verify fetchability from here, but we can
-        // require an absolute http(s) URL — TeamLinkt fetches server-
-        // side and a scheme-less URL wouldn't resolve there.
+        // Contract v2 §7 "Assets": absolute, publicly fetchable, no
+        // auth. Also required for AssetPublisher to fetch bytes.
         if (! preg_match('#^https?://#i', $sourceUrl)) {
             return RegistrationResult::rejected(
                 "sourceUrl must be absolute http(s); got `{$sourceUrl}`",
             );
         }
 
-        // Explicit-reject list (SVG is the current entry).
-        if (isset(self::EXPLICITLY_REJECTED_MIME_TYPES[$mimeType])) {
-            return RegistrationResult::rejected(
-                self::EXPLICITLY_REJECTED_MIME_TYPES[$mimeType],
-            );
-        }
-
-        // Everything else must be in the accept list.
-        if (! in_array($mimeType, self::ACCEPTED_MIME_TYPES, true)) {
-            return RegistrationResult::rejected(
-                "mimeType `{$mimeType}` not in the contract's accepted list (image/jpeg|png|webp|gif or application/pdf)",
-            );
-        }
-
-        // Dedupe by sourceUrl.
+        // Dedupe by sourceUrl — one publish per distinct source.
         if (isset($this->bySource[$sourceUrl])) {
             return RegistrationResult::accepted($this->bySource[$sourceUrl]->ref);
         }
 
+        // Publish through the host. Fetch failures, SVG, and non-
+        // accepted mimes come back as `skip_reason` — surface as a
+        // sidecar diagnostic so the reviewer sees the exact drop.
+        $publishResult = $this->publisher->publishFromUrl($sourceUrl, $filename);
+        if (! $publishResult->isOk()) {
+            $reason = $publishResult->skip_reason ?? 'unknown publish failure';
+            $this->skipDiagnostics[] = new Diagnostic(
+                severity: 'warning',
+                code: self::codeForSkip($reason),
+                message: "Asset not declared: {$reason}",
+                sourceUrl: $sourceUrl,
+            );
+
+            return RegistrationResult::rejected($reason);
+        }
+        $published = $publishResult->published;
+        assert($published !== null);
+
         $ref = $this->mintRef($sourceUrl, $usage);
         $this->refs[$ref] = true;
+
         $this->bySource[$sourceUrl] = new Asset(
             ref: $ref,
-            sourceUrl: $sourceUrl,
+            url: $published->url,
             filename: $filename,
-            mimeType: $mimeType,
+            mimeType: $published->mimeType,
+            sourceUrl: $sourceUrl,
+            sha256: $published->sha256,
+            byteSize: $published->byteSize,
+            width: $published->width ?? new Optional,
+            height: $published->height ?? new Optional,
             alt: $alt !== null && $alt !== '' ? $alt : new Optional,
             usage: $usage !== null && $usage !== '' ? $usage : new Optional,
         );
@@ -168,6 +157,18 @@ final class AssetLedger
         return $this->bySource[$sourceUrl]->ref ?? null;
     }
 
+    /**
+     * Drain the skip diagnostics accumulated during publish attempts.
+     * Called once by the emitter after all mapping is done; folded
+     * into the sidecar's diagnostics list.
+     *
+     * @return array<int, Diagnostic>
+     */
+    public function skipDiagnostics(): array
+    {
+        return $this->skipDiagnostics;
+    }
+
     private function mintRef(string $sourceUrl, ?string $usage): string
     {
         $prefix = $usage !== null && $usage !== '' ? $usage : 'asset';
@@ -188,5 +189,29 @@ final class AssetLedger
         }
 
         return $candidate;
+    }
+
+    private static function codeForSkip(string $reason): string
+    {
+        if (str_starts_with($reason, 'svg_rasterizer_missing')) {
+            return 'svg_rasterizer_missing';
+        }
+        if (str_starts_with($reason, 'mime_not_accepted')) {
+            return 'asset_mime_rejected';
+        }
+        if (str_starts_with($reason, 'fetch_failed')) {
+            return 'asset_fetch_failed';
+        }
+        if (str_starts_with($reason, 'empty body')) {
+            return 'asset_body_empty';
+        }
+        if (str_starts_with($reason, 'mime_sniff_failed')) {
+            return 'asset_mime_sniff_failed';
+        }
+        if (str_starts_with($reason, 'host_put_threw')) {
+            return 'asset_host_put_threw';
+        }
+
+        return 'asset_publish_skipped';
     }
 }

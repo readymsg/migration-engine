@@ -7,31 +7,38 @@ namespace App\Console\Commands;
 use App\Data\ConversionResult;
 use App\Data\OrgType;
 use App\Services\ContractEmitter\ContractPayloadEmitter;
+use App\Services\ContractEmitter\ContractPayloadValidator;
+use App\Services\ContractEmitter\ContractSchema;
+use App\Services\ContractEmitter\EnvelopeJson;
 use Illuminate\Console\Command;
 use RuntimeException;
 
-// Reads the tbirdhoops preview fixture (ConversionResult JSON) and
-// runs it through the ContractPayloadEmitter to produce a contract-
-// shaped Envelope JSON. Output lands at:
-//   storage/app/public/preview/tbirdhoops-contract.json
+// Reads a preview fixture (ConversionResult JSON) and runs it through
+// the ContractPayloadEmitter to produce a contract-shaped Envelope
+// JSON. Under v2 it writes TWO files:
 //
-// Consumed by the contract-preview React bundle. This is the M1
-// milestone artifact — a valid, previewable payload against the
-// Site Import Contract v1.
+//   preview/{name}-contract.json              — envelope payload
+//   preview/{name}-contract.diagnostics.json  — diagnostics sidecar
 //
-// Deliberately depends on the existing tbirdhoops.json (produced by
+// The envelope is what would ship to TeamLinkt's ingest. The sidecar
+// carries every diagnostic that used to live inside envelope.diagnostics
+// (v2 removed that field) plus the schema sha256 stamp so a fixture
+// can be traced back to the exact schema bytes it was produced against.
+//
+// Deliberately depends on the existing {name}.json (produced by
 // engine:emit-preview-fixture) rather than re-running the full
-// pipeline — same source, two output shapes. The Slice-19 block-
-// fill re-prompt would collapse the two into one output, but for
-// M1 the contract emitter is a downstream translator.
+// pipeline — same source, two output shapes.
 final class EmitContractFixture extends Command
 {
     protected $signature = 'engine:emit-contract-fixture {--source-fixture=tbirdhoops} {--org-type=club}';
 
-    protected $description = 'Emit a contract-shaped payload from an existing ConversionResult fixture.';
+    protected $description = 'Emit a contract-shaped payload + diagnostics sidecar from an existing ConversionResult fixture.';
 
-    public function handle(ContractPayloadEmitter $emitter): int
-    {
+    public function handle(
+        ContractPayloadEmitter $emitter,
+        ContractPayloadValidator $validator,
+        ContractSchema $schema,
+    ): int {
         $sourceName = (string) $this->option('source-fixture');
         $orgTypeValue = (string) $this->option('org-type');
         $orgType = OrgType::tryFrom($orgTypeValue);
@@ -54,35 +61,67 @@ final class EmitContractFixture extends Command
         $result = ConversionResult::from($raw);
 
         $out = $emitter->emit($result, $orgType);
-        $envelope = $out->envelope->toArray();
 
-        // Attach the validation verdict alongside the envelope for
-        // preview-side transparency. NOT part of the contract shape —
-        // the fixture is a DEBUG artifact, not something we'd ship.
-        $sidecarPath = storage_path("app/public/preview/{$sourceName}-contract.json");
-        $written = file_put_contents($sidecarPath, json_encode($envelope, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
-        if ($written === false) {
-            throw new RuntimeException("Failed to write contract fixture: {$sidecarPath}");
+        // v2: encode the envelope through the single-source helper
+        // (EnvelopeJson) so root/zones become JSON `{}` on disk. The
+        // opis validator ran against the same encoded shape inside
+        // emit(), so the on-disk bytes match what was validated.
+        $envelopeJson = EnvelopeJson::encode($out->envelope, pretty: true);
+        $envelopePath = storage_path("app/public/preview/{$sourceName}-contract.json");
+        if (file_put_contents($envelopePath, $envelopeJson) === false) {
+            throw new RuntimeException("Failed to write contract fixture: {$envelopePath}");
         }
 
-        $this->line("Wrote contract fixture to {$sidecarPath}");
+        // Companion sidecar: schema hash, source metadata, and every
+        // diagnostic that used to appear in envelope.diagnostics.
+        $sidecarJson = json_encode(
+            $out->sidecar->toArray(),
+            JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+        );
+        $sidecarPath = storage_path("app/public/preview/{$sourceName}-contract.diagnostics.json");
+        if (file_put_contents($sidecarPath, $sidecarJson) === false) {
+            throw new RuntimeException("Failed to write diagnostics sidecar: {$sidecarPath}");
+        }
+
+        $this->line("Wrote envelope       {$envelopePath}");
+        $this->line("Wrote sidecar        {$sidecarPath}");
+        $this->line('Schema sha256        '.$schema->sha256());
         $this->line(sprintf(
-            ' pages: %d, blocks: %d, assets: %d, diagnostics: %d',
-            count($envelope['pages']),
-            array_sum(array_map(fn ($p) => count($p['data']['content']), $envelope['pages'])),
-            count($envelope['assets']),
-            count($envelope['diagnostics']),
+            'Payload              pages: %d, blocks: %d, assets: %d',
+            $out->envelope->pages->count(),
+            array_sum(array_map(
+                fn ($p) => $p->data->content->count(),
+                iterator_to_array($out->envelope->pages),
+            )),
+            $out->envelope->assets->count(),
         ));
-        $this->line(sprintf(' validation: %d errors, %d warnings', count($out->errors), count($out->warnings)));
+        $this->line(sprintf(
+            'Sidecar diagnostics  %d total (by severity: info=%d, warning=%d, error=%d)',
+            $out->sidecar->diagnostics->count(),
+            $out->sidecar->coverage_by_severity['info'] ?? 0,
+            $out->sidecar->coverage_by_severity['warning'] ?? 0,
+            $out->sidecar->coverage_by_severity['error'] ?? 0,
+        ));
+
+        // Independent second validation pass on the JUST-WRITTEN
+        // envelope bytes. Belt-and-braces: proves the on-disk file
+        // validates cleanly under opis, not just the in-memory
+        // Envelope value.
+        $reValidateIssues = $validator->validate($out->envelope);
+        $this->line(sprintf(
+            'Validation           %d schema errors, %d block-rule errors, %d warnings',
+            count($reValidateIssues),
+            count($out->errors) - count($reValidateIssues),
+            count($out->warnings),
+        ));
         if ($out->errors !== []) {
-            $this->warn('First 5 errors:');
-            foreach (array_slice($out->errors, 0, 5) as $e) {
+            $this->warn('First 10 errors:');
+            foreach (array_slice($out->errors, 0, 10) as $e) {
                 $path = is_string($e->path) ? $e->path : '(no path)';
                 $this->warn("   {$e->code} at {$path}: {$e->message}");
             }
         }
-        $this->line("Browse: http://127.0.0.1:8000/preview-contract/{$sourceName}");
 
-        return self::SUCCESS;
+        return $out->errors === [] ? self::SUCCESS : self::FAILURE;
     }
 }

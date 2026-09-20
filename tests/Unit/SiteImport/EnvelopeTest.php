@@ -19,7 +19,9 @@ use Tests\TestCase;
 
 // Pins the top-level Envelope contract:
 //   1. schemaVersion serialises as an integer `1`.
-//   2. All six top-level keys appear in the JSON output.
+//   2. All FIVE top-level keys appear in the JSON output (v2 removed
+//      the sixth — `diagnostics` — and rejects it via
+//      `additionalProperties: false` at the envelope).
 //   3. Empty payload is still shape-valid (four keys may be empty
 //      objects/arrays; pages will be [] on the empty factory even
 //      though a real payload requires at least one home page).
@@ -30,7 +32,7 @@ use Tests\TestCase;
 final class EnvelopeTest extends TestCase
 {
     #[Test]
-    public function empty_envelope_has_all_six_top_level_keys(): void
+    public function empty_envelope_has_all_five_top_level_keys(): void
     {
         $env = Envelope::emptyShell(new Source(
             url: 'https://www.tbirdhoops.org/',
@@ -41,9 +43,13 @@ final class EnvelopeTest extends TestCase
 
         $json = $env->toArray();
 
-        foreach (['schemaVersion', 'source', 'site', 'pages', 'assets', 'diagnostics'] as $key) {
+        foreach (['schemaVersion', 'source', 'site', 'pages', 'assets'] as $key) {
             $this->assertArrayHasKey($key, $json, "Envelope must carry `{$key}`");
         }
+        // v2: `diagnostics` was removed from the envelope
+        // (`additionalProperties: false` rejects it). Content lives
+        // on DiagnosticsSidecar now.
+        $this->assertArrayNotHasKey('diagnostics', $json);
     }
 
     #[Test]
@@ -90,7 +96,6 @@ final class EnvelopeTest extends TestCase
             ),
             pages: new DataCollection(Page::class, []),
             assets: new DataCollection(Asset::class, []),
-            diagnostics: new DataCollection(Diagnostic::class, []),
         );
 
         $site = $env->toArray()['site'];
@@ -142,9 +147,11 @@ final class EnvelopeTest extends TestCase
     #[Test]
     public function asset_optional_fields_are_omitted_when_unset(): void
     {
+        // v2 required fields on Asset are: ref, url, filename, mimeType.
+        // sourceUrl is now optional (provenance-only, never fetched).
         $asset = new Asset(
             ref: 'site-logo',
-            sourceUrl: 'https://cdn2.sportngin.com/attachments/banner_graphic/aa/siteHeader.png',
+            url: 'https://assets.example.test/aaaaaaaaaaaaaaaa.png',
             filename: 'siteHeader.png',
             mimeType: 'image/png',
         );
@@ -153,6 +160,8 @@ final class EnvelopeTest extends TestCase
         $this->assertSame('site-logo', $json['ref']);
         $this->assertArrayNotHasKey('alt', $json);
         $this->assertArrayNotHasKey('usage', $json);
+        $this->assertArrayNotHasKey('sourceUrl', $json);
+        $this->assertArrayNotHasKey('sha256', $json);
     }
 
     #[Test]
@@ -196,13 +205,13 @@ final class EnvelopeTest extends TestCase
             assets: new DataCollection(Asset::class, [
                 new Asset(
                     ref: 'site-logo',
-                    sourceUrl: 'https://cdn2.sportngin.com/attachments/banner_graphic/aa/siteHeader.png',
+                    url: 'https://assets.example.test/aaaaaaaaaaaaaaaa.png',
                     filename: 'siteHeader.png',
                     mimeType: 'image/png',
+                    sourceUrl: 'https://cdn2.sportngin.com/attachments/banner_graphic/aa/siteHeader.png',
                     usage: 'logo',
                 ),
             ]),
-            diagnostics: new DataCollection(Diagnostic::class, []),
         );
 
         $encoded = json_encode($env->toArray(), JSON_THROW_ON_ERROR);

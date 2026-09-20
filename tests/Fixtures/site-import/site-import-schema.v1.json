@@ -27,6 +27,7 @@
       "Every tl-asset: token needs a matching assets[] entry, and every declared asset should be referenced.",
       "Content and branding only — never author templateId, templateSettings, theme or zones.",
       "Never emit a prop beginning with `resolved`, nor formUuid.",
+      "Respect orgType gating: emitting a restricted block for the wrong org type is an error.",
       "Import writes a draft revision; a human publishes. Optimise for coverage over caution.",
       "Never copy a stock-media default into a prop — those paths are environment-resolved placeholders. Omit the prop instead."
     ],
@@ -39,8 +40,6 @@
       "SiteNotice": "Zone-only. Zones are template-owned."
     },
     "orgTypeGating": {
-      "importedOrgType": "association",
-      "effect": "Every imported organization is an association, which appears in every restriction below, so all emittable blocks are legal on every import.",
       "orgTypes": [
         "club",
         "association",
@@ -643,7 +642,7 @@
     "changeManagement": {
       "rule": "Block props are a storage contract. Nothing is ever deleted from or repaired in stored puck_data, so a renamed or removed prop leaves orphaned values behind forever.",
       "forYou": "Echo `schemaVersion` in every payload. We reject a mismatch loudly rather than ingesting against the wrong shape.",
-      "unknownBlockType": "If you believe content needs a block that does not exist here, do not invent a type — emit the nearest supported block, or omit the content entirely."
+      "unknownBlockType": "If you believe content needs a block that does not exist here, do not invent a type — emit the nearest supported block and record a diagnostic."
     }
   },
   "type": "object",
@@ -652,7 +651,8 @@
     "source",
     "site",
     "pages",
-    "assets"
+    "assets",
+    "diagnostics"
   ],
   "additionalProperties": false,
   "properties": {
@@ -707,6 +707,13 @@
         "$ref": "#/$defs/asset"
       },
       "description": "Every asset referenced by a tl-asset: token. May be []."
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      },
+      "description": "Things you could not map. May be []. Please use this generously."
     }
   },
   "$defs": {
@@ -1669,7 +1676,7 @@
       "type": "object",
       "required": [
         "ref",
-        "url",
+        "sourceUrl",
         "filename",
         "mimeType"
       ],
@@ -1680,40 +1687,11 @@
           "pattern": "^[a-z0-9-]{1,64}$",
           "description": "Matches the `tl-asset:<ref>` token. Unique within the payload."
         },
-        "url": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https://",
-          "description": "Where we fetch the bytes from. You host the file; the host must be the one agreed asset host, since our fetcher allow-lists a single origin. Absolute https, publicly fetchable, no auth.",
-          "x-teamlinkt": {
-            "hostAllowListed": true
-          }
-        },
         "sourceUrl": {
           "type": "string",
           "format": "uri",
           "pattern": "^https?://",
-          "description": "Provenance only — where the file lived on the scraped site. Never fetched. Include it where you have it; it is what makes a bad asset traceable back to its origin."
-        },
-        "sha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$",
-          "description": "Lowercase hex digest of the bytes at `url`. Lets us verify what we fetched and store one copy of an asset reused across pages."
-        },
-        "byteSize": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Size in bytes of the file at `url`. Anything over 10 MB is skipped."
-        },
-        "width": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Intrinsic pixel width, for images."
-        },
-        "height": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Intrinsic pixel height, for images."
+          "description": "Absolute, publicly fetchable, no auth. We fetch it server-side."
         },
         "filename": {
           "type": "string",
@@ -1744,6 +1722,47 @@
             "other"
           ],
           "description": "Hint for the asset library."
+        }
+      }
+    },
+    "diagnostic": {
+      "title": "Diagnostic",
+      "description": "Something you could not map. Use these generously — a recurring diagnostic is a feature request for a new block. An `error` does not mean abandon the payload.",
+      "type": "object",
+      "required": [
+        "severity",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "description": "Stable machine-readable slug.",
+          "examples": [
+            "unmappable_section",
+            "form_not_imported",
+            "asset_type_rejected"
+          ]
+        },
+        "sourceUrl": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable explanation for the reviewing admin."
+        },
+        "droppedContent": {
+          "type": "string",
+          "description": "The content you gave up on, verbatim where practical."
         }
       }
     },

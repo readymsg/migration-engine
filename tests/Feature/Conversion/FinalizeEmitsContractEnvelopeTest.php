@@ -130,7 +130,6 @@ final class FinalizeEmitsContractEnvelopeTest extends TestCase
             site: new SiteSettings(primaryColor: '#AE292E'),
             pages: new DataCollection(Page::class, []),
             assets: new DataCollection(Asset::class, []),
-            diagnostics: new DataCollection(Diagnostic::class, []),
         );
         app(ContractEnvelopeStore::class)->put('conv-route-test', $envelope);
 
