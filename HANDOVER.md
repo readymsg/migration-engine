@@ -86,26 +86,26 @@ Four live-captured fixtures. Durable `BlockFillResult` captures live at `tests/F
 | **langdondiamonds.ca** | Youth baseball association, 18 pages | 0 content-page scrubs. Coaches page carries 7 legitimate `help.sportsengine.com` links — proves the SE-platform-block scrubber's narrower pattern doesn't false-positive on help-article links. |
 | **cjfl.ca** | Canadian Junior Football League, 34-page site | Complete on IR + block-fill under chunked path (was Failed/abort pre-chunking). Partial only from a pre-existing draft-landing Teams-nav gap unrelated to IR. |
 
-### Fixture emission baseline (2026-10-02)
+### Fixture emission baseline
 
-Measured via `php artisan engine:emit-contract-fixture` against the committed-shape `storage/app/public/preview/{site}.json` ConversionResult fixtures. These are gitignored captures used for emitter development; **they are NOT guaranteed to reflect current live-pipeline output.** The cjfl fixture in particular is a pre-chunking historical capture whose source `failures[]` is dominated by the single-call-IR-capacity abort mode that the always-chunked IR slice resolved — so its 2-page emission is faithful to the stale source, not a measure of today's pipeline.
+Measured via `php artisan engine:emit-contract-fixture` against the committed-shape `storage/app/public/preview/{site}.json` ConversionResult fixtures. The gitignored source fixtures are not guaranteed to reflect current live-pipeline output on their own — the cjfl row has just been refreshed, the other two sources date from earlier captures.
 
-| Site | Pages | Blocks | Assets | Schema errors | Block-rule errors |
-|---|---|---|---|---|---|
-| tbirdhoops | 7 | 87 | 107 | 0 | 0 |
-| cjfl *(stale source, pre-chunking)* | 2 | 2 | 0 | 0 | 0 |
-| langdondiamonds | 18 | 85 | 50 | 0 | 0 |
+| Site | Pages | Blocks | Assets | Schema errors | Block-rule errors | Source |
+|---|---|---|---|---|---|---|
+| tbirdhoops | 7 | 87 | 107 | 0 | 0 | pre-handover fixture |
+| cjfl | 41 | 133 | 81 | 0 | 0 | **live refresh 2026-10-02, ≤$4 estimated spend** |
+| langdondiamonds | 18 | 85 | 50 | 0 | 0 | pre-handover fixture |
 
-All three emitted JSON files independently validate against `resources/site-import-schema/site-import-schema.json` via opis/json-schema. Emission is correct for the sources given.
+All three emitted JSON files independently validate against `resources/site-import-schema/site-import-schema.json` via opis/json-schema.
 
-### Live-run baseline (last known, pre-handover)
+### Live-run baseline
 
-Produced by a full `ConversionJob → FinalizeConversionJob` chain against the live site under the current (always-chunked IR) pipeline. These are the numbers to compare against on the next live run.
+Produced by `php artisan engine:capture-live` running the full `INGEST → PLAN → IR → BLOCK-FILL → ASSEMBLE → SCRUB → PLATFORM-RENDER → DRAFT-LAND` pipeline under `QUEUE_CONNECTION=sync` (inline, no Horizon required). Wall-clock ~18 min for cjfl.
 
 | Site | Pages | Blocks | Failures | Notes |
 |---|---|---|---|---|
 | tbirdhoops | not recorded | not recorded | not recorded | ~93% migratable coverage. Pages/blocks/failures were not captured in a durable artifact from the live run — only the coverage percentage is on record. The 7/87 numbers quoted elsewhere are the fixture-emission figures above, not a live measurement. |
-| cjfl | 41 | 143 | 0 | Previously single-call-abort; chunked IR converts cleanly |
+| cjfl (2026-10-02 refresh) | 41 | 133 | 0 | Live run via `engine:capture-live https://www.cjfl.org`. Reproduces the "41 pages / 0 failures" prior baseline exactly; **the "143 blocks" figure from the earlier handover note did not reproduce — the current emission is 133 blocks.** The difference is unexplained from this run alone (deterministic assembler on the new BlockFillResult produced 133; the 143 came from a different capture whose BlockFillResult is not available for diff). Treat 133 as the current source of truth; 143 is the historical note. |
 
 **To refresh the cjfl fixture** so emission can re-baseline: delete `storage/app/public/preview/cjfl.json` and run the live pipeline (`POST /api/conversions` with the cjfl URL under `QUEUE_CONNECTION=redis` + Horizon). Costs ~1 Opus call for the brief + ~3 Opus calls for IR chunks + ~34 Sonnet calls for block-fill ≈ $4-6.
 
@@ -131,7 +131,13 @@ Produced by a full `ConversionJob → FinalizeConversionJob` chain against the l
 
 - **Tool-call structured-output `blocks` stringification.** On rare rulebook-shape pages (`("EP") rule.` ↔ embedded quoted abbreviations + legal-doc formatting), Sonnet deterministically emits `blocks` as a stringified JSON array. Correctness is preserved — the hardened `AnthropicBlockFillAgent::filledPageFromDecoded` throws and the job surfaces a visible `BlockFillFailure`. Real fix is Option 3 (native structured-outputs via Anthropic beta header) — substantial slice; schema changes required on `confidence` and `props`. Fully scoped in CLAUDE.md.
 
-- **Scraped third-party API keys in captured fixtures.** `tests/Fixtures/blockfill/tbirdhoops.json` contains Google Maps Static API keys from scraped SportsEngine map embeds (belongs to tbirdhoops/sportngin, not us). Not a credential leak on our side; worth flagging to tbirdhoops if we hand them results.
+- **Scraped third-party API keys in captured fixtures — mitigated.** The Google Maps Static API key previously embedded in `tests/Fixtures/blockfill/tbirdhoops.json` from scraped SE map embeds has been replaced with `REDACTED_GMAPS_KEY` in commit `1249b5e`. Future live captures of SE sites with embedded Google Maps widgets will re-introduce the pattern; `engine:capture-live` has no redaction pass. Worth adding a post-capture scrubber if more SE sites get captured.
+
+- **`engine:capture-live` unconditionally overwrites BOTH the gitignored preview `ConversionResult` and the git-TRACKED block-fill fixture.** Default write paths: `storage/app/public/preview/<slug>.json` AND `tests/Fixtures/blockfill/<slug>.json`. The second is a committed artifact that downstream fixture-replay tests (`DraftLandingFixtureReplayTest`, `AssemblerFixtureReplayTest`, `AssetUrlRewriterTest`, `GalleryFillerTest`, `SePlatformBlockScrubberTest::cjfl_zero_scrubs_*`, `PuckToContractMapperTest::cjfl_*`, etc.) pin against. **To sandbox a run that shouldn't touch committed state, pass `--blockfill-out=/tmp/<slug>-bf.json --preview-out=/tmp/<slug>-pv.json`.** The command has no `--dry-run` flag today. Learned the hard way during the 2026-10-02 cjfl refresh — the overwrite is pre-gate.
+
+- **CLI live path has NO spend meter, NO token logging, and does NOT enforce `DEMO_DAILY_BUDGET_USD`.** `ConversionCostGuard` is referenced only by `app/Http/Controllers/Conversion/ConversionController.php:39`, `app/Http/Controllers/Demo/LandingController.php:28`, and `app/Jobs/FinalizeConversionJob.php:16` (release-on-terminal only). `app/Console/Commands/CaptureLive.php` has zero references to the guard. `laravel/ai`'s client does not log Anthropic token counts to any file by default. A single `engine:capture-live` invocation can therefore spend arbitrarily (bounded only by Anthropic's org-level rate limits and your approval). **This must be fixed before any batch or mass-migration run.** Minimum viable fix: pre-call cost estimate + per-call token usage logging to a sidecar JSONL at `storage/logs/llm-usage/<conversion_id>.jsonl` so the artisan path has an auditable spend trail.
+
+- **A sync live run of a ~40-page site takes ~18 min wall clock.** cjfl (34 content pages, 7 platform pages) under `QUEUE_CONNECTION=sync` + always-chunked IR + sequential Sonnet block-fill: measured 1,092s on 2026-10-02 against a reasonably warm Firecrawl cache. The parallel Horizon path is faster (10-way concurrency on block-fill) but requires a running Redis + Horizon supervisor. Plan accordingly for live-dev iteration vs. production conversion.
 
 ---
 
