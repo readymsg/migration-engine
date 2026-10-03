@@ -104,7 +104,7 @@ Produced by a full `ConversionJob → FinalizeConversionJob` chain against the l
 
 | Site | Pages | Blocks | Failures | Notes |
 |---|---|---|---|---|
-| tbirdhoops | 7 | 87 | 1 (draft-landing Teams-nav gap) | ~93% migratable coverage |
+| tbirdhoops | not recorded | not recorded | not recorded | ~93% migratable coverage. Pages/blocks/failures were not captured in a durable artifact from the live run — only the coverage percentage is on record. The 7/87 numbers quoted elsewhere are the fixture-emission figures above, not a live measurement. |
 | cjfl | 41 | 143 | 0 | Previously single-call-abort; chunked IR converts cleanly |
 
 **To refresh the cjfl fixture** so emission can re-baseline: delete `storage/app/public/preview/cjfl.json` and run the live pipeline (`POST /api/conversions` with the cjfl URL under `QUEUE_CONNECTION=redis` + Horizon). Costs ~1 Opus call for the brief + ~3 Opus calls for IR chunks + ~34 Sonnet calls for block-fill ≈ $4-6.
