@@ -849,7 +849,7 @@
                                     {
                                         "component_type": "Image",
                                         "props": {
-                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4454214&2i6391049&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=40267",
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4454214&2i6391049&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=REDACTED_GMAPS_KEY&token=40267",
                                             "alt": "Lakota Basketball facility location map 1"
                                         }
                                     }
@@ -860,7 +860,7 @@
                                     {
                                         "component_type": "Image",
                                         "props": {
-                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4453223&2i6388252&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=116745",
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4453223&2i6388252&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=REDACTED_GMAPS_KEY&token=116745",
                                             "alt": "Lakota Basketball facility location map 2"
                                         }
                                     }
@@ -871,7 +871,7 @@
                                     {
                                         "component_type": "Image",
                                         "props": {
-                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4455494&2i6388953&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=49360",
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4455494&2i6388953&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=REDACTED_GMAPS_KEY&token=49360",
                                             "alt": "Lakota Basketball facility location map 3"
                                         }
                                     },
@@ -893,7 +893,7 @@
                                     {
                                         "component_type": "Image",
                                         "props": {
-                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4456529&2i6391062&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&token=90717",
+                                            "src": "https://maps.googleapis.com/maps/api/js/StaticMapService.GetMapImage?1m2&1i4456529&2i6391062&2e1&3u16&4m2&1u600&2u450&5m6&1e0&5sen&6sus&10b1&12b1&14i47083502&8e1&key=REDACTED_GMAPS_KEY&token=90717",
                                             "alt": "Lakota Basketball facility location map 4"
                                         }
                                     }
