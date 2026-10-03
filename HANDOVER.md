@@ -86,15 +86,28 @@ Four live-captured fixtures. Durable `BlockFillResult` captures live at `tests/F
 | **langdondiamonds.ca** | Youth baseball association, 18 pages | 0 content-page scrubs. Coaches page carries 7 legitimate `help.sportsengine.com` links — proves the SE-platform-block scrubber's narrower pattern doesn't false-positive on help-article links. |
 | **cjfl.ca** | Canadian Junior Football League, 34-page site | Complete on IR + block-fill under chunked path (was Failed/abort pre-chunking). Partial only from a pre-existing draft-landing Teams-nav gap unrelated to IR. |
 
-Contract-emission baseline (confirmed 2026-10-02 via `php artisan engine:emit-contract-fixture`):
+### Fixture emission baseline (2026-10-02)
+
+Measured via `php artisan engine:emit-contract-fixture` against the committed-shape `storage/app/public/preview/{site}.json` ConversionResult fixtures. These are gitignored captures used for emitter development; **they are NOT guaranteed to reflect current live-pipeline output.** The cjfl fixture in particular is a pre-chunking historical capture whose source `failures[]` is dominated by the single-call-IR-capacity abort mode that the always-chunked IR slice resolved — so its 2-page emission is faithful to the stale source, not a measure of today's pipeline.
 
 | Site | Pages | Blocks | Assets | Schema errors | Block-rule errors |
 |---|---|---|---|---|---|
 | tbirdhoops | 7 | 87 | 107 | 0 | 0 |
-| cjfl | 2 | 2 | 0 | 0 | 0 |
+| cjfl *(stale source, pre-chunking)* | 2 | 2 | 0 | 0 | 0 |
 | langdondiamonds | 18 | 85 | 50 | 0 | 0 |
 
-All three emitted files independently validate against `resources/site-import-schema/site-import-schema.json` via opis/json-schema.
+All three emitted JSON files independently validate against `resources/site-import-schema/site-import-schema.json` via opis/json-schema. Emission is correct for the sources given.
+
+### Live-run baseline (last known, pre-handover)
+
+Produced by a full `ConversionJob → FinalizeConversionJob` chain against the live site under the current (always-chunked IR) pipeline. These are the numbers to compare against on the next live run.
+
+| Site | Pages | Blocks | Failures | Notes |
+|---|---|---|---|---|
+| tbirdhoops | 7 | 87 | 1 (draft-landing Teams-nav gap) | ~93% migratable coverage |
+| cjfl | 41 | 143 | 0 | Previously single-call-abort; chunked IR converts cleanly |
+
+**To refresh the cjfl fixture** so emission can re-baseline: delete `storage/app/public/preview/cjfl.json` and run the live pipeline (`POST /api/conversions` with the cjfl URL under `QUEUE_CONNECTION=redis` + Horizon). Costs ~1 Opus call for the brief + ~3 Opus calls for IR chunks + ~34 Sonnet calls for block-fill ≈ $4-6.
 
 ---
 
@@ -102,7 +115,7 @@ All three emitted files independently validate against `resources/site-import-sc
 
 - **Prompt caching OFF on block-fill.** `AnthropicBlockFillAgent` ships uncached. The shared prefix (schema + GlobalStyleBrief + rubric) is a perfect fit for Anthropic's 5-min ephemeral cache (`cache_control: {type: 'ephemeral'}`). Blocker is in `vendor/laravel/ai`'s Anthropic gateway (`BuildsTextRequests.php:31` sends `system` as a plain string, not the structured-blocks array shape with `cache_control` markers). Options: (a) wedge through `providerOptions` once laravel/ai exposes them per-call; (b) own a bespoke Anthropic Messages HTTP client for block-fill behind the same `BlockFillAgent` interface; (c) wait for laravel/ai cache_control support. Pick (b) when volume justifies the biggest single speed/cost win in the engine.
 
-- **`GeneratePageJob` $tries=1 — RESOLVED (now $tries=3 with [30,60] backoff + `failed()` hook).** CLAUDE.md still lists this under "Known Gaps" as historical context; the current `app/Jobs/GeneratePageJob.php` is already `$tries=3`. Update CLAUDE.md's known-gaps section to retire this item on the next pass.
+- **`GeneratePageJob` $tries=3 — RESOLVED.** `app/Jobs/GeneratePageJob.php` is `$tries=3` with `[30, 60]`s backoff + `failed()` hook that writes a `BlockFillFailure` with attempt count. CLAUDE.md's known-gaps section matches. No outstanding work.
 
 - **`PublicAssetHost` has only `FakePublicAssetHost`.** `app/Services/Assets/FakePublicAssetHost` is the only implementation registered in `AppServiceProvider`. A real `SpacesPublicAssetHost` (DigitalOcean Spaces / S3 + CloudFront) is referenced in docblocks but not built. Interface is at `app/Contracts/PublicAssetHost.php` — the seam exists; the production implementation does not. **BLOCKER for shipping emitted contract payloads to a real TeamLinkt endpoint**: emitted `assets[].url` fields will reference the fake host's deterministic sha256-keyed URLs. Build before go-live.
 
